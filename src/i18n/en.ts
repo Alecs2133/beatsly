@@ -52,6 +52,7 @@ export const en = {
   // Store / Pricing
   store_title: 'Store & Packs',
   store_subtitle: 'Upgrade your plan to unlock more downloads and exclusive tools.',
+  current_plan: 'Current Plan',
   your_tier: 'Your Tier',
   upgrade_to: 'Upgrade to',
   ultimate_required: 'Ultimate Pack Required',

@@ -54,6 +54,7 @@ export const ro: Record<TranslationKeys, string> = {
   // Store / Pricing
   store_title: 'Magazin & Pachete',
   store_subtitle: 'Fă upgrade la plan pentru a debloca mai multe descărcări și unelte exclusive.',
+  current_plan: 'Planul Curent',
   your_tier: 'Planul Tău',
   upgrade_to: 'Fă upgrade la',
   ultimate_required: 'Necesită Pachetul Ultimate',
