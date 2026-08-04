@@ -3,6 +3,9 @@ name: Build Installers
 on:
   workflow_dispatch: # Permite rularea manuală dintr-un buton pe GitHub
 
+permissions:
+  contents: write
+
 jobs:
   build-tauri:
     strategy:
@@ -18,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
