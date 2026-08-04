@@ -4,10 +4,10 @@
   left: 0;
   width: 100vw;
   height: var(--player-height);
-  background: rgba(8, 8, 12, 0.7);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(5, 5, 8, 0.65);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -81,12 +81,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.4s var(--spring-easing);
 }
 
 .play-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(255,255,255,0.4);
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(255,255,255,0.6);
 }
 
 .play-btn:active {

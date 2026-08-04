@@ -52,10 +52,13 @@ export const ro: Record<TranslationKeys, string> = {
   download_failed: 'Descărcarea a eșuat',
 
   // Store / Pricing
-  store_title: 'Magazin & Abonamente',
+  store_title: 'Magazin & Pachete',
   store_subtitle: 'Fă upgrade la plan pentru a debloca mai multe descărcări și unelte exclusive.',
-  current_plan: 'Plan Curent',
+  your_tier: 'Planul Tău',
   upgrade_to: 'Fă upgrade la',
+  ultimate_required: 'Necesită Pachetul Ultimate',
+  ultimate_desc: 'Generatorul AI este o unealtă exclusivă pentru membrii Ultimate.',
+  upgrade_store: 'Fă upgrade acum în Magazin',
   pack: 'Pack',
   available_credits: 'Credite Disponibile',
   unlimited: 'Nelimitat',

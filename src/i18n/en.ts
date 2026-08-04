@@ -50,10 +50,13 @@ export const en = {
   download_failed: 'Download failed',
 
   // Store / Pricing
-  store_title: 'Store & Subscriptions',
+  store_title: 'Store & Packs',
   store_subtitle: 'Upgrade your plan to unlock more downloads and exclusive tools.',
-  current_plan: 'Current Plan',
+  your_tier: 'Your Tier',
   upgrade_to: 'Upgrade to',
+  ultimate_required: 'Ultimate Pack Required',
+  ultimate_desc: 'The AI Generator is an exclusive tool for Ultimate members.',
+  upgrade_store: 'Upgrade now in the Store',
   pack: 'Pack',
   available_credits: 'Available Credits',
   unlimited: 'Unlimited',

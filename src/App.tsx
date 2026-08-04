@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { AudioPlayer } from './components/AudioPlayer';
@@ -14,6 +14,7 @@ import { Admin } from './pages/Admin';
 import { Account } from './pages/Account';
 import { Options } from './pages/Options';
 import { LoadingScreen } from './components/LoadingScreen';
+import { useTranslation } from './hooks/useTranslation';
 import { PlayerProvider } from './context/PlayerContext';
 import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
@@ -44,6 +45,7 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 
 const UltimateRoute = ({ children }: { children: JSX.Element }) => {
   const { session, profile, initialized } = useAuthStore();
+  const { t } = useTranslation();
   
   if (!initialized || !profile) return <div style={{ padding: 40 }}>Loading...</div>;
   if (!session) return <Navigate to="/auth" replace />;
@@ -53,10 +55,10 @@ const UltimateRoute = ({ children }: { children: JSX.Element }) => {
   if (profile.tier !== 'ultimate' && !isOwner) {
     return (
       <div style={{ padding: '80px', textAlign: 'center' }}>
-        <h1 style={{ color: 'var(--accent-primary)', marginBottom: '20px' }}>Ultimate Pack Required</h1>
-        <p style={{ color: 'var(--text-muted)' }}>The AI Generator is an exclusive tool for Ultimate members.</p>
+        <h1 style={{ color: 'var(--accent-primary)', marginBottom: '20px' }}>{t('ultimate_required')}</h1>
+        <p style={{ color: 'var(--text-muted)' }}>{t('ultimate_desc')}</p>
         <p style={{ marginTop: '20px' }}>
-          <a href="#/store" style={{ color: 'var(--accent-primary)' }}>Upgrade now in the Store</a>
+          <Link to="/store" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 'bold' }}>{t('upgrade_store')}</Link>
         </p>
       </div>
     );

@@ -127,7 +127,9 @@
 
 .settings-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: rotate(45deg);
+  transform: rotate(45deg) scale(1.1);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--accent-primary);
 }
 
 .settings-dropdown {
@@ -135,12 +137,12 @@
   top: calc(100% + 12px);
   right: 0;
   width: 280px;
-  background: rgba(15, 15, 22, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 15, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(176, 38, 255, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
