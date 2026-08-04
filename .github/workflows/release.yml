@@ -1,0 +1,38 @@
+name: Build Installers
+
+on:
+  workflow_dispatch: # Permite rularea manuală dintr-un buton pe GitHub
+
+jobs:
+  build-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v0.1.0-beta
+          releaseName: 'Beats.ly v0.1.0 Beta'
+          releaseBody: 'Download the installer for your operating system below.'
+          releaseDraft: true
+          prerelease: true

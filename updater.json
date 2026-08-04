@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "notes": "Test version",
+  "pub_date": "2026-08-04T00:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "mock_signature_to_be_replaced",
+      "url": "https://github.com/theal/beatsly/releases/download/v0.1.0/Beatsly_0.1.0_x64_en-US.msi.zip"
+    },
+    "darwin-aarch64": {
+      "signature": "mock_signature_to_be_replaced",
+      "url": "https://github.com/theal/beatsly/releases/download/v0.1.0/Beatsly_0.1.0_aarch64.app.tar.gz"
+    },
+    "darwin-x86_64": {
+      "signature": "mock_signature_to_be_replaced",
+      "url": "https://github.com/theal/beatsly/releases/download/v0.1.0/Beatsly_0.1.0_x64.app.tar.gz"
+    }
+  }
+}

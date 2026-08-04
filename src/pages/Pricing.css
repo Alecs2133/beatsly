@@ -1,0 +1,191 @@
+.pricing-container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.pricing-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.pricing-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.current-status {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  padding: 20px 30px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  animation: pageFadeIn 0.3s ease-out;
+}
+
+.current-status h3 {
+  margin: 0 0 5px 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.current-status .value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent-primary);
+}
+
+.current-status .credits-value {
+  color: var(--accent-tertiary);
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 60px;
+}
+
+.plan-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 40px 30px;
+  position: relative;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent-secondary);
+}
+
+.plan-card.ultimate {
+  border-color: var(--accent-primary);
+  background: linear-gradient(180deg, rgba(0, 255, 204, 0.05) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.plan-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.plan-price {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.plan-price span {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 30px 0;
+  flex: 1;
+}
+
+.plan-features li {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-main);
+}
+
+.plan-features li::before {
+  content: "✓";
+  color: var(--accent-primary);
+  font-weight: bold;
+}
+
+.plan-features li.unavailable {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.plan-features li.unavailable::before {
+  content: "✕";
+  color: var(--text-muted);
+}
+
+.plan-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.plan-btn.primary {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.plan-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+.plan-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.credits-section {
+  text-align: center;
+}
+
+.credits-section h2 {
+  margin-bottom: 30px;
+}
+
+.credits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.credit-pack {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 25px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.credit-pack:hover {
+  border-color: var(--accent-tertiary);
+  transform: scale(1.05);
+}
+
+.credit-amount {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--accent-tertiary);
+  margin-bottom: 10px;
+}
+
+.credit-price {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}

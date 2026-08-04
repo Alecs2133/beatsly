@@ -1,0 +1,43 @@
+{
+    "productName": "beatsly",
+    "version": "0.1.0",
+    "identifier": "com.beatsly.app",
+    "build": {
+        "beforeDevCommand": "npm run dev",
+        "devUrl": "http://localhost:1420",
+        "beforeBuildCommand": "npm run build",
+        "frontendDist": "../dist"
+    },
+    "app": {
+        "windows": [{
+            "title": "beatsly",
+            "width": 1280,
+            "height": 720
+        }],
+        "security": {
+            "assetProtocol": {
+                "enable": true,
+                "scope": ["**"]
+            }
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ]
+    },
+    "plugins": {
+        "updater": {
+            "endpoints": [
+                "https://raw.githubusercontent.com/theal/beatsly/main/updater.json"
+            ],
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1MjNDNzcwRDI3QkM4RkMKSlduRStiVjRDaUVkSWI1U1U2bVVrd055Q1M1WXZtUStLNDNOazV5UGI1YmIK"
+        }
+    }
+}
