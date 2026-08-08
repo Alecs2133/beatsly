@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { useAppStore } from './useAppStore';
+
+let realtimeChannel: any = null;
 
 export interface UserProfile {
   id: string;
@@ -42,12 +45,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     
     set({ session, user: session?.user || null, initialized: true });
+    
+    const setupRealtime = (userId: string) => {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+      realtimeChannel = supabase.channel('public:profiles')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
+          (payload) => {
+            const newProfile = payload.new as UserProfile;
+            const currentProfile = get().profile;
+            set({ profile: newProfile });
+            
+            if (currentProfile && newProfile.credits > currentProfile.credits) {
+              const diff = newProfile.credits - currentProfile.credits;
+              useAppStore.getState().showToast(`+${diff} Credits received! 🎉`, 'success');
+            } else if (currentProfile && newProfile.tier !== currentProfile.tier) {
+              useAppStore.getState().showToast(`Tier upgraded to ${newProfile.tier.toUpperCase()}! 🎉`, 'success');
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    if (session?.user) {
+      setupRealtime(session.user.id);
+    }
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         await fetchAndProcessProfile(session.user.id, set);
+        setupRealtime(session.user.id);
       } else {
         set({ profile: null });
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
       }
       set({ session, user: session?.user || null });
     });

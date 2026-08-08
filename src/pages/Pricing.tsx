@@ -3,10 +3,11 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from '../hooks/useTranslation';
+import { open } from '@tauri-apps/plugin-shell';
 import './Pricing.css';
 
 export const Pricing: React.FC = () => {
-  const { profile, user, setProfile } = useAuthStore();
+  const { profile, user } = useAuthStore();
   const { showToast } = useAppStore();
   const { t } = useTranslation();
   const [isApplying, setIsApplying] = useState(false);
@@ -21,50 +22,44 @@ export const Pricing: React.FC = () => {
     );
   }
 
-  const handleBuyCredits = async (amount: number, price: number) => {
+  const handleBuyCredits = async (amount: number) => {
     try {
-      showToast(`${t('processing_payment')} $${price}...`, 'info');
+      showToast(`${t('processing_payment')}...`, 'info');
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const newCredits = profile.credits + amount;
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ credits: newCredits })
-        .eq('id', user.id)
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { amount, item_type: 'credits', user_id: user.id }
+      });
 
       if (error) throw error;
-
-      setProfile(data);
-      showToast(amount + ' ' + t('purchase_success'), 'success');
+      if (data?.url) {
+        // Deschidem fereastra browserului pentru plata sigură Stripe
+        await open(data.url);
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (err: any) {
       console.error(err);
-      showToast(t('payment_failed'), 'error');
+      showToast(`Error: ${err.message || JSON.stringify(err)}`, 'error');
     }
   };
 
-  const handleSubscribe = async (tier: 'producer' | 'ultimate', price: number) => {
+  const handleSubscribe = async (tier: 'producer' | 'ultimate') => {
     try {
-      showToast(`${t('processing_subscription')} $${price}/month...`, 'info');
+      showToast(`${t('processing_subscription')}...`, 'info');
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ tier })
-        .eq('id', user.id)
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { amount: tier, item_type: 'subscription', user_id: user.id }
+      });
 
       if (error) throw error;
-
-      setProfile(data);
-      showToast(tier.toUpperCase() + ' - ' + t('subscription_success'), 'success');
+      if (data?.url) {
+        await open(data.url);
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (err: any) {
       console.error(err);
-      showToast(t('subscription_failed'), 'error');
+      showToast(`Error: ${err.message || JSON.stringify(err)}`, 'error');
     }
   };
 
@@ -138,10 +133,10 @@ export const Pricing: React.FC = () => {
           </ul>
           <button
             className="plan-btn primary"
-            onClick={() => handleSubscribe('producer', 20)}
-            disabled={profile.tier === 'producer' || profile.tier === 'ultimate'}
+            disabled={true}
+            style={{ opacity: 0.5, cursor: 'not-allowed' }}
           >
-            {profile.tier === 'producer' ? t('active') : t('upgrade_producer')}
+            {t('coming_soon')}
           </button>
         </div>
 
@@ -155,11 +150,10 @@ export const Pricing: React.FC = () => {
           </ul>
           <button
             className="plan-btn primary"
-            onClick={() => handleSubscribe('ultimate', 40)}
-            disabled={profile.tier === 'ultimate'}
-            style={{ background: 'var(--accent-primary)', color: '#000' }}
+            disabled={true}
+            style={{ background: 'var(--accent-primary)', color: '#000', opacity: 0.5, cursor: 'not-allowed' }}
           >
-            {profile.tier === 'ultimate' ? t('active') : t('go_ultimate')}
+            {t('coming_soon')}
           </button>
         </div>
       </div>
@@ -195,6 +189,7 @@ export const Pricing: React.FC = () => {
           <h2>{t('buy_download_credits')}</h2>
           <div className="credits-grid">
             {[
+              { credits: 1, price: 1 },
               { credits: 5, price: 3 },
               { credits: 10, price: 5 },
               { credits: 20, price: 9 },
@@ -202,7 +197,7 @@ export const Pricing: React.FC = () => {
               { credits: 100, price: 35 },
               { credits: 200, price: 60 }
             ].map(pack => (
-              <div key={pack.credits} className="credit-pack" onClick={() => handleBuyCredits(pack.credits, pack.price)}>
+              <div key={pack.credits} className="credit-pack" onClick={() => handleBuyCredits(pack.credits)}>
                 <div className="credit-amount">{pack.credits} 🪙</div>
                 <div className="credit-price">${pack.price}</div>
               </div>
