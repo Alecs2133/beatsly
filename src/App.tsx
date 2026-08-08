@@ -1,24 +1,26 @@
-import { useEffect, useState } from 'react';
+
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { AudioPlayer } from './components/AudioPlayer';
 import { ToastContainer } from './components/ToastContainer';
-import { Library } from './pages/Library'; 
-import { Analyzer } from './pages/Analyzer';
-import { Auth } from './pages/Auth';
-import { MySounds } from './pages/MySounds';
-import { LocalFiles } from './pages/LocalFiles';
-import { Pricing } from './pages/Pricing';
-import { Admin } from './pages/Admin';
-import { Account } from './pages/Account';
-import { Options } from './pages/Options';
 import { LoadingScreen } from './components/LoadingScreen';
 import { useTranslation } from './hooks/useTranslation';
-import { PlayerProvider } from './context/PlayerContext';
 import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
 import './design.css';
+
+// Lazy loaded pages for performance
+const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
+const Analyzer = lazy(() => import('./pages/Analyzer').then(m => ({ default: m.Analyzer })));
+const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
+const MySounds = lazy(() => import('./pages/MySounds').then(m => ({ default: m.MySounds })));
+const LocalFiles = lazy(() => import('./pages/LocalFiles').then(m => ({ default: m.LocalFiles })));
+const Pricing = lazy(() => import('./pages/Pricing').then(m => ({ default: m.Pricing })));
+const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
+const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
+const Options = lazy(() => import('./pages/Options').then(m => ({ default: m.Options })));
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { session, initialized } = useAuthStore();
@@ -103,17 +105,19 @@ const AppContent = () => {
       <div className={hideLayout ? "" : "main-wrapper"} style={hideLayout ? { flex: 1, display: 'flex' } : {}}>
         {!hideLayout && <TopBar />}
         <main className={hideLayout ? "full-page-wrapper" : "main-content"} style={hideLayout ? { flex: 1, display: 'flex' } : {}}>
-          <Routes key={location.pathname}>
-            <Route path="/" element={<Library />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/library" element={<ProtectedRoute><MySounds /></ProtectedRoute>} />
-            <Route path="/analyzer" element={<UltimateRoute><Analyzer /></UltimateRoute>} />
-            <Route path="/local" element={<AdminRoute><LocalFiles /></AdminRoute>} />
-            <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
-            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-            <Route path="/options" element={<Options />} />
-          </Routes>
+          <Suspense fallback={<div style={{ padding: '40px', color: 'var(--text-muted)' }}>Loading...</div>}>
+            <Routes key={location.pathname}>
+              <Route path="/" element={<Library />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/library" element={<ProtectedRoute><MySounds /></ProtectedRoute>} />
+              <Route path="/analyzer" element={<UltimateRoute><Analyzer /></UltimateRoute>} />
+              <Route path="/local" element={<AdminRoute><LocalFiles /></AdminRoute>} />
+              <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+              <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+              <Route path="/options" element={<Options />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
 
@@ -127,9 +131,7 @@ const AppContent = () => {
 export default function App() {
   return (
     <Router>
-      <PlayerProvider>
-        <AppContent />
-      </PlayerProvider>
+      <AppContent />
     </Router>
   );
 }

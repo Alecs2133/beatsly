@@ -1,4 +1,4 @@
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -10,7 +10,13 @@ import { WaveformVisualizer } from './WaveformVisualizer';
 import './AudioPlayer.css';
 
 export const AudioPlayer: React.FC = () => {
-  const { currentTrack, isPlaying, currentTime, duration, volume, togglePlay, changeVolume } = usePlayer();
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
+  const currentTime = usePlayerStore(state => state.currentTime);
+  const duration = usePlayerStore(state => state.duration);
+  const volume = usePlayerStore(state => state.volume);
+  const togglePlay = usePlayerStore(state => state.togglePlay);
+  const changeVolume = usePlayerStore(state => state.changeVolume);
   const { showToast } = useAppStore();
   const { toggleSaveSound, isSaved } = useLibraryStore();
   const { session, deductCredit } = useAuthStore();

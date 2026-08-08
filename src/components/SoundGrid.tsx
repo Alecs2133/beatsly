@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SoundItem } from '../data/mockData';
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayerStore } from '../store/usePlayerStore';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -10,6 +10,60 @@ import { writeFile } from '@tauri-apps/plugin-fs';
 import { EditSoundModal } from './EditSoundModal';
 import { useTranslation } from '../hooks/useTranslation';
 import './SoundGrid.css';
+
+const SoundRow = React.memo(({ 
+  sound, isCurrentTrack, isPlaying, isSaved, canPublish, isOwner, t,
+  onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete 
+}: any) => {
+  return (
+    <div className="grid-row">
+      <div className="col col-play">
+        <button 
+          className="row-play-btn"
+          onClick={() => onPlay(sound)}
+          style={{
+            color: isCurrentTrack ? 'var(--accent-primary)' : 'inherit'
+          }}
+        >
+          {isCurrentTrack && isPlaying ? '⏸' : '▶'}
+        </button>
+      </div>
+      <div className="col col-title">
+        <div className="sound-title">{sound.title}</div>
+        <div className="sound-author">{sound.author}</div>
+      </div>
+      <div className="col col-bpm">{sound.bpm || '-'}</div>
+      <div className="col col-key">{sound.key || '-'}</div>
+      <div className="col col-tags">
+        {sound.tags.map((tag: string) => (
+          <span key={tag} className="tag">{tag}</span>
+        ))}
+      </div>
+      <div className="col col-actions">
+        <button 
+          className="row-action-btn"
+          onClick={() => onLike(sound)}
+          style={{
+            color: isSaved ? 'var(--accent-tertiary)' : 'inherit'
+          }}
+        >
+          {isSaved ? '❤️' : '🤍'}
+        </button>
+        <button className="row-action-btn" onClick={() => onDownload(sound)} title={t('download')}>⬇</button>
+        <button className="row-action-btn" onClick={() => onShare(sound)} title="Share">↗</button>
+        {sound.id.toString().startsWith('local-') && canPublish && (
+          <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud">☁️</button>
+        )}
+        {!sound.id.toString().startsWith('local-') && isOwner && (
+          <>
+            <button className="row-action-btn" onClick={() => onEdit(sound)} title="Edit Sound">✏️</button>
+            <button className="row-action-btn" onClick={() => onDelete(sound.id)} title="Delete Sound" style={{ color: '#ff4444' }}>🗑️</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+});
 
 interface SoundGridProps {
   sounds: SoundItem[];
@@ -23,11 +77,12 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
     setSounds(initialSounds);
   }, [initialSounds]);
 
-  const { currentTrack, isPlaying, playTrack } = usePlayer();
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
+  const playTrack = usePlayerStore(state => state.playTrack);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow default behavior if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       
       if (!currentTrack) return;
@@ -49,16 +104,19 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentTrack, sounds, playTrack]);
-  const { toggleSaveSound, isSaved } = useLibraryStore();
-  const { showToast } = useAppStore();
-  const { session, deductCredit } = useAuthStore();
+
+  const savedSounds = useLibraryStore(state => state.savedSounds);
+  const toggleSaveSound = useLibraryStore(state => state.toggleSaveSound);
+  const showToast = useAppStore(state => state.showToast);
+  const session = useAuthStore(state => state.session);
+  const deductCredit = useAuthStore(state => state.deductCredit);
   const { t } = useTranslation();
   
   const role = session?.user?.user_metadata?.role;
   const canPublish = role === 'PRODUCER' || role === 'VIDEO MAKER' || role === 'PRODUCER ADMIN' || role === 'OWNER';
   const isOwner = role === 'OWNER';
 
-  const handleDelete = async (soundId: string | number) => {
+  const handleDelete = useCallback(async (soundId: string | number) => {
     if (!window.confirm('Are you sure you want to delete this sound forever?')) return;
     try {
       showToast('Deleting...', 'info');
@@ -70,22 +128,17 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
       console.error(err);
       showToast('Delete failed: ' + err.message, 'error');
     }
-  };
+  }, [showToast]);
 
-  const handleEditSuccess = (soundId: string | number, updated: Partial<SoundItem>) => {
+  const handleEditSuccess = useCallback((soundId: string | number, updated: Partial<SoundItem>) => {
     setSounds(prev => prev.map(s => s.id === soundId ? { ...s, ...updated } as SoundItem : s));
-  };
+  }, []);
 
-  const handleLike = (sound: SoundItem) => {
+  const handleLike = useCallback((sound: SoundItem) => {
     toggleSaveSound(sound);
-    if (!isSaved(sound.id)) {
-      showToast('Saved to My Sounds', 'success');
-    } else {
-      showToast('Removed from My Sounds', 'info');
-    }
-  };
+  }, [toggleSaveSound]);
 
-  const handleDownload = async (sound: SoundItem) => {
+  const handleDownload = useCallback(async (sound: SoundItem) => {
     if (!sound.id.toString().startsWith('local-')) {
       if (!session) {
         showToast(t('logged_in_download'), 'error');
@@ -121,22 +174,20 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
       console.error(error);
       showToast('Download failed', 'error');
     }
-  };
+  }, [session, deductCredit, showToast, t]);
 
-  const handleShare = (sound: SoundItem) => {
+  const handleShare = useCallback((sound: SoundItem) => {
     navigator.clipboard.writeText(`${sound.title} by ${sound.author}`);
     showToast('Copied to clipboard!', 'success');
-  };
+  }, [showToast]);
 
-  const handlePublish = async (sound: SoundItem) => {
+  const handlePublish = useCallback(async (sound: SoundItem) => {
     try {
       showToast('Uploading to cloud... ☁️', 'info');
 
-      // 1. Fetch local file
       const response = await fetch(sound.file_url || '');
       const blob = await response.blob();
 
-      // 2. Upload to Supabase Storage
       const fileName = `${Date.now()}_${sound.title.replace(/\s+/g, '_')}.wav`;
       const { error: uploadError } = await supabase.storage
         .from('sounds')
@@ -144,17 +195,15 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
 
       if (uploadError) throw uploadError;
 
-      // 3. Get Public URL
       const { data: publicUrlData } = supabase.storage
         .from('sounds')
         .getPublicUrl(fileName);
 
-      // 4. Insert into Database
       const { error: dbError } = await supabase
         .from('sounds')
         .insert({
           title: sound.title,
-          author: sound.author, // Ar trebui să fie preluat din profilul userului real, dar pentru demo e okay
+          author: sound.author,
           bpm: sound.bpm,
           key_signature: sound.key,
           tags: sound.tags,
@@ -170,7 +219,7 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
       console.error(err);
       showToast('Publish failed: ' + err.message, 'error');
     }
-  };
+  }, [showToast]);
 
   return (
     <div className="sound-grid">
@@ -184,54 +233,29 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
       </div>
       
       <div className="grid-body">
-        {sounds.map(sound => (
-          <div key={sound.id} className="grid-row">
-            <div className="col col-play">
-              <button 
-                className="row-play-btn"
-                onClick={() => playTrack(sound)}
-                style={{
-                  color: currentTrack?.id === sound.id ? 'var(--accent-primary)' : 'inherit'
-                }}
-              >
-                {currentTrack?.id === sound.id && isPlaying ? '⏸' : '▶'}
-              </button>
-            </div>
-            <div className="col col-title">
-              <div className="sound-title">{sound.title}</div>
-              <div className="sound-author">{sound.author}</div>
-            </div>
-            <div className="col col-bpm">{sound.bpm || '-'}</div>
-            <div className="col col-key">{sound.key || '-'}</div>
-            <div className="col col-tags">
-              {sound.tags.map(tag => (
-                <span key={tag} className="tag">{tag}</span>
-              ))}
-            </div>
-            <div className="col col-actions">
-              <button 
-                className="row-action-btn"
-                onClick={() => handleLike(sound)}
-                style={{
-                  color: isSaved(sound.id) ? 'var(--accent-tertiary)' : 'inherit'
-                }}
-              >
-                {isSaved(sound.id) ? '❤️' : '🤍'}
-              </button>
-              <button className="row-action-btn" onClick={() => handleDownload(sound)} title={t('download')}>⬇</button>
-              <button className="row-action-btn" onClick={() => handleShare(sound)} title="Share">↗</button>
-              {sound.id.toString().startsWith('local-') && canPublish && (
-                <button className="row-action-btn" onClick={() => handlePublish(sound)} title="Publish to Cloud">☁️</button>
-              )}
-              {!sound.id.toString().startsWith('local-') && isOwner && (
-                <>
-                  <button className="row-action-btn" onClick={() => setEditingSound(sound)} title="Edit Sound">✏️</button>
-                  <button className="row-action-btn" onClick={() => handleDelete(sound.id)} title="Delete Sound" style={{ color: '#ff4444' }}>🗑️</button>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
+        {sounds.map(sound => {
+          const isSaved = savedSounds.some(s => s.id === sound.id);
+          const isCurrentTrack = currentTrack?.id === sound.id;
+          return (
+            <SoundRow 
+              key={sound.id}
+              sound={sound}
+              isCurrentTrack={isCurrentTrack}
+              isPlaying={isPlaying}
+              isSaved={isSaved}
+              canPublish={canPublish}
+              isOwner={isOwner}
+              t={t}
+              onPlay={playTrack}
+              onLike={handleLike}
+              onDownload={handleDownload}
+              onShare={handleShare}
+              onPublish={handlePublish}
+              onEdit={setEditingSound}
+              onDelete={handleDelete}
+            />
+          );
+        })}
       </div>
 
       {editingSound && (

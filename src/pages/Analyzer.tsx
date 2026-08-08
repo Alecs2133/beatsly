@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateAudio } from '../lib/replicateApi';
+import { generateAudio } from '../lib/hfApi';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
@@ -50,8 +50,47 @@ export const Analyzer: React.FC = () => {
         <p style={{ color: 'var(--text-muted)' }}>{t('ai_generator_subtitle')}</p>
       </div>
 
-      <div className="generator-card glass" style={{ padding: '32px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="generator-card glass" style={{ padding: '32px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative', overflow: 'hidden' }}>
         
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(10, 10, 15, 0.95)',
+          backdropFilter: 'blur(64px)',
+          WebkitBackdropFilter: 'blur(64px)',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+          textAlign: 'center',
+          borderRadius: '12px'
+        }}>
+          <div style={{
+            background: 'var(--gradient-primary)',
+            padding: '8px 24px',
+            borderRadius: '100px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: 'white',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+            boxShadow: '0 4px 15px rgba(255, 51, 102, 0.4)'
+          }}>
+            Coming Soon
+          </div>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
+            Advanced AI Generation
+          </h2>
+          <p style={{ color: 'var(--text-muted)', maxWidth: '400px', lineHeight: '1.5' }}>
+            We are working hard to integrate a state-of-the-art AI model that will allow you to generate studio-quality beats and samples directly from text. Stay tuned for the update!
+          </p>
+        </div>
         <div className="input-group">
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--accent-primary)' }}>{t('prompt_label')}</label>
           <textarea 

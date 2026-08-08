@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayerStore } from '../store/usePlayerStore';
 
 export const WaveformVisualizer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
-  const { currentTrack, audioRef } = usePlayer();
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const audio = usePlayerStore(state => state.audio);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // wait for audioRef to be attached
-    if (!containerRef.current || !audioRef.current) return;
+    // wait for audio to be available
+    if (!containerRef.current || !audio) return;
 
     wavesurferRef.current = WaveSurfer.create({
       container: containerRef.current,
@@ -24,7 +25,7 @@ export const WaveformVisualizer: React.FC = () => {
       height: 40,
       normalize: true,
       dragToSeek: true,
-      media: audioRef.current, // Use the global audio element directly!
+      media: audio, // Use the global audio element directly!
     });
     
     // Listen to decode events for the UI loader
@@ -36,7 +37,7 @@ export const WaveformVisualizer: React.FC = () => {
         wavesurferRef.current.destroy();
       }
     };
-  }, [audioRef.current]); // Re-run if audioRef.current changes (rarely happens)
+  }, [audio]); // Re-run if audio changes (rarely happens)
 
   useEffect(() => {
     if (wavesurferRef.current && currentTrack) {

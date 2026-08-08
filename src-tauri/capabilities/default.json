@@ -10,6 +10,10 @@
         "dialog:default",
         "drag:default",
         {
+            "identifier": "http:default",
+            "allow": [{ "url": "https://api-inference.huggingface.co/*" }]
+        },
+        {
             "identifier": "shell:allow-execute",
             "allow": [{
                 "name": "bin/analyzer",
