@@ -83,6 +83,7 @@ export const ro: Record<TranslationKeys, string> = {
   processing_payment: 'Se procesează plata de',
   purchase_success: 'Credite cumpărate cu succes! 🎉',
   payment_failed: 'Plata a eșuat.',
+  coming_soon: 'În curând',
   processing_subscription: 'Se procesează abonamentul pentru',
   subscription_success: 'Bun venit în pachetul ales! 🚀',
   subscription_failed: 'Abonamentul a eșuat.',

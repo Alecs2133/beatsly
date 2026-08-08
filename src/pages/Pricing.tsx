@@ -43,25 +43,7 @@ export const Pricing: React.FC = () => {
     }
   };
 
-  const handleSubscribe = async (tier: 'producer' | 'ultimate') => {
-    try {
-      showToast(`${t('processing_subscription')}...`, 'info');
 
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { amount: tier, item_type: 'subscription', user_id: user.id }
-      });
-
-      if (error) throw error;
-      if (data?.url) {
-        await open(data.url);
-      } else {
-        throw new Error('No checkout URL returned');
-      }
-    } catch (err: any) {
-      console.error(err);
-      showToast(`Error: ${err.message || JSON.stringify(err)}`, 'error');
-    }
-  };
 
   const handleApplyProducer = async (e: React.FormEvent) => {
     e.preventDefault();

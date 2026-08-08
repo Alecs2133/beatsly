@@ -81,6 +81,7 @@ export const en = {
   processing_payment: 'Processing payment of',
   purchase_success: 'Successfully purchased credits! 🎉',
   payment_failed: 'Payment failed.',
+  coming_soon: 'Coming Soon',
   processing_subscription: 'Processing subscription for',
   subscription_success: 'Welcome to the pack! 🚀',
   subscription_failed: 'Subscription failed.',
