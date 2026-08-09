@@ -1,46 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { SoundItem } from '../data/mockData';
 
-interface DropModalProps {
-  filePath: string;
+interface PublishLocalModalProps {
+  sound: SoundItem;
   onClose: () => void;
+  onSuccess: (soundId: string) => void;
 }
 
-export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
+export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onClose, onSuccess }) => {
   const { showToast } = useAppStore();
   const { profile } = useAuthStore();
   const { t } = useTranslation();
 
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(sound.title || '');
   const [author] = useState(profile?.username || '');
-  const [bpm, setBpm] = useState('');
-  const [key, setKey] = useState('');
-  const [tags, setTags] = useState('');
-  const [duration, setDuration] = useState('0:00');
+  const [bpm, setBpm] = useState(sound.bpm ? String(sound.bpm) : '');
+  const [key, setKey] = useState(sound.key || '');
+  const [tags, setTags] = useState(sound.tags?.join(', ') || '');
   const [isPublishing, setIsPublishing] = useState(false);
-  
-
-
-  useEffect(() => {
-    // Extragere automată a numelui din calea fișierului
-    const fileName = filePath.split(/[\\/]/).pop() || '';
-    setTitle(fileName.replace(/\.[^/.]+$/, ""));
-
-    // Calculare durată reală audio
-    const assetUrl = convertFileSrc(filePath);
-    const audio = new Audio(assetUrl);
-    
-    audio.addEventListener('loadedmetadata', () => {
-      const minutes = Math.floor(audio.duration / 60);
-      const seconds = Math.floor(audio.duration % 60);
-      setDuration(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-    });
-  }, [filePath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,11 +33,10 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
     setIsPublishing(true);
     
     try {
-      showToast(t('uploading_cloud'), 'info');
+      showToast(t('uploading_cloud') || 'Uploading to cloud...', 'info');
 
       // 1. Fetch local file
-      const assetUrl = convertFileSrc(filePath);
-      const response = await fetch(assetUrl);
+      const response = await fetch(sound.file_url || '');
       const blob = await response.blob();
 
       // 2. Upload to Supabase Storage
@@ -82,15 +63,16 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
           bpm: bpm ? Number(bpm) : null,
           key_signature: key || null,
           tags: tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
-          duration,
-          type: 'loop',
+          duration: sound.duration || '0:00',
+          type: sound.type || 'loop',
           file_url: publicUrlData.publicUrl,
           status: 'pending'
         });
 
       if (dbError) throw dbError;
 
-      showToast(t('published_success'), 'success');
+      showToast(t('published_success') || 'Published successfully! 🎉', 'success');
+      onSuccess(sound.id.toString());
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -112,10 +94,7 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
         maxWidth: '100%', margin: 'auto',
         animation: 'pageFadeIn 0.3s ease-out forwards'
       }}>
-        <h2 style={{ marginBottom: '20px', color: 'var(--accent-secondary)' }}>{t('add_dropped_file')}</h2>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px', wordBreak: 'break-all' }}>
-          {filePath}
-        </p>
+        <h2 style={{ marginBottom: '20px', color: 'var(--accent-secondary)' }}>Publish Local Sound</h2>
         
         <div style={{ 
           background: 'rgba(255, 68, 68, 0.1)', 
@@ -129,7 +108,7 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
         }}>
           {t('publish_warning')}
         </div>
-        
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>{t('title_label')}</label>
@@ -187,10 +166,6 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
             />
           </div>
 
-          <div style={{ marginTop: '10px', fontSize: '14px', color: 'var(--accent-secondary)' }}>
-            <strong>{t('auto_detected_duration')}</strong> {duration}
-          </div>
-
           <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
             <button 
               type="button" 
@@ -227,7 +202,8 @@ const inputStyle = {
   border: '1px solid var(--border-strong)',
   background: 'rgba(0,0,0,0.5)',
   color: 'white',
-  outline: 'none'
+  outline: 'none',
+  boxSizing: 'border-box' as const
 };
 
 const btnStyle = {

@@ -3,7 +3,6 @@ import { generateAudio } from '../lib/hfApi';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
-
 export const Analyzer: React.FC = () => {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
@@ -54,32 +53,17 @@ export const Analyzer: React.FC = () => {
         
         <div style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(10, 10, 15, 0.95)',
           backdropFilter: 'blur(64px)',
           WebkitBackdropFilter: 'blur(64px)',
           zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          textAlign: 'center',
-          borderRadius: '12px'
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '24px', textAlign: 'center', borderRadius: '12px'
         }}>
           <div style={{
-            background: 'var(--gradient-primary)',
-            padding: '8px 24px',
-            borderRadius: '100px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: 'white',
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            marginBottom: '16px',
+            background: 'var(--gradient-primary)', padding: '8px 24px', borderRadius: '100px',
+            fontSize: '14px', fontWeight: 'bold', color: 'white', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px',
             boxShadow: '0 4px 15px rgba(255, 51, 102, 0.4)'
           }}>
             Coming Soon
@@ -88,7 +72,7 @@ export const Analyzer: React.FC = () => {
             Advanced AI Generation
           </h2>
           <p style={{ color: 'var(--text-muted)', maxWidth: '400px', lineHeight: '1.5' }}>
-            We are working hard to integrate a state-of-the-art AI model that will allow you to generate studio-quality beats and samples directly from text. Stay tuned for the update!
+            Lucrăm la integrarea celui mai performant model AI pentru a-ți permite să generezi instrumentale la calitate de studio direct din text. Revino curând!
           </p>
         </div>
         <div className="input-group">

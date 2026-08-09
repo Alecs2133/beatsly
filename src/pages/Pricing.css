@@ -189,3 +189,31 @@
   color: var(--text-muted);
   font-size: 1.1rem;
 }
+
+.role-select {
+  padding: 15px 40px 15px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20stroke%3D%22%2300ffcc%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 16px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(0, 255, 204, 0.2);
+}
+
+.role-select option {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 10px;
+}

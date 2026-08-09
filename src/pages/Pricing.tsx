@@ -13,6 +13,7 @@ export const Pricing: React.FC = () => {
   const { t } = useTranslation();
   const [isApplying, setIsApplying] = useState(false);
   const [socialLinks, setSocialLinks] = useState('');
+  const [requestedRole, setRequestedRole] = useState('PRODUCER');
 
   if (!profile || !user) {
     return (
@@ -57,7 +58,8 @@ export const Pricing: React.FC = () => {
         .insert({
           user_id: user.id,
           social_links: socialLinks,
-          status: 'pending'
+          status: 'pending',
+          requested_role: requestedRole
         });
 
       if (error) throw error;
@@ -99,7 +101,7 @@ export const Pricing: React.FC = () => {
           <h2>{t('free')}</h2>
           <div className="plan-price">$0<span>/month</span></div>
           <ul className="plan-features">
-            <li>5 {t('credits_day')}</li>
+            <li>3 {t('credits_day')}</li>
             <li className="unavailable">{t('ai_generator')}</li>
             <li className="unavailable">{t('cloud_uploading')}</li>
           </ul>
@@ -108,9 +110,9 @@ export const Pricing: React.FC = () => {
 
         <div className="plan-card">
           <h2>{t('producer_pack')}</h2>
-          <div className="plan-price">$20<span>/month</span></div>
+          <div className="plan-price">$14.99<span>/month</span></div>
           <ul className="plan-features">
-            <li>100 {t('credits_day')}</li>
+            <li>30 {t('credits_day')}</li>
             <li className="unavailable">{t('ai_generator')}</li>
             <li className="unavailable">{t('cloud_uploading')}</li>
           </ul>
@@ -125,7 +127,7 @@ export const Pricing: React.FC = () => {
 
         <div className="plan-card ultimate">
           <h2 style={{ color: 'var(--accent-primary)' }}>{t('ultimate_pack')}</h2>
-          <div className="plan-price">$40<span>/month</span></div>
+          <div className="plan-price">$29.99<span>/month</span></div>
           <ul className="plan-features">
             <li>{t('unlimited_downloads')}</li>
             <li>{t('ai_generator_included')}</li>
@@ -147,19 +149,31 @@ export const Pricing: React.FC = () => {
           <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
             {t('apply_producer_desc')}
           </p>
-          <form onSubmit={handleApplyProducer} style={{ display: 'flex', gap: '15px' }}>
-            <input
-              type="text"
-              placeholder="https://instagram.com/your_handle"
-              value={socialLinks}
-              onChange={e => setSocialLinks(e.target.value)}
-              style={{ flex: 1, padding: '15px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'rgba(0,0,0,0.5)', color: 'white' }}
-              required
-            />
+          <form onSubmit={handleApplyProducer} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <select 
+                value={requestedRole}
+                onChange={e => setRequestedRole(e.target.value)}
+                className="role-select"
+              >
+                <option value="PRODUCER">Producer</option>
+                <option value="EDITOR">Editor</option>
+                <option value="SOUND ENGINEER">Sound Engineer</option>
+                <option value="ARTIST">Artist</option>
+              </select>
+              <input
+                type="text"
+                placeholder="https://instagram.com/your_handle"
+                value={socialLinks}
+                onChange={e => setSocialLinks(e.target.value)}
+                style={{ flex: 1, padding: '15px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'rgba(0,0,0,0.5)', color: 'white' }}
+                required
+              />
+            </div>
             <button
               type="submit"
               disabled={isApplying}
-              style={{ padding: '0 30px', borderRadius: '8px', border: 'none', background: 'var(--accent-primary)', color: 'black', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{ padding: '15px 30px', borderRadius: '8px', border: 'none', background: 'var(--accent-primary)', color: 'black', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start' }}
             >
               {isApplying ? t('sending') : t('submit_request')}
             </button>
@@ -172,13 +186,11 @@ export const Pricing: React.FC = () => {
           <h2>{t('buy_download_credits')}</h2>
           <div className="credits-grid">
             {[
-              { credits: 1, price: 1 },
-              { credits: 5, price: 3 },
-              { credits: 10, price: 5 },
-              { credits: 20, price: 9 },
-              { credits: 50, price: 20 },
-              { credits: 100, price: 35 },
-              { credits: 200, price: 60 }
+              { credits: 10, price: 2.99 },
+              { credits: 25, price: 5.99 },
+              { credits: 50, price: 9.99 },
+              { credits: 150, price: 24.99 },
+              { credits: 300, price: 39.99 }
             ].map(pack => (
               <div key={pack.credits} className="credit-pack" onClick={() => handleBuyCredits(pack.credits)}>
                 <div className="credit-amount" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{pack.credits} <Coins size={18} /></div>

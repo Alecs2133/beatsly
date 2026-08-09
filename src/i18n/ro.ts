@@ -74,9 +74,9 @@ export const ro: Record<TranslationKeys, string> = {
   go_ultimate: 'Devino Ultimate',
   unlimited_downloads: 'Descărcări Nelimitate (Fără credite)',
   ai_generator_included: 'Unealtă Generator AI Inclusă',
-  apply_producer_tag: 'Aplică pentru Tag PRODUCER / VIDEO MAKER (Încărcare în Cloud)',
-  apply_producer_title: 'Aplică pentru Tag PRODUCER / VIDEO MAKER',
-  apply_producer_desc: 'Ca membru Ultimate, poți publica propriile sunete în cloud. Te rugăm să furnizezi link-ul tău de Instagram, Facebook, YouTube sau Beatstars pentru a-ți verifica identitatea.',
+  apply_producer_tag: 'Aplică pentru un Tag Premium (Upload în Cloud)',
+  apply_producer_title: 'Aplică pentru un Tag Premium',
+  apply_producer_desc: 'Ca membru Ultimate, poți publica propriile sunete în cloud. Te rugăm să furnizezi un link către Instagram, Facebook, YouTube sau Beatstars pentru a-ți verifica identitatea.',
   submit_request: 'Trimite Cererea',
   sending: 'Se trimite...',
   buy_download_credits: 'Cumpără Credite',
@@ -218,5 +218,6 @@ export const ro: Record<TranslationKeys, string> = {
   details: 'Detalii',
   music_info: 'Informații Muzicale',
   status_label: 'Status:',
-  duration_label: 'Durată:'
+  duration_label: 'Durată:',
+  publish_warning: '⚠️ Citeste foarte bine informatiile sampleului/sound ului pentru upload, introdu informatiile corecte, orice sunet sau audio care nu respecta conditiile de publicare sau regulile nu va fi publicat si daca se insista va fi sanctionat'
 };

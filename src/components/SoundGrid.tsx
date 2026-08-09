@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { EditSoundModal } from './EditSoundModal';
+import { PublishLocalModal } from './PublishLocalModal';
 import { useTranslation } from '../hooks/useTranslation';
 import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2 } from 'lucide-react';
 import './SoundGrid.css';
@@ -73,6 +74,7 @@ interface SoundGridProps {
 export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) => {
   const [sounds, setSounds] = useState<SoundItem[]>(initialSounds);
   const [editingSound, setEditingSound] = useState<SoundItem | null>(null);
+  const [publishingSound, setPublishingSound] = useState<SoundItem | null>(null);
 
   useEffect(() => {
     setSounds(initialSounds);
@@ -182,45 +184,9 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
     showToast('Copied to clipboard!', 'success');
   }, [showToast]);
 
-  const handlePublish = useCallback(async (sound: SoundItem) => {
-    try {
-      showToast('Uploading to cloud... ☁️', 'info');
-
-      const response = await fetch(sound.file_url || '');
-      const blob = await response.blob();
-
-      const fileName = `${Date.now()}_${sound.title.replace(/\s+/g, '_')}.wav`;
-      const { error: uploadError } = await supabase.storage
-        .from('sounds')
-        .upload(fileName, blob);
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage
-        .from('sounds')
-        .getPublicUrl(fileName);
-
-      const { error: dbError } = await supabase
-        .from('sounds')
-        .insert({
-          title: sound.title,
-          author: sound.author,
-          bpm: sound.bpm,
-          key_signature: sound.key,
-          tags: sound.tags,
-          duration: sound.duration,
-          type: sound.type,
-          file_url: publicUrlData.publicUrl
-        });
-
-      if (dbError) throw dbError;
-
-      showToast('Published successfully! 🎉', 'success');
-    } catch (err: any) {
-      console.error(err);
-      showToast('Publish failed: ' + err.message, 'error');
-    }
-  }, [showToast]);
+  const handlePublishClick = useCallback((sound: SoundItem) => {
+    setPublishingSound(sound);
+  }, []);
 
   return (
     <div className="sound-grid">
@@ -251,7 +217,7 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
               onLike={handleLike}
               onDownload={handleDownload}
               onShare={handleShare}
-              onPublish={handlePublish}
+              onPublish={handlePublishClick}
               onEdit={setEditingSound}
               onDelete={handleDelete}
             />
@@ -264,6 +230,16 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
           sound={editingSound} 
           onClose={() => setEditingSound(null)}
           onSuccess={(updated) => handleEditSuccess(editingSound.id, updated)}
+        />
+      )}
+
+      {publishingSound && (
+        <PublishLocalModal 
+          sound={publishingSound} 
+          onClose={() => setPublishingSound(null)}
+          onSuccess={() => {
+            // Optional: you can mark it as published or refresh if needed.
+          }}
         />
       )}
     </div>

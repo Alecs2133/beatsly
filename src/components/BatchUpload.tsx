@@ -4,6 +4,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface StagedFile {
   id: string;
@@ -22,6 +23,7 @@ interface StagedFile {
 
 export const BatchUpload: React.FC = () => {
   const { showToast } = useAppStore();
+  const { profile } = useAuthStore();
   const { t } = useTranslation();
   const [files, setFiles] = useState<StagedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +48,10 @@ export const BatchUpload: React.FC = () => {
   };
 
   const handleSelectFiles = async () => {
+    if (!profile?.username) {
+      showToast('Please set your Username in Account Settings first!', 'error');
+      return;
+    }
     try {
       const selected = await open({
         multiple: true,
@@ -71,7 +77,7 @@ export const BatchUpload: React.FC = () => {
           path,
           name: fileName,
           title: defaultTitle,
-          author: 'Beats.ly',
+          author: profile?.username || 'Unknown',
           type: 'loop',
           bpm: '',
           key: '',
@@ -141,7 +147,8 @@ export const BatchUpload: React.FC = () => {
           tags: tagsArray,
           duration: file.duration,
           type: file.type,
-          file_url: publicUrlData.publicUrl
+          file_url: publicUrlData.publicUrl,
+          status: 'pending'
         });
 
         if (dbError) throw dbError;
@@ -161,14 +168,14 @@ export const BatchUpload: React.FC = () => {
   return (
     <div style={{ marginTop: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>{t('batch_upload_studio')}</h2>
+        <h2>{t('batch_upload_studio') || 'Batch Upload'}</h2>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
             onClick={handleSelectFiles}
             disabled={isLoading || isPublishing}
             style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid var(--accent-primary)', background: 'transparent', color: 'var(--accent-primary)', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            {isLoading ? t('loading_samples') : t('btn_select_files')}
+            {isLoading ? t('loading_samples') || 'Loading...' : t('btn_select_files') || 'Select Local Files'}
           </button>
           
           <button 
@@ -176,9 +183,22 @@ export const BatchUpload: React.FC = () => {
             disabled={isPublishing || files.filter(f => f.selected).length === 0}
             style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--gradient-primary)', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            {isPublishing ? t('btn_publishing') : t('btn_publish_selected')}
+            {isPublishing ? t('btn_publishing') || 'Publishing...' : t('btn_publish_selected') || 'Publish Selected'}
           </button>
         </div>
+      </div>
+
+      <div style={{ 
+        background: 'rgba(255, 68, 68, 0.1)', 
+        border: '1px solid #ff4444', 
+        color: '#ff4444', 
+        padding: '12px', 
+        borderRadius: '8px', 
+        fontSize: '13px', 
+        marginBottom: '20px',
+        lineHeight: '1.4'
+      }}>
+        {t('publish_warning')}
       </div>
 
       {files.length === 0 ? (
@@ -214,7 +234,7 @@ export const BatchUpload: React.FC = () => {
                   </td>
                   <td style={{ padding: '15px' }}>
                     <input type="text" value={f.title} onChange={e => updateFile(f.id, 'title', e.target.value)} placeholder="Title" style={inputStyle} />
-                    <input type="text" value={f.author} onChange={e => updateFile(f.id, 'author', e.target.value)} placeholder="Author" style={{...inputStyle, marginTop: '8px'}} />
+                    <input type="text" value={f.author} disabled title="Author is set to your username" style={{...inputStyle, marginTop: '8px', opacity: 0.7, cursor: 'not-allowed'}} />
                   </td>
                   <td style={{ padding: '15px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>

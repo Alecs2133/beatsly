@@ -53,6 +53,14 @@ serve(async (req) => {
           credits: (profile?.credits || 0) + creditAmount
         }).eq('id', userId)
         
+        // Add notification
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          title: 'Credits Added',
+          message: `Successfully added ${creditAmount} credits to your account.`,
+          type: 'credits'
+        })
+        
         console.log(`Added ${creditAmount} credits to user ${userId}`)
       } 
       else if (type === 'subscription') {
@@ -60,6 +68,14 @@ serve(async (req) => {
           tier: amount
         }).eq('id', userId)
         
+        // Add notification
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          title: 'Subscription Upgraded',
+          message: `Your account has been upgraded to the ${amount} tier. Welcome!`,
+          type: 'system'
+        })
+
         console.log(`Upgraded user ${userId} to ${amount} tier`)
       }
     }

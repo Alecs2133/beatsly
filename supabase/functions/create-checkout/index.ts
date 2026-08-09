@@ -25,18 +25,16 @@ serve(async (req) => {
     let name = ""
 
     if (item_type === 'credits') {
-      if (amount === 1) price = 100
-      else if (amount === 5) price = 300
-      else if (amount === 10) price = 500
-      else if (amount === 20) price = 900
-      else if (amount === 50) price = 2000
-      else if (amount === 100) price = 3500
-      else if (amount === 200) price = 6000
+      if (amount === 10) price = 299
+      else if (amount === 25) price = 599
+      else if (amount === 50) price = 999
+      else if (amount === 150) price = 2499
+      else if (amount === 300) price = 3999
       else throw new Error('Invalid credit amount')
-      name = `${amount} 🪙 Credits Pack`
+      name = `${amount} Credits Pack`
     } else if (item_type === 'subscription') {
-      if (amount === 'producer') price = 2000
-      else if (amount === 'ultimate') price = 4000
+      if (amount === 'producer') price = 1499
+      else if (amount === 'ultimate') price = 2999
       else throw new Error('Invalid tier')
       name = `${amount.toUpperCase()} Subscription`
     }

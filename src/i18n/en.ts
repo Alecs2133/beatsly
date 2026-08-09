@@ -72,8 +72,8 @@ export const en = {
   go_ultimate: 'Go Ultimate',
   unlimited_downloads: 'Unlimited Downloads (No credits)',
   ai_generator_included: 'AI Generator Tool Included',
-  apply_producer_tag: 'Apply for PRODUCER / VIDEO MAKER Tag (Cloud Uploads)',
-  apply_producer_title: 'Apply for PRODUCER / VIDEO MAKER Tag',
+  apply_producer_tag: 'Apply for a Premium Tag (Cloud Uploads)',
+  apply_producer_title: 'Apply for a Premium Tag',
   apply_producer_desc: 'As an Ultimate member, you can publish your own sounds to the cloud. Please provide your Instagram, Facebook, YouTube, or Beatstars link to verify your identity.',
   submit_request: 'Submit Request',
   sending: 'Sending...',
@@ -216,7 +216,8 @@ export const en = {
   details: 'Details',
   music_info: 'Music Info',
   status_label: 'Status:',
-  duration_label: 'Duration:'
+  duration_label: 'Duration:',
+  publish_warning: '⚠️ Please read the sample/sound information very carefully before uploading and ensure you enter the correct details. Any sound or audio that does not comply with the publishing conditions or rules will not be published, and repeated offenses will result in sanctions.'
 };
 
 export type TranslationKeys = keyof typeof en;

@@ -16,16 +16,12 @@ export const Library: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const categories = ['ALL', 'Loop', 'One-Shot', 'FX'];
 
-  const curatedPacks = [
-    { id: 1, title: 'Hip-Hop Essentials', author: 'Beats.ly', color: 'linear-gradient(135deg, #ff007f, #7928ca)', tag: 'hip-hop' },
-    { id: 2, title: 'Cinematic Ambience', author: 'SoundDesign Pro', color: 'linear-gradient(135deg, #00c6ff, #0072ff)', tag: 'cinematic' },
-    { id: 3, title: 'Ultimate FX Pack', author: 'Beats.ly', color: 'linear-gradient(135deg, #fceabb, #f8b500)', tag: 'fx' },
-    { id: 4, title: 'Lo-Fi Chill Vibes', author: 'ChillBeats', color: 'linear-gradient(135deg, #11998e, #38ef7d)', tag: 'lofi' },
-    { id: 5, title: 'Trap God Drums', author: 'Producer X', color: 'linear-gradient(135deg, #ff416c, #ff4b2b)', tag: 'trap' },
-  ];
+  const [dynamicPacks, setDynamicPacks] = useState<any[]>([]);
 
   useEffect(() => {
     if (!session) return; // Do not fetch if not logged in
@@ -35,6 +31,7 @@ export const Library: React.FC = () => {
         const { data, error } = await supabase
           .from('sounds')
           .select('*')
+          .eq('status', 'approved')
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -55,8 +52,37 @@ export const Library: React.FC = () => {
           type: item.type,
           file_url: item.file_url || audioFallbacks[index % audioFallbacks.length]
         }));
-
         setSounds(mappedData);
+
+        // Compute frequencies to show top 5
+        const allTags = mappedData.flatMap((s: any) => s.tags || []);
+        const tagCounts = allTags.reduce((acc: any, tag: string) => {
+           if (tag && tag.trim().length > 0) {
+             acc[tag] = (acc[tag] || 0) + 1;
+           }
+           return acc;
+        }, {});
+        
+        const uniqueTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+        
+        const colors = [
+          'linear-gradient(135deg, #ff007f, #7928ca)',
+          'linear-gradient(135deg, #00c6ff, #0072ff)',
+          'linear-gradient(135deg, #fceabb, #f8b500)',
+          'linear-gradient(135deg, #11998e, #38ef7d)',
+          'linear-gradient(135deg, #ff416c, #ff4b2b)',
+          'linear-gradient(135deg, #9d4edd, #ff007f)',
+        ];
+        // Slice top 5
+        const generatedPacks = uniqueTags.slice(0, 5).map((tag, index) => ({
+          id: tag,
+          title: `${tag.charAt(0).toUpperCase() + tag.slice(1)} Pack`,
+          author: 'Community',
+          count: tagCounts[tag],
+          color: colors[index % colors.length],
+          tag: tag
+        }));
+        setDynamicPacks(generatedPacks);
       } catch (err: any) {
         console.error("Error fetching sounds:", err);
         setError(err.message);
@@ -67,6 +93,11 @@ export const Library: React.FC = () => {
 
     fetchSounds();
   }, [session?.user?.id]);
+
+  // Reset to page 1 when search query or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeFilter]);
 
   if (!session) {
     return (
@@ -104,10 +135,22 @@ export const Library: React.FC = () => {
         <p style={{ color: 'var(--text-muted)' }}>{t('discover_subtitle')}</p>
       </div>
 
-      <div style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>{t('featured_packs')}</h2>
+      {currentPage === 1 && (
+        <div style={{ marginBottom: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>{t('featured_packs')}</h2>
+            <button 
+              onClick={() => navigate('/packs')}
+            style={{ 
+              background: 'transparent', border: 'none', color: 'var(--accent-secondary)', 
+              fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' 
+            }}
+          >
+            Show All
+          </button>
+        </div>
         <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', margin: '0 -10px', padding: '0 10px 16px 10px' }}>
-          {curatedPacks.map(pack => (
+          {dynamicPacks.length > 0 ? dynamicPacks.map(pack => (
             <div 
               key={pack.id} 
               style={{ 
@@ -131,17 +174,17 @@ export const Library: React.FC = () => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
                 e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
               }}
-              onClick={() => {
-                useAppStore.getState().setSearchQuery(pack.tag);
-                setActiveFilter('ALL');
-              }}
+              onClick={() => navigate(`/pack/${pack.tag}`)}
             >
               <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)', marginBottom: '4px' }}>{pack.title}</h3>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontWeight: '600' }}>by {pack.author}</p>
             </div>
-          ))}
+          )) : (
+            <p style={{ color: 'var(--text-muted)' }}>{t('no_sounds_found')}</p>
+          )}
         </div>
       </div>
+      )}
 
       <div className="filter-container">
         {categories.map(cat => (
@@ -167,15 +210,79 @@ export const Library: React.FC = () => {
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
           <p>{t('no_sounds_found')}</p>
         </div>
-      ) : (
-        <SoundGrid sounds={sounds.filter(s => {
+      ) : (() => {
+        const filteredSounds = sounds.filter(s => {
           const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
           const matchesFilter = activeFilter === 'ALL' || s.type.toLowerCase() === activeFilter.toLowerCase();
           return matchesSearch && matchesFilter;
-        })} />
-      )}
+        });
+
+        const totalPages = Math.ceil(filteredSounds.length / ITEMS_PER_PAGE);
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const currentSounds = filteredSounds.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+        return (
+          <>
+            <SoundGrid sounds={currentSounds} />
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '40px', paddingBottom: '40px' }}>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border-strong)',
+                    color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-main)',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Prev
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    style={{
+                      background: currentPage === page ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)',
+                      color: currentPage === page ? 'black' : 'var(--text-main)',
+                      border: '1px solid',
+                      borderColor: currentPage === page ? 'var(--accent-primary)' : 'var(--border-strong)',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border-strong)',
+                    color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-main)',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 };
