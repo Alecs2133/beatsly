@@ -9,6 +9,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { EditSoundModal } from './EditSoundModal';
 import { useTranslation } from '../hooks/useTranslation';
+import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2 } from 'lucide-react';
 import './SoundGrid.css';
 
 const SoundRow = React.memo(({ 
@@ -25,7 +26,7 @@ const SoundRow = React.memo(({
             color: isCurrentTrack ? 'var(--accent-primary)' : 'inherit'
           }}
         >
-          {isCurrentTrack && isPlaying ? '⏸' : '▶'}
+          {isCurrentTrack && isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
         </button>
       </div>
       <div className="col col-title">
@@ -47,17 +48,17 @@ const SoundRow = React.memo(({
             color: isSaved ? 'var(--accent-tertiary)' : 'inherit'
           }}
         >
-          {isSaved ? '❤️' : '🤍'}
+          <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} color={isSaved ? 'var(--accent-tertiary)' : 'currentColor'} />
         </button>
-        <button className="row-action-btn" onClick={() => onDownload(sound)} title={t('download')}>⬇</button>
-        <button className="row-action-btn" onClick={() => onShare(sound)} title="Share">↗</button>
+        <button className="row-action-btn download" onClick={() => onDownload(sound)} title={t('download')}><Download size={18} /></button>
+        <button className="row-action-btn" onClick={() => onShare(sound)} title="Share"><Share2 size={18} /></button>
         {sound.id.toString().startsWith('local-') && canPublish && (
-          <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud">☁️</button>
+          <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud"><CloudUpload size={18} /></button>
         )}
         {!sound.id.toString().startsWith('local-') && isOwner && (
           <>
-            <button className="row-action-btn" onClick={() => onEdit(sound)} title="Edit Sound">✏️</button>
-            <button className="row-action-btn" onClick={() => onDelete(sound.id)} title="Delete Sound" style={{ color: '#ff4444' }}>🗑️</button>
+            <button className="row-action-btn" onClick={() => onEdit(sound)} title="Edit Sound"><Pencil size={18} /></button>
+            <button className="row-action-btn" onClick={() => onDelete(sound.id)} title="Delete Sound" style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
           </>
         )}
       </div>

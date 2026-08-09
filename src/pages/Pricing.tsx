@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from '../hooks/useTranslation';
 import { open } from '@tauri-apps/plugin-shell';
+import { Coins } from 'lucide-react';
 import './Pricing.css';
 
 export const Pricing: React.FC = () => {
@@ -87,8 +88,8 @@ export const Pricing: React.FC = () => {
         </div>
         <div style={{ textAlign: 'right' }}>
           <h3>{t('available_credits')}</h3>
-          <div className="value credits-value">
-            {profile.tier === 'ultimate' ? t('unlimited') : profile.credits} 🪙
+          <div className="value credits-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+            {profile.tier === 'ultimate' ? t('unlimited') : profile.credits} <Coins size={24} color="var(--accent-secondary)" />
           </div>
         </div>
       </div>
@@ -180,7 +181,7 @@ export const Pricing: React.FC = () => {
               { credits: 200, price: 60 }
             ].map(pack => (
               <div key={pack.credits} className="credit-pack" onClick={() => handleBuyCredits(pack.credits)}>
-                <div className="credit-amount">{pack.credits} 🪙</div>
+                <div className="credit-amount" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{pack.credits} <Coins size={18} /></div>
                 <div className="credit-price">${pack.price}</div>
               </div>
             ))}

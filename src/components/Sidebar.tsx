@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { Headphones, Library, Bot, HardDrive, Settings } from 'lucide-react';
 import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
@@ -16,7 +17,7 @@ export const Sidebar: React.FC = () => {
       <div className="logo" style={{ display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'space-between', width: '100%' }}>
         {!isCollapsed && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span className="logo-icon">🎵</span>
+            <span className="logo-icon"><Headphones size={28} color="var(--accent-primary)" /></span>
             <h2>Beats<span className="accent">.ly</span></h2>
           </div>
         )}
@@ -36,33 +37,28 @@ export const Sidebar: React.FC = () => {
           <ul>
             <li>
               <NavLink to="/" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                <span className="nav-icon">🎧</span>
+                <span className="nav-icon"><Headphones size={20} /></span>
                 <span className="nav-text">{t('nav_discover')}</span>
               </NavLink>
             </li>
             <li>
               <NavLink to="/library" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                <span className="nav-icon">📁</span>
+                <span className="nav-icon"><Library size={20} /></span>
                 <span className="nav-text">{t('nav_my_sounds')}</span>
               </NavLink>
             </li>
             <li>
               <NavLink to="/analyzer" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                <span className="nav-icon">🤖</span>
+                <span className="nav-icon"><Bot size={20} /></span>
                 <span className="nav-text">{t('nav_ai_generator')}</span>
                 <span className="beta-badge">ULTIMATE</span>
               </NavLink>
             </li>
-            <li>
-              <NavLink to="/store" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                <span className="nav-icon">💎</span>
-                <span className="nav-text">{t('nav_store')}</span>
-              </NavLink>
-            </li>
+
             {canPublish && (
               <li>
                 <NavLink to="/local" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                  <span className="nav-icon">📂</span>
+                  <span className="nav-icon"><HardDrive size={20} /></span>
                   <span className="nav-text">{t('nav_local_files')}</span>
                 </NavLink>
               </li>
@@ -70,7 +66,7 @@ export const Sidebar: React.FC = () => {
             {(role === 'PRODUCER ADMIN' || role === 'OWNER') && (
               <li>
                 <NavLink to="/admin" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                  <span className="nav-icon">⚙️</span>
+                  <span className="nav-icon"><Settings size={20} /></span>
                   <span className="nav-text">{t('nav_admin')}</span>
                 </NavLink>
               </li>

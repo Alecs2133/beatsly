@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import { Search, Settings, X, Plus } from 'lucide-react';
 import './TopBar.css';
 
 export const TopBar: React.FC = () => {
@@ -35,7 +36,7 @@ export const TopBar: React.FC = () => {
     <header className="topbar glass">
       {showSearch ? (
         <div className="search-container">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Search size={16} /></span>
           <input 
             type="text" 
             className="search-input" 
@@ -49,7 +50,7 @@ export const TopBar: React.FC = () => {
               onClick={() => setSearchQuery('')}
               title="Clear search"
             >
-              ✕
+              <X size={14} />
             </button>
           )}
         </div>
@@ -58,11 +59,12 @@ export const TopBar: React.FC = () => {
       )}
       <div className="user-profile">
         {profile && (
-          <div className="credits">
+          <div className="credits" onClick={() => navigate('/store')} style={{ cursor: 'pointer' }} title="Get more credits">
             <span className="credits-amount">
               {(profile.tier === 'ultimate' || user?.user_metadata?.role === 'OWNER') ? '∞' : profile.credits}
             </span>
             <span className="credits-label">{t('topbar_credits')}</span>
+            <button className="add-credits-btn"><Plus size={16} strokeWidth={3} /></button>
           </div>
         )}
         
@@ -73,7 +75,7 @@ export const TopBar: React.FC = () => {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             title="Settings"
           >
-            ⚙️
+            <Settings size={20} />
           </button>
           
           {dropdownOpen && (

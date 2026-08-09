@@ -7,6 +7,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { WaveformVisualizer } from './WaveformVisualizer';
+import { Play, Pause, Volume2, Heart, Download } from 'lucide-react';
 import './AudioPlayer.css';
 
 export const AudioPlayer: React.FC = () => {
@@ -85,7 +86,7 @@ export const AudioPlayer: React.FC = () => {
            onClick={togglePlay}
            disabled={!currentTrack}
         >
-          {isPlaying ? '⏸' : '▶'}
+          {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
         </button>
       </div>
       
@@ -99,7 +100,7 @@ export const AudioPlayer: React.FC = () => {
       
       <div className="player-actions">
         <div className="volume-control">
-          <span>🔊</span>
+          <Volume2 size={18} color="var(--text-muted)" />
           <input 
             type="range" 
             className="volume-bar" 
@@ -117,15 +118,16 @@ export const AudioPlayer: React.FC = () => {
           disabled={!currentTrack}
           title={t('save_to_my_sounds')}
         >
-          {currentTrack && isSaved(currentTrack.id) ? '❤️' : '🤍'}
+          <Heart size={20} color={currentTrack && isSaved(currentTrack.id) ? "var(--accent-tertiary)" : "var(--text-main)"} fill={currentTrack && isSaved(currentTrack.id) ? "var(--accent-tertiary)" : "none"} />
         </button>
         <button 
           className="download-btn" 
           onClick={handleDownload}
           disabled={!currentTrack}
           title={t('download_track')}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          ⬇ {t('download')}
+          <Download size={16} /> {t('download')}
         </button>
       </div>
     </div>
