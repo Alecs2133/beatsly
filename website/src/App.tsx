@@ -1,5 +1,5 @@
 import { Download, Cloud, Sparkles, ShoppingBag, Music, Code, Zap, Shield, Crown, Lock, X, Coins, LogOut, UserCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
@@ -443,6 +443,31 @@ function App() {
         </motion.div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="faq-section" style={{ maxWidth: '780px', margin: '0 auto', padding: '80px 24px' }}>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={fadeInUp}
+        >
+          <h2 className="section-title">Frequently Asked <span className="glow-text">Questions</span></h2>
+        </motion.div>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '40px' }}
+        >
+          {FAQS.map((item) => (
+            <motion.div key={item.q} variants={fadeInUp}>
+              <FaqItem q={item.q} a={item.a} />
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
       {/* Download Section */}
       <section id="download" className="download-section">
         <div className="animated-bg"></div>
@@ -497,6 +522,8 @@ function App() {
           <p>&copy; 2026 Beats.ly. All rights reserved.</p>
         </div>
       </footer>
+
+      <CookieBanner />
     </div>
   );
 }
