@@ -1,7 +1,7 @@
 import { Download, Cloud, Sparkles, ShoppingBag, Music, Code, Zap, Shield, Crown, Lock, X, Coins, LogOut, UserCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { AuthModal } from './components/AuthModal';
@@ -36,6 +36,56 @@ const WindowsIcon = () => (
     <path d="M0 93.7l183.6-25.3v177.4H0V93.7zm0 324.6l183.6 25.3V268.4H0v149.9zm203.8 28L448 480V268.4H203.8v177.9zm0-380.6v180.1H448V32L203.8 65.7z"/>
   </svg>
 );
+
+// Animated counter hook
+function useCountUp(end: number, duration: number = 2000, startCounting: boolean = false) {
+  const [count, setCount] = useState(0);
+  const startTime = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  const animate = useCallback((timestamp: number) => {
+    if (!startTime.current) startTime.current = timestamp;
+    const elapsed = timestamp - startTime.current;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    setCount(Math.floor(eased * end));
+    if (progress < 1) {
+      rafRef.current = requestAnimationFrame(animate);
+    }
+  }, [end, duration]);
+
+  useEffect(() => {
+    if (!startCounting) return;
+    startTime.current = null;
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [startCounting, animate]);
+
+  return count;
+}
+
+function StatCard({ value, suffix, label, prefix = '' }: { value: number; suffix: string; label: string; prefix?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.5 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const count = useCountUp(value, 2000, visible);
+
+  return (
+    <div ref={ref} className="stat-card">
+      <div className="stat-value">{prefix}{count.toLocaleString()}{suffix}</div>
+      <div className="stat-label">{label}</div>
+    </div>
+  );
+}
 
 function App() {
   const [authOpen, setAuthOpen] = useState(false);
@@ -169,6 +219,28 @@ function App() {
           </div>
         </motion.div>
       </header>
+
+      {/* Stats Section */}
+      <motion.section
+        className="stats-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-80px' }}
+        variants={staggerContainer}
+      >
+        <motion.div variants={fadeInUp}>
+          <StatCard value={1200} suffix="+" label="Producers Worldwide" />
+        </motion.div>
+        <motion.div variants={fadeInUp}>
+          <StatCard value={50000} suffix="+" label="Sounds in the Cloud" />
+        </motion.div>
+        <motion.div variants={fadeInUp}>
+          <StatCard value={4} suffix=".9★" label="Average Rating" prefix="" />
+        </motion.div>
+        <motion.div variants={fadeInUp}>
+          <StatCard value={100} suffix="% Free" label="Forever to Start" />
+        </motion.div>
+      </motion.section>
 
       {/* Features Section */}
       <section id="features" className="features">
