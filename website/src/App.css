@@ -92,6 +92,34 @@
   color: var(--text-main);
 }
 
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 30px;
+  padding: 6px 14px 6px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.btn-icon:hover {
+  color: #ff6b6b;
+}
+
 /* Hero Section */
 .hero {
   min-height: 100vh;

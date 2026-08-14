@@ -1,6 +1,10 @@
-import { Download, Cloud, Sparkles, ShoppingBag, Music, Code, Zap, Shield, Crown, Lock, X, Coins } from 'lucide-react';
+import { Download, Cloud, Sparkles, ShoppingBag, Music, Code, Zap, Shield, Crown, Lock, X, Coins, LogOut, UserCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import type { User } from '@supabase/supabase-js';
+import { supabase } from './lib/supabase';
+import { AuthModal } from './components/AuthModal';
 import './App.css';
 
 // Animation variants
@@ -34,6 +38,26 @@ const WindowsIcon = () => (
 );
 
 function App() {
+  const [authOpen, setAuthOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
   return (
     <div className="landing-container">
       {/* Floating background orbs */}
@@ -52,11 +76,27 @@ function App() {
           <a href="#download">Download</a>
         </div>
         <div className="nav-actions">
-          <a href="#download" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
-            Get Started
-          </a>
+          {user ? (
+            <div className="nav-user">
+              <UserCircle size={20} />
+              <span>{user.email?.split('@')[0]}</span>
+              <button onClick={handleSignOut} className="btn-icon" title="Sign Out">
+                <LogOut size={16} />
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setAuthOpen(true)} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '14px' }}>
+              Sign In
+            </button>
+          )}
         </div>
       </nav>
+
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={(u) => setUser({ email: u.email } as User)}
+      />
 
       {/* Hero Section */}
       <header className="hero">
