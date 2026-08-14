@@ -58,6 +58,17 @@ function App() {
     setUser(null);
   };
 
+  const WIN_URL = 'https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_x64-setup.exe';
+  const MAC_URL = 'https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_aarch64.dmg';
+
+  const handleDownload = (url: string) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="landing-container">
       {/* Floating background orbs */}
@@ -114,14 +125,24 @@ function App() {
             Manage your sounds, generate new samples with AI, and sync your entire library to the cloud. All in one beautiful, lightning-fast Windows application.
           </motion.p>
           <motion.div className="hero-cta" variants={fadeInUp} style={{ display: 'flex', flexWrap: 'wrap' }}>
-            <a href="https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_x64-setup.exe" className="btn btn-primary">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleDownload(WIN_URL)}
+              className="btn btn-primary"
+            >
               <WindowsIcon />
               Download for Windows
-            </a>
-            <a href="https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_aarch64.dmg" className="btn btn-secondary" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleDownload(MAC_URL)}
+              className="btn btn-secondary glass-btn"
+            >
               <AppleIcon />
               Download for Mac
-            </a>
+            </motion.button>
           </motion.div>
         </motion.div>
 
@@ -290,24 +311,24 @@ function App() {
           <motion.h2 variants={fadeInUp}>Ready to elevate your production?</motion.h2>
           <motion.p variants={fadeInUp}>Join thousands of producers who have already switched to Beats.ly.</motion.p>
           <motion.div variants={fadeInUp} style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
-            <motion.a 
+            <motion.button 
               whileHover={{ scale: 1.05 }} 
               whileTap={{ scale: 0.95 }} 
-              href="https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_x64-setup.exe" 
+              onClick={() => handleDownload(WIN_URL)}
               className="btn btn-primary btn-large"
             >
               <WindowsIcon />
               Download for Windows
-            </motion.a>
-            <motion.a 
+            </motion.button>
+            <motion.button 
               whileHover={{ scale: 1.05 }} 
               whileTap={{ scale: 0.95 }} 
-              href="https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_aarch64.dmg" 
+              onClick={() => handleDownload(MAC_URL)}
               className="btn btn-secondary btn-large glass-btn"
             >
               <AppleIcon />
               Download for Mac
-            </motion.a>
+            </motion.button>
           </motion.div>
           <motion.p variants={fadeInUp} className="download-note">Available for Windows (x64) and Mac (Apple Silicon)</motion.p>
         </motion.div>
