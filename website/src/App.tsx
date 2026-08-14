@@ -1,5 +1,6 @@
-import { Download, Cloud, Sparkles, ShoppingBag, Music, ArrowRight, Code, Zap, Shield, Crown, Lock, X, Check, Coins } from 'lucide-react';
-import { motion, Variants } from 'framer-motion';
+import { Download, Cloud, Sparkles, ShoppingBag, Music, Code, Zap, Shield, Crown, Lock, X, Coins } from 'lucide-react';
+import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import './App.css';
 
 // Animation variants
