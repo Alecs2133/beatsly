@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { AuthModal } from './components/AuthModal';
+import { CookieBanner } from './components/CookieBanner';
 import './App.css';
 
 // Animation variants
@@ -87,9 +88,49 @@ function StatCard({ value, suffix, label, prefix = '' }: { value: number; suffix
   );
 }
 
+const TESTIMONIALS = [
+  { name: 'Alex M.', role: 'Trap Producer', text: 'Beats.ly completely changed how I organize my samples. The AI generator is insane — I get fresh ideas in seconds instead of hours.', avatar: 'AM' },
+  { name: 'Sandra K.', role: 'Sound Designer', text: "The cloud sync is a game changer. I work from two different studios and my entire library is always there. Can't go back to hard drives.", avatar: 'SK' },
+  { name: 'DJ Mihai', role: 'DJ & Producer', text: 'Cleanest sample manager I\'ve ever used. The dark UI looks premium and everything just works. The community store is growing fast.', avatar: 'DM' },
+];
+
+const FAQS = [
+  { q: 'Is Beats.ly really free?', a: 'Yes! The Free tier gives you 3 download credits per day and full access to the local library manager. You can use it forever at no cost.' },
+  { q: 'What is a "credit"?', a: 'Credits are used to download sounds from the cloud. Each sound costs 1 credit. Free users get 3 per day. Ultimate members have unlimited downloads with no credit system.' },
+  { q: 'How does the AI Generator work?', a: 'You describe the sound you need (e.g. "heavy 808 bass at 140 BPM") and our AI generates a unique, royalty-free audio sample in seconds.' },
+  { q: 'What platforms are supported?', a: 'Beats.ly is available for Windows 10/11 (x64) and macOS (Apple Silicon). An Intel Mac build is coming soon.' },
+  { q: 'Is my data safe?', a: 'All your data is stored securely on Supabase with Row Level Security. We never share your data with third parties.' },
+];
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`faq-item glass ${open ? 'open' : ''}`} onClick={() => setOpen(o => !o)}>
+      <div className="faq-question">
+        <span>{q}</span>
+        <motion.span animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex', fontSize: '24px', color: 'var(--accent-primary)', fontWeight: 300 }}>+</motion.span>
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="faq-answer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <p>{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -101,6 +142,12 @@ function App() {
       setUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const handleSignOut = async () => {
@@ -126,7 +173,7 @@ function App() {
       <div className="ambient-orb orb-2"></div>
       
       {/* Navbar */}
-      <nav className="navbar glass">
+      <nav className={`navbar ${scrolled ? 'glass scrolled' : 'transparent'}`}>
         <div className="nav-brand">
           <div className="logo-icon"><img src="/app-icon.png" alt="Beats.ly Logo" /></div>
           <span className="logo-text">Beats.ly</span>
@@ -295,6 +342,35 @@ function App() {
             <h3>Developer Friendly</h3>
             <p>Open source and easily extensible. Built by producers, for producers.</p>
           </motion.div>
+        </motion.div>
+      </section>
+      {/* Testimonials Section */}
+      <section className="testimonials">
+        <motion.div
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={fadeInUp}
+        >
+          <h2 className="section-title">Loved by <span className="glow-text">Producers</span></h2>
+        </motion.div>
+        <motion.div
+          className="testimonials-grid"
+          initial="hidden" whileInView="visible"
+          viewport={{ once: true }} variants={staggerContainer}
+        >
+          {TESTIMONIALS.map((t) => (
+            <motion.div key={t.name} className="testimonial-card glass" variants={fadeInUp}>
+              <div className="testimonial-stars">★★★★★</div>
+              <p className="testimonial-text">"{t.text}"</p>
+              <div className="testimonial-author">
+                <div className="testimonial-avatar">{t.avatar}</div>
+                <div>
+                  <div className="testimonial-name">{t.name}</div>
+                  <div className="testimonial-role">{t.role}</div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
       </section>
 

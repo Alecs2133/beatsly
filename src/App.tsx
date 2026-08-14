@@ -47,6 +47,19 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'beats.ly – Discover Sounds',
+  '/auth': 'Sign In – beats.ly',
+  '/library': 'My Sounds – beats.ly',
+  '/analyzer': 'AI Generator – beats.ly',
+  '/local': 'Local Files – beats.ly',
+  '/store': 'Store – beats.ly',
+  '/admin': 'Admin – beats.ly',
+  '/account': 'Account – beats.ly',
+  '/options': 'Settings – beats.ly',
+  '/packs': 'Sound Packs – beats.ly',
+};
+
 const AppContent = () => {
   const { initialize, user, initialized } = useAuthStore();
   const { fetchLibrary } = useLibraryStore();
@@ -73,6 +86,18 @@ const AppContent = () => {
   }, [initialized]);
 
   const hideLayout = location.pathname === '/options' || location.pathname === '/account';
+
+  // Dynamic page title
+  useEffect(() => {
+    // Handle /pack/:tag route
+    if (location.pathname.startsWith('/pack/')) {
+      const tag = location.pathname.split('/pack/')[1];
+      const formatted = tag ? tag.charAt(0).toUpperCase() + tag.slice(1) : '';
+      document.title = formatted ? `${formatted} Pack – beats.ly` : 'beats.ly';
+    } else {
+      document.title = PAGE_TITLES[location.pathname] ?? 'beats.ly';
+    }
+  }, [location.pathname]);
 
   return (
     <>
