@@ -1,7 +1,10 @@
 name: Build Installers
 
 on:
-  workflow_dispatch: # Permite rularea manuală dintr-un buton pe GitHub
+  workflow_dispatch: # Rulare manuală din interfața GitHub
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -22,12 +25,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Tauri App
         uses: tauri-apps/tauri-action@v0
@@ -35,10 +44,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_HF_API_TOKEN: ${{ secrets.VITE_HF_API_TOKEN }}
+          # Semnarea artefactelor pentru auto-update. Fără aceste două secrete
+          # nu se generează `latest.json`, iar actualizarea automată nu merge:
+          # clientul refuză orice pachet nesemnat.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v0.1.0-beta
-          releaseName: 'Beats.ly v0.1.0 Beta'
+          # `__VERSION__` este înlocuit de tauri-action cu versiunea aplicației,
+          # citită din tauri.conf.json (care la rândul lui o ia din
+          # package.json). Anterior tag-ul era fix `v0.1.0-beta`, deci fiecare
+          # build suprascria același release.
+          tagName: v__VERSION__
+          releaseName: 'Beats.ly v__VERSION__'
           releaseBody: 'Download the installer for your operating system below.'
           releaseDraft: true
           prerelease: true
+          # Generează și atașează `latest.json`, pe care îl consumă updater-ul.
+          includeUpdaterJson: true

@@ -1,6 +1,6 @@
 {
     "productName": "beatsly",
-    "version": "0.1.5",
+    "version": "../package.json",
     "identifier": "com.beatsly.app",
     "build": {
         "beforeDevCommand": "npm run dev",
@@ -15,9 +15,35 @@
             "height": 720
         }],
         "security": {
+            "csp": {
+                "default-src": "'self'",
+                "script-src": "'self'",
+                "style-src": "'self' 'unsafe-inline'",
+                "font-src": "'self' data:",
+                "img-src": "'self' data: blob: asset: http://asset.localhost",
+                "media-src": "'self' data: blob: asset: http://asset.localhost https://lhoqhzigptnyhwgjqpsc.supabase.co",
+                "connect-src": "'self' data: blob: asset: http://asset.localhost ipc: http://ipc.localhost https://lhoqhzigptnyhwgjqpsc.supabase.co wss://lhoqhzigptnyhwgjqpsc.supabase.co http://localhost:1420 ws://localhost:1420",
+                "frame-src": "'none'",
+                "object-src": "'none'",
+                "base-uri": "'self'",
+                "form-action": "'none'"
+            },
+            "devCsp": {
+                "default-src": "'self'",
+                "script-src": "'self' 'unsafe-inline' 'unsafe-eval'",
+                "style-src": "'self' 'unsafe-inline'",
+                "font-src": "'self' data:",
+                "img-src": "'self' data: blob: asset: http://asset.localhost",
+                "media-src": "'self' data: blob: asset: http://asset.localhost https://lhoqhzigptnyhwgjqpsc.supabase.co",
+                "connect-src": "'self' data: blob: asset: http://asset.localhost ipc: http://ipc.localhost https://lhoqhzigptnyhwgjqpsc.supabase.co wss://lhoqhzigptnyhwgjqpsc.supabase.co http://localhost:1420 ws://localhost:1420 ws://localhost:1421",
+                "frame-src": "'none'",
+                "object-src": "'none'",
+                "base-uri": "'self'",
+                "form-action": "'none'"
+            },
             "assetProtocol": {
                 "enable": true,
-                "scope": ["**"]
+                "scope": []
             }
         }
     },
@@ -35,7 +61,7 @@
     "plugins": {
         "updater": {
             "endpoints": [
-                "https://raw.githubusercontent.com/theal/beatsly/main/updater.json"
+                "https://github.com/Alecs2133/beatsly/releases/latest/download/latest.json"
             ],
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1MjNDNzcwRDI3QkM4RkMKSlduRStiVjRDaUVkSWI1U1U2bVVrd055Q1M1WXZtUStLNDNOazV5UGI1YmIK"
         }

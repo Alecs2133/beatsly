@@ -9,21 +9,19 @@
         "core:default",
         "dialog:default",
         "drag:default",
+        "fs:allow-write-file",
         {
             "identifier": "http:default",
-            "allow": [{ "url": "https://api-inference.huggingface.co/*" }]
-        },
-        {
-            "identifier": "shell:allow-execute",
-            "allow": [{
-                "name": "bin/analyzer",
-                "sidecar": true,
-                "args": true
-            }]
+            "allow": [
+                { "url": "https://lhoqhzigptnyhwgjqpsc.supabase.co/*" }
+            ]
         },
         {
             "identifier": "shell:allow-open",
-            "allow": [{ "url": "https://*.stripe.com/*" }, { "url": "https://stripe.com/*" }]
+            "allow": [
+                { "url": "https://*.stripe.com/*" },
+                { "url": "https://stripe.com/*" }
+            ]
         }
     ]
 }

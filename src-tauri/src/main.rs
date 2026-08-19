@@ -4,16 +4,16 @@ use lofty::file::AudioFile;
 use lofty::probe::Probe;
 use regex::Regex;
 use serde::Serialize;
-use std::env;
 use std::fs;
 use std::path::Path;
+use tauri::{AppHandle, Manager};
 
 #[derive(Serialize)]
 struct LocalSample {
     id: String,
     name: String,
     path: String,
-    bpm: String, // Am schimbat din u16 în String ca să putem pune "-" dacă nu găsim BPM
+    bpm: String, // String, nu u16, ca să putem returna "-" când nu găsim BPM
     key: String,
     tags: Vec<String>,
     duration: String,
@@ -30,9 +30,8 @@ fn get_audio_duration(path: &Path) -> String {
     "-:--".to_string()
 }
 
-// --- NOU: Funcție care caută BPM-ul în nume (ex: "140bpm", "128_bpm", sau pur și simplu un număr urmat de bpm)
+/// Caută BPM-ul în numele fișierului (ex: "140bpm", "128_bpm").
 fn extract_bpm(filename: &str) -> String {
-    // Caută 2 sau 3 cifre, urmate opțional de spațiu sau underscore, și cuvântul "bpm"
     let re = Regex::new(r"(?i)(\d{2,3})[\s_]*bpm").unwrap();
 
     if let Some(caps) = re.captures(filename) {
@@ -41,7 +40,7 @@ fn extract_bpm(filename: &str) -> String {
         }
     }
 
-    // Dacă nu găsește cuvântul BPM, caută măcar un număr între 70 și 200 care ar putea fi BPM
+    // Fără cuvântul "bpm": căutăm un număr izolat între 70 și 200.
     let fallback_re = Regex::new(r"_(7[0-9]|1[0-9]{2}|200)_").unwrap();
     if let Some(caps) = fallback_re.captures(filename) {
         if let Some(matched) = caps.get(1) {
@@ -52,7 +51,7 @@ fn extract_bpm(filename: &str) -> String {
     "-".to_string()
 }
 
-// --- NOU: Funcție care caută Cheia (Key) muzicală (ex: Cmin, F#maj, Am)
+/// Caută cheia muzicală în numele fișierului (ex: Cmin, F#maj, Am).
 fn extract_key(filename: &str) -> String {
     let re = Regex::new(r"(?i)\b([A-G][#b]?\s?(min|maj|m|M))\b").unwrap();
     if let Some(caps) = re.captures(filename) {
@@ -63,10 +62,43 @@ fn extract_key(filename: &str) -> String {
     "-".to_string()
 }
 
+/// Deschide protocolul `asset:` pentru un singur fișier ales de utilizator.
+///
+/// Scope-ul din tauri.conf.json este gol. Anterior era `["**"]`, ceea ce
+/// însemna că webview-ul putea citi orice fișier de pe disc — inclusiv chei
+/// SSH, fișiere de configurare sau documente — printr-un simplu
+/// `fetch('asset://...')`. Acum fiecare cale trebuie permisă explicit, iar
+/// asta se întâmplă doar pentru fișierele pe care userul le-a selectat el.
 #[tauri::command]
-fn scan_directory(folder_path: &str) -> Result<Vec<LocalSample>, String> {
+fn allow_asset_path(app: AppHandle, path: String) -> Result<(), String> {
+    let p = Path::new(&path);
+
+    if !p.exists() {
+        return Err(format!("Calea nu există: {}", path));
+    }
+
+    if p.is_dir() {
+        app.asset_protocol_scope()
+            .allow_directory(p, false)
+            .map_err(|e| e.to_string())
+    } else {
+        app.asset_protocol_scope()
+            .allow_file(p)
+            .map_err(|e| e.to_string())
+    }
+}
+
+#[tauri::command]
+fn scan_directory(app: AppHandle, folder_path: &str) -> Result<Vec<LocalSample>, String> {
     let mut samples = Vec::new();
     let paths = fs::read_dir(folder_path).map_err(|e| e.to_string())?;
+
+    // Folderul a fost ales de utilizator prin dialog, deci îl deschidem pentru
+    // protocolul `asset:` — altfel frontend-ul nu poate reda fișierele.
+    // Nerecursiv: permitem exact folderul scanat, nu tot ce e sub el.
+    app.asset_protocol_scope()
+        .allow_directory(Path::new(folder_path), false)
+        .map_err(|e| e.to_string())?;
 
     for (index, path_result) in paths.enumerate() {
         let entry = path_result.map_err(|e| e.to_string())?;
@@ -83,8 +115,6 @@ fn scan_directory(folder_path: &str) -> Result<Vec<LocalSample>, String> {
                 let name = p.file_name().unwrap().to_string_lossy().into_owned();
 
                 let duration = get_audio_duration(&p);
-
-                // Extragem informațiile folosind funcțiile de mai sus
                 let bpm = extract_bpm(&name);
                 let key = extract_key(&name);
 
@@ -103,54 +133,6 @@ fn scan_directory(folder_path: &str) -> Result<Vec<LocalSample>, String> {
     Ok(samples)
 }
 
-#[tauri::command]
-async fn generate_audio_backend(prompt: String, api_token: String) -> Result<Vec<u8>, String> {
-    println!("[RUST BACKEND] Generating audio for prompt: {}", prompt);
-
-    if api_token.is_empty() {
-        return Err("Token-ul HuggingFace lipsește din apelul Frontend!".to_string());
-    }
-
-    let client = reqwest::Client::new();
-    let url = "https://api-inference.huggingface.co/models/facebook/musicgen-small";
-
-    let mut payload = std::collections::HashMap::new();
-    payload.insert("inputs", prompt);
-
-    let response = match client
-        .post(url)
-        .header("Authorization", format!("Bearer {}", api_token))
-        .json(&payload)
-        .send()
-        .await
-    {
-        Ok(res) => res,
-        Err(e) => {
-            println!(
-                "[RUST BACKEND] Eroare rețea/blocaj, folosim fallback: {}",
-                e
-            );
-            // Fișierul e acum "cimentat" direct în fișierul .exe (nu mai depinde de foldere)
-            let embedded_audio = include_bytes!("../../test_beat.wav").to_vec();
-            return Ok(embedded_audio);
-        }
-    };
-
-    if !response.status().is_success() {
-        let err_text = response.text().await.unwrap_or_default();
-        println!("[RUST BACKEND] Eroare AI, folosim fallback: {}", err_text);
-        let embedded_audio = include_bytes!("../../test_beat.wav").to_vec();
-        return Ok(embedded_audio);
-    }
-
-    let audio_bytes = response
-        .bytes()
-        .await
-        .map_err(|e| format!("Eroare procesare byte-stream: {}", e))?;
-
-    Ok(audio_bytes.to_vec())
-}
-
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
@@ -158,11 +140,9 @@ fn main() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_drag::init())
-        .invoke_handler(tauri::generate_handler![
-            scan_directory,
-            generate_audio_backend
-        ])
+        .invoke_handler(tauri::generate_handler![scan_directory, allow_asset_path])
         .run(tauri::generate_context!())
         .expect("Eroare la pornirea aplicației Tauri");
 }

@@ -1,36 +1,35 @@
 [package]
 name = "beatsly"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+# Versiunea aplicației livrate vine din package.json, prin tauri.conf.json.
+# Aceasta e doar versiunea crate-ului și nu apare în installer.
+version = "0.1.5"
+description = "Sample library and sound manager for producers"
+authors = ["Beats.ly"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "beatsly_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["protocol-asset"] }
-tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 lofty = "0.21.1"
-tauri-plugin-dialog = "2.0.0"
 regex = "1"
+tauri-plugin-dialog = "2.0.0"
+# Necesar pentru writeFile la download. Era tras doar tranzitiv prin
+# tauri-plugin-dialog și nu era înregistrat, deci descărcările eșuau.
+tauri-plugin-fs = "2"
 tauri-plugin-drag = "2.1.1"
 tauri-plugin-shell = "2.3.5"
-reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls"] }
-tokio = { version = "1.52.3", features = ["full"] }
-dotenvy = "0.15.7"
 tauri-plugin-http = "2"
+
+# reqwest / tokio / dotenvy au fost eliminate odată cu comanda
+# generate_audio_backend: aceea primea tokenul HuggingFace de la frontend,
+# iar generarea s-a mutat în edge function-ul Supabase.
+# tauri-plugin-opener era declarat dar niciodată înregistrat în main.rs.
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

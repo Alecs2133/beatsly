@@ -155,8 +155,12 @@ function App() {
     setUser(null);
   };
 
-  const WIN_URL = 'https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_x64-setup.exe';
-  const MAC_URL = 'https://github.com/Alecs2133/beatsly/releases/download/v0.1.0-beta/beatsly_0.1.5_aarch64.dmg';
+  // Tag-ul și numele fișierelor sunt derivate din versiunea din package.json.
+  // Anterior tag-ul era fix `v0.1.0-beta` în timp ce fișierele purtau 0.1.5,
+  // deci link-urile se rupeau la fiecare release nou.
+  const RELEASES_BASE = 'https://github.com/Alecs2133/beatsly/releases/download';
+  const WIN_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_x64-setup.exe`;
+  const MAC_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_aarch64.dmg`;
 
   const handleDownload = (url: string) => {
     if (!user) {
