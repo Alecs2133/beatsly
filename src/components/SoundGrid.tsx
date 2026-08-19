@@ -7,14 +7,18 @@ import { useAuthStore } from '../store/useAuthStore';
 import { supabase } from '../lib/supabase';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { EditSoundModal } from './EditSoundModal';
 import { PublishLocalModal } from './PublishLocalModal';
 import { useTranslation } from '../hooks/useTranslation';
+import { requestDownloadUrl, InsufficientCreditsError } from '../lib/soundUpload';
+import { previewObjectName } from '../lib/audioPreview';
+import { isAdminRole, isPublisherRole } from '../lib/roles';
 import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2 } from 'lucide-react';
 import './SoundGrid.css';
 
 const SoundRow = React.memo(({ 
-  sound, isCurrentTrack, isPlaying, isSaved, canPublish, isOwner, t,
+  sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, t,
   onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete 
 }: any) => {
   return (
@@ -56,10 +60,10 @@ const SoundRow = React.memo(({
         {sound.id.toString().startsWith('local-') && canPublish && (
           <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud"><CloudUpload size={18} /></button>
         )}
-        {!sound.id.toString().startsWith('local-') && isOwner && (
+        {!sound.id.toString().startsWith('local-') && canModerate && (
           <>
             <button className="row-action-btn" onClick={() => onEdit(sound)} title="Edit Sound"><Pencil size={18} /></button>
-            <button className="row-action-btn" onClick={() => onDelete(sound.id)} title="Delete Sound" style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
+            <button className="row-action-btn" onClick={() => onDelete(sound)} title="Delete Sound" style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
           </>
         )}
       </div>
@@ -112,20 +116,51 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
   const toggleSaveSound = useLibraryStore(state => state.toggleSaveSound);
   const showToast = useAppStore(state => state.showToast);
   const session = useAuthStore(state => state.session);
-  const deductCredit = useAuthStore(state => state.deductCredit);
   const { t } = useTranslation();
   
-  const role = session?.user?.user_metadata?.role;
-  const canPublish = role === 'PRODUCER' || role === 'VIDEO MAKER' || role === 'PRODUCER ADMIN' || role === 'OWNER';
-  const isOwner = role === 'OWNER';
+  const profile = useAuthStore(state => state.profile);
+  const role = profile?.role;
+  const canPublish = isPublisherRole(role);
+  const isModerator = isAdminRole(role);
 
-  const handleDelete = useCallback(async (soundId: string | number) => {
+  // Editarea/ștergerea aparțin fie moderatorilor, fie proprietarului
+  // sunetului. Regula reală e în RLS; asta doar ascunde butoanele.
+  const canManage = useCallback(
+    (sound: SoundItem) =>
+      isModerator || (!!profile?.id && sound.owner_id === profile.id),
+    [isModerator, profile?.id]
+  );
+
+  const handleDelete = useCallback(async (sound: SoundItem) => {
     if (!window.confirm('Are you sure you want to delete this sound forever?')) return;
     try {
       showToast('Deleting...', 'info');
-      const { error } = await supabase.from('sounds').delete().eq('id', soundId);
+
+      // Fișierele se șterg ÎNAINTEA rândului. Anterior se ștergea doar rândul,
+      // iar fișierul rămânea în storage la nesfârșit — invizibil în aplicație,
+      // dar consumând spațiu. Așa au apărut obiectele orfane din bucket.
+      const storagePath =
+        sound.storage_path ??
+        (sound.file_url?.includes('/object/public/sounds/')
+          ? sound.file_url.split('/object/public/sounds/')[1]
+          : undefined);
+
+      if (storagePath) {
+        const { error: fileError } = await supabase.storage
+          .from('sounds')
+          .remove([storagePath]);
+        if (fileError) console.error('Storage delete error:', fileError);
+
+        const { error: previewError } = await supabase.storage
+          .from('sound-previews')
+          .remove([previewObjectName(storagePath)]);
+        if (previewError) console.error('Preview delete error:', previewError);
+      }
+
+      const { error } = await supabase.from('sounds').delete().eq('id', sound.id);
       if (error) throw error;
-      setSounds(prev => prev.filter(s => s.id !== soundId));
+
+      setSounds(prev => prev.filter(s => s.id !== sound.id));
       showToast('Sound deleted permanently.', 'success');
     } catch (err: any) {
       console.error(err);
@@ -142,42 +177,52 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
   }, [toggleSaveSound]);
 
   const handleDownload = useCallback(async (sound: SoundItem) => {
-    if (!sound.id.toString().startsWith('local-')) {
-      if (!session) {
-        showToast(t('logged_in_download'), 'error');
-        return;
-      }
-      
-      const success = await deductCredit();
-      if (!success) {
-        showToast(t('not_enough_credits'), 'error');
-        return;
-      }
+    const isLocal = sound.id.toString().startsWith('local-');
+
+    if (!isLocal && !session) {
+      showToast(t('logged_in_download'), 'error');
+      return;
     }
 
     try {
-      showToast(t('preparing_download'), 'info');
       const filePath = await save({
         defaultPath: `${sound.title.replace(/\s+/g, '_')}.wav`,
         filters: [{ name: 'Audio', extensions: ['wav'] }]
       });
 
       if (!filePath) {
-        showToast('Download cancelled', 'info');
+        showToast(t('download_cancelled'), 'info');
         return;
       }
 
-      const response = await fetch(sound.file_url || '/test_beat.wav');
+      showToast(t('preparing_download'), 'info');
+
+      // Pentru sunetele din cloud, URL-ul vine de la server, care consumă
+      // creditul în aceeași cerere. Fișierul complet stă în bucket privat,
+      // deci nu există cale de a-l lua ocolind plata. Creditul se ia abia
+      // aici, după ce userul a ales destinația.
+      const sourceUrl = isLocal
+        ? (sound.file_url ?? '')
+        : await requestDownloadUrl(sound.id.toString());
+
+      const response = await tauriFetch(sourceUrl);
       const buffer = await response.arrayBuffer();
-      
+
       await writeFile(filePath, new Uint8Array(buffer));
-      
-      showToast('Download complete!', 'success');
+
+      showToast(t('download_complete'), 'success');
     } catch (error) {
-      console.error(error);
-      showToast('Download failed', 'error');
+      console.error('[download]', error);
+      if (error instanceof InsufficientCreditsError) {
+        showToast(t('not_enough_credits'), 'error');
+      } else {
+        // Mesajul brut, nu doar eticheta generică: fără el orice esec arata
+        // la fel, iar cauza reala ramane doar in consola.
+        const detail = error instanceof Error ? error.message : String(error);
+        showToast(`${t('download_failed')}: ${detail}`, 'error');
+      }
     }
-  }, [session, deductCredit, showToast, t]);
+  }, [session, showToast, t]);
 
   const handleShare = useCallback((sound: SoundItem) => {
     navigator.clipboard.writeText(`${sound.title} by ${sound.author}`);
@@ -211,7 +256,7 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
               isPlaying={isPlaying}
               isSaved={isSaved}
               canPublish={canPublish}
-              isOwner={isOwner}
+              canModerate={canManage(sound)}
               t={t}
               onPlay={playTrack}
               onLike={handleLike}

@@ -4,6 +4,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { useAuthStore } from '../store/useAuthStore';
 
 interface StagedFile {
@@ -112,6 +113,15 @@ export const BatchUpload: React.FC = () => {
       return;
     }
 
+    // `owner_id` e obligatoriu la inserare (policy `sounds_insert_publisher`),
+    // iar calea în storage începe cu id-ul proprietarului. Fără profil încărcat
+    // nu avem ce trimite, deci ne oprim aici cu un mesaj clar în loc să lăsăm
+    // fiecare fișier să eșueze pe rând.
+    if (!profile?.id) {
+      showToast('Profilul nu e încărcat încă. Încearcă din nou în câteva secunde.', 'error');
+      return;
+    }
+
     setIsPublishing(true);
 
     for (const file of toPublish) {
@@ -121,19 +131,8 @@ export const BatchUpload: React.FC = () => {
         const response = await fetch(url);
         const blob = await response.blob();
 
-        const safeFileName = `${Date.now()}_${file.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.wav`;
-        
-        // Upload to storage
-        const { error: uploadError } = await supabase.storage
-          .from('sounds')
-          .upload(safeFileName, blob);
-          
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('sounds')
-          .getPublicUrl(safeFileName);
+        // Upload fișier complet + preview generat din același blob
+        const uploaded = await uploadSoundWithPreview(blob, file.title, profile.id);
 
         // Insert into database
         const numBpm = file.bpm ? parseInt(file.bpm) : null;
@@ -147,7 +146,10 @@ export const BatchUpload: React.FC = () => {
           tags: tagsArray,
           duration: file.duration,
           type: file.type,
-          file_url: publicUrlData.publicUrl,
+          owner_id: profile.id,
+          storage_path: uploaded.storagePath,
+          preview_url: uploaded.previewUrl,
+          file_url: uploaded.legacyPublicUrl,
           status: 'pending'
         });
 

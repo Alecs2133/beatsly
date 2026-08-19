@@ -8,6 +8,12 @@ export interface SoundItem {
   duration: string;
   type: 'loop' | 'one-shot' | 'fx';
   file_url?: string;
+  /** URL public al preview-ului mp3. Sursa pentru redare. */
+  preview_url?: string;
+  /** Cheia obiectului în bucket-ul privat. Nu se folosește direct din client. */
+  storage_path?: string;
+  /** Utilizatorul care a urcat sunetul. Absent pentru încărcările vechi. */
+  owner_id?: string;
 }
 
 export const mockSounds: SoundItem[] = [

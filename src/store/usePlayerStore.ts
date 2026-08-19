@@ -35,7 +35,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       if (currentTrack?.id === track.id) {
         get().togglePlay();
       } else {
-        globalAudio.src = track.file_url || '/test_beat.wav';
+        // Redarea folosește preview-ul public. Fișierul complet stă în
+        // bucket privat și se obține doar prin `get-download-url`, contra
+        // credit. Pentru fișierele locale nu există preview, deci cade pe
+        // `file_url`, care e un asset:// URL de pe discul utilizatorului.
+        globalAudio.src = track.preview_url || track.file_url || '';
         globalAudio.volume = get().volume;
         globalAudio.play().catch(e => console.error("Error playing audio", e));
         set({ currentTrack: track, isPlaying: true });

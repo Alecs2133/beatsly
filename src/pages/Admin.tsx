@@ -6,6 +6,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { SoundItem } from '../data/mockData';
 import { Play, Pause } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
+import { createPreviewMp3, previewObjectName } from '../lib/audioPreview';
 
 interface RoleRequest {
   id: string;
@@ -22,6 +24,9 @@ export const Admin: React.FC = () => {
   const [requests, setRequests] = useState<RoleRequest[]>([]);
   const [pendingSounds, setPendingSounds] = useState<SoundItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [missingPreviews, setMissingPreviews] = useState<number | null>(null);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillProgress, setBackfillProgress] = useState({ done: 0, total: 0, failed: 0 });
   const { showToast } = useAppStore();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayerStore();
 
@@ -60,7 +65,7 @@ export const Admin: React.FC = () => {
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([fetchRequests(), fetchPendingSounds()]);
+      await Promise.all([fetchRequests(), fetchPendingSounds(), countMissingPreviews()]);
       setLoading(false);
     };
     loadAll();
@@ -134,19 +139,25 @@ export const Admin: React.FC = () => {
     try {
       showToast('Rejecting and deleting sound...', 'info');
       
-      // Extract filename from URL
-      // URL format: https://.../storage/v1/object/public/sounds/filename.wav
-      if (sound.file_url) {
-        const urlParts = sound.file_url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
+      // `storage_path` este cheia reală a obiectului. Parsarea URL-ului
+      // public nu mai funcționează odată ce bucket-ul devine privat, iar
+      // pentru URL-uri semnate ar include și query string-ul.
+      const storagePath =
+        sound.storage_path ??
+        (sound.file_url?.includes('/object/public/sounds/')
+          ? sound.file_url.split('/object/public/sounds/')[1]
+          : undefined);
 
-        if (fileName) {
-          // Delete from storage
-          const { error: storageError } = await supabase.storage
-            .from('sounds')
-            .remove([fileName]);
-          if (storageError) console.error("Storage delete error:", storageError);
-        }
+      if (storagePath) {
+        const { error: storageError } = await supabase.storage
+          .from('sounds')
+          .remove([storagePath]);
+        if (storageError) console.error('Storage delete error:', storageError);
+
+        const { error: previewError } = await supabase.storage
+          .from('sound-previews')
+          .remove([previewObjectName(storagePath)]);
+        if (previewError) console.error('Preview delete error:', previewError);
       }
 
       // Delete from DB
@@ -162,6 +173,110 @@ export const Admin: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       showToast('Rejection failed.', 'error');
+    }
+  };
+
+  const countMissingPreviews = async () => {
+    const { count, error } = await supabase
+      .from('sounds')
+      .select('id', { count: 'exact', head: true })
+      .is('preview_url', null);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setMissingPreviews(count ?? 0);
+  };
+
+  /**
+   * Generează preview-urile lipsă pentru sunetele deja publicate.
+   *
+   * Funcționează cât timp bucket-ul `sounds` este încă public — de aceea
+   * migrarea care îl trece la privat trebuie aplicată abia după ce contorul
+   * de mai jos ajunge la zero.
+   */
+  const handleBackfillPreviews = async () => {
+    setBackfilling(true);
+    setBackfillProgress({ done: 0, total: 0, failed: 0 });
+
+    try {
+      const { data, error } = await supabase
+        .from('sounds')
+        .select('id, title, file_url, storage_path')
+        .is('preview_url', null);
+
+      if (error) throw error;
+
+      const pending = data ?? [];
+      setBackfillProgress({ done: 0, total: pending.length, failed: 0 });
+
+      if (pending.length === 0) {
+        showToast('Toate sunetele au deja preview.', 'success');
+        return;
+      }
+
+      let done = 0;
+      let failed = 0;
+
+      for (const row of pending) {
+        try {
+          const storagePath =
+            row.storage_path ??
+            (row.file_url?.includes('/object/public/sounds/')
+              ? row.file_url.split('/object/public/sounds/')[1]
+              : null);
+
+          if (!storagePath || !row.file_url) {
+            throw new Error('Lipsește calea în storage');
+          }
+
+          const response = await tauriFetch(row.file_url);
+          const blob = await response.blob();
+          const preview = await createPreviewMp3(blob);
+
+          const previewPath = previewObjectName(storagePath);
+          const { error: uploadError } = await supabase.storage
+            .from('sound-previews')
+            .upload(previewPath, preview, {
+              contentType: 'audio/mpeg',
+              upsert: true,
+            });
+          if (uploadError) throw uploadError;
+
+          const { data: publicUrl } = supabase.storage
+            .from('sound-previews')
+            .getPublicUrl(previewPath);
+
+          const { error: updateError } = await supabase
+            .from('sounds')
+            .update({
+              preview_url: publicUrl.publicUrl,
+              storage_path: storagePath,
+            })
+            .eq('id', row.id);
+          if (updateError) throw updateError;
+
+          done++;
+        } catch (err) {
+          console.error(`Preview eșuat pentru "${row.title}":`, err);
+          failed++;
+        }
+        setBackfillProgress({ done, total: pending.length, failed });
+      }
+
+      showToast(
+        failed === 0
+          ? `${done} preview-uri generate.`
+          : `${done} generate, ${failed} eșuate — vezi consola.`,
+        failed === 0 ? 'success' : 'error'
+      );
+      await countMissingPreviews();
+    } catch (err: any) {
+      console.error(err);
+      showToast('Backfill eșuat: ' + err.message, 'error');
+    } finally {
+      setBackfilling(false);
     }
   };
 
@@ -240,6 +355,44 @@ export const Admin: React.FC = () => {
         </>
       ) : activeTab === 'moderation' ? (
         <>
+          <div style={{
+            background: 'var(--bg-panel)', padding: '20px', borderRadius: '12px',
+            border: '1px solid var(--border-light)', marginBottom: '24px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px'
+          }}>
+            <div>
+              <p style={{ fontWeight: 'bold', marginBottom: '6px' }}>Preview-uri audio</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '620px', lineHeight: 1.5 }}>
+                {missingPreviews === null
+                  ? 'Se verifică…'
+                  : missingPreviews === 0
+                    ? 'Toate sunetele au preview. Bucket-ul principal poate fi trecut la privat.'
+                    : `${missingPreviews} sunete nu au preview. Generează-le înainte de a aplica migrarea care face bucket-ul privat, altfel nu vor putea fi ascultate.`}
+              </p>
+              {backfilling && backfillProgress.total > 0 && (
+                <p style={{ fontSize: '13px', color: 'var(--accent-secondary)', marginTop: '8px' }}>
+                  {backfillProgress.done} / {backfillProgress.total}
+                  {backfillProgress.failed > 0 && ` · ${backfillProgress.failed} eșuate`}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleBackfillPreviews}
+              disabled={backfilling || missingPreviews === 0}
+              style={{
+                padding: '10px 20px', borderRadius: '8px', border: 'none',
+                background: backfilling || missingPreviews === 0
+                  ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)',
+                color: backfilling || missingPreviews === 0 ? 'var(--text-muted)' : 'black',
+                fontWeight: 'bold',
+                cursor: backfilling || missingPreviews === 0 ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {backfilling ? 'Se generează…' : 'Generate missing previews'}
+            </button>
+          </div>
+
           {loading ? (
             <p>Loading pending sounds...</p>
           ) : pendingSounds.length === 0 ? (

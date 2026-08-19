@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { uploadSoundWithPreview } from '../lib/soundUpload';
 
 interface DropModalProps {
   filePath: string;
@@ -31,15 +32,32 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
     const fileName = filePath.split(/[\\/]/).pop() || '';
     setTitle(fileName.replace(/\.[^/.]+$/, ""));
 
-    // Calculare durată reală audio
-    const assetUrl = convertFileSrc(filePath);
-    const audio = new Audio(assetUrl);
-    
-    audio.addEventListener('loadedmetadata', () => {
-      const minutes = Math.floor(audio.duration / 60);
-      const seconds = Math.floor(audio.duration % 60);
-      setDuration(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-    });
+    let cancelled = false;
+
+    // Fișierele venite prin drag & drop nu trec prin dialog, deci nu sunt
+    // adăugate automat în scope-ul `asset:`. Le permitem explicit, altfel
+    // `convertFileSrc` produce un URL pe care webview-ul nu-l poate citi.
+    (async () => {
+      try {
+        await invoke('allow_asset_path', { path: filePath });
+      } catch (err) {
+        console.error('Nu s-a putut permite accesul la fișier:', err);
+        return;
+      }
+      if (cancelled) return;
+
+      const assetUrl = convertFileSrc(filePath);
+      const audio = new Audio(assetUrl);
+
+      audio.addEventListener('loadedmetadata', () => {
+        if (cancelled) return;
+        const minutes = Math.floor(audio.duration / 60);
+        const seconds = Math.floor(audio.duration % 60);
+        setDuration(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      });
+    })();
+
+    return () => { cancelled = true; };
   }, [filePath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,22 +76,11 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
       const response = await fetch(assetUrl);
       const blob = await response.blob();
 
-      // 2. Upload to Supabase Storage
+      // 2. Upload fișier complet + preview generat din același blob
       const generatedName = title || 'Untitled';
-      const safeName = generatedName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const fileName = `${Date.now()}_${safeName}.wav`;
-      const { error: uploadError } = await supabase.storage
-        .from('sounds')
-        .upload(fileName, blob);
+      const uploaded = await uploadSoundWithPreview(blob, generatedName, profile.id);
 
-      if (uploadError) throw uploadError;
-
-      // 3. Get Public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('sounds')
-        .getPublicUrl(fileName);
-
-      // 4. Insert into Database
+      // 3. Insert into Database
       const { error: dbError } = await supabase
         .from('sounds')
         .insert({
@@ -84,7 +91,10 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
           tags: tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
           duration,
           type: 'loop',
-          file_url: publicUrlData.publicUrl,
+          owner_id: profile.id,
+          storage_path: uploaded.storagePath,
+          preview_url: uploaded.previewUrl,
+          file_url: uploaded.legacyPublicUrl,
           status: 'pending'
         });
 

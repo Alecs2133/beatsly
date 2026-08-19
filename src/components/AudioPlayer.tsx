@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { requestDownloadUrl, InsufficientCreditsError } from '../lib/soundUpload';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
@@ -20,7 +21,7 @@ export const AudioPlayer: React.FC = () => {
   const changeVolume = usePlayerStore(state => state.changeVolume);
   const { showToast } = useAppStore();
   const { toggleSaveSound, isSaved } = useLibraryStore();
-  const { session, deductCredit } = useAuthStore();
+  const { session } = useAuthStore();
   const { t } = useTranslation();
 
   const formatTime = (time: number) => {
@@ -33,21 +34,14 @@ export const AudioPlayer: React.FC = () => {
   const handleDownload = async () => {
     if (!currentTrack) return;
     
-    if (!currentTrack.id.toString().startsWith('local-')) {
-      if (!session) {
-        showToast(t('logged_in_download'), 'error');
-        return;
-      }
-      
-      const success = await deductCredit();
-      if (!success) {
-        showToast(t('not_enough_credits'), 'error');
-        return;
-      }
+    const isLocal = currentTrack.id.toString().startsWith('local-');
+
+    if (!isLocal && !session) {
+      showToast(t('logged_in_download'), 'error');
+      return;
     }
 
     try {
-      showToast(t('preparing_download'), 'info');
       const filePath = await save({
         defaultPath: `${currentTrack.title.replace(/\s+/g, '_')}.wav`,
         filters: [{ name: 'Audio', extensions: ['wav'] }]
@@ -58,15 +52,29 @@ export const AudioPlayer: React.FC = () => {
         return;
       }
 
-      const response = await tauriFetch(currentTrack.file_url || '/test_beat.wav');
+      showToast(t('preparing_download'), 'info');
+
+      // URL semnat de la server; creditul se consumă acolo, în aceeași cerere.
+      const sourceUrl = isLocal
+        ? (currentTrack.file_url ?? '')
+        : await requestDownloadUrl(currentTrack.id.toString());
+
+      const response = await tauriFetch(sourceUrl);
       const buffer = await response.arrayBuffer();
-      
+
       await writeFile(filePath, new Uint8Array(buffer));
-      
+
       showToast(t('download_complete'), 'success');
     } catch (error) {
-      console.error(error);
-      showToast(t('download_failed'), 'error');
+      console.error('[download]', error);
+      if (error instanceof InsufficientCreditsError) {
+        showToast(t('not_enough_credits'), 'error');
+      } else {
+        // Mesajul brut, nu doar eticheta generică: fără el orice esec arata
+        // la fel, iar cauza reala ramane doar in consola.
+        const detail = error instanceof Error ? error.message : String(error);
+        showToast(`${t('download_failed')}: ${detail}`, 'error');
+      }
     }
   };
 

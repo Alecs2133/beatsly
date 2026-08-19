@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { SoundItem } from '../data/mockData';
+import { uploadSoundWithPreview } from '../lib/soundUpload';
 
 interface PublishLocalModalProps {
   sound: SoundItem;
@@ -39,22 +40,11 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
       const response = await fetch(sound.file_url || '');
       const blob = await response.blob();
 
-      // 2. Upload to Supabase Storage
+      // 2. Upload fișier complet + preview generat din același blob
       const generatedName = title || 'Untitled';
-      const safeName = generatedName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const fileName = `${Date.now()}_${safeName}.wav`;
-      const { error: uploadError } = await supabase.storage
-        .from('sounds')
-        .upload(fileName, blob);
+      const uploaded = await uploadSoundWithPreview(blob, generatedName, profile.id);
 
-      if (uploadError) throw uploadError;
-
-      // 3. Get Public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('sounds')
-        .getPublicUrl(fileName);
-
-      // 4. Insert into Database
+      // 3. Insert into Database
       const { error: dbError } = await supabase
         .from('sounds')
         .insert({
@@ -65,7 +55,10 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
           tags: tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
           duration: sound.duration || '0:00',
           type: sound.type || 'loop',
-          file_url: publicUrlData.publicUrl,
+          owner_id: profile.id,
+          storage_path: uploaded.storagePath,
+          preview_url: uploaded.previewUrl,
+          file_url: uploaded.legacyPublicUrl,
           status: 'pending'
         });
 

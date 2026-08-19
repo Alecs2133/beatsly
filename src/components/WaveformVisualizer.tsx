@@ -41,7 +41,7 @@ export const WaveformVisualizer: React.FC = () => {
 
   useEffect(() => {
     if (wavesurferRef.current && currentTrack) {
-      const url = currentTrack.file_url || '/test_beat.wav';
+      const url = currentTrack.preview_url || currentTrack.file_url || '';
       // Load the new audio file to generate its specific waveform
       wavesurferRef.current.load(url);
     }

@@ -50,7 +50,10 @@ export const Library: React.FC = () => {
           tags: item.tags || [],
           duration: item.duration || '0:00',
           type: item.type,
-          file_url: item.file_url || audioFallbacks[index % audioFallbacks.length]
+          file_url: item.file_url || audioFallbacks[index % audioFallbacks.length],
+          preview_url: item.preview_url ?? undefined,
+          storage_path: item.storage_path ?? undefined,
+          owner_id: item.owner_id ?? undefined
         }));
         setSounds(mappedData);
 
