@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   const body = await req.text()
-  let event;
+  let event: Stripe.Event
 
   try {
     event = await stripe.webhooks.constructEventAsync(
@@ -32,53 +32,73 @@ serve(async (req) => {
       cryptoProvider
     )
   } catch (err) {
-    console.error(`Webhook signature verification failed: ${err.message}`)
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 })
+    console.error(`Webhook signature verification failed: ${(err as Error).message}`)
+    return new Response(`Webhook Error: ${(err as Error).message}`, { status: 400 })
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object
-    const userId = session.client_reference_id
-    const type = session.metadata?.type
-    const amount = session.metadata?.amount
+  if (event.type !== 'checkout.session.completed') {
+    return new Response(JSON.stringify({ received: true }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
-    if (userId) {
-      if (type === 'credits') {
-        const creditAmount = parseInt(amount)
-        // Get current credits
-        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single()
-        
-        // Add new credits
-        await supabase.from('profiles').update({
-          credits: (profile?.credits || 0) + creditAmount
-        }).eq('id', userId)
-        
-        // Add notification
-        await supabase.from('notifications').insert({
-          user_id: userId,
-          title: 'Credits Added',
-          message: `Successfully added ${creditAmount} credits to your account.`,
-          type: 'credits'
-        })
-        
-        console.log(`Added ${creditAmount} credits to user ${userId}`)
-      } 
-      else if (type === 'subscription') {
-        await supabase.from('profiles').update({
-          tier: amount
-        }).eq('id', userId)
-        
-        // Add notification
-        await supabase.from('notifications').insert({
-          user_id: userId,
-          title: 'Subscription Upgraded',
-          message: `Your account has been upgraded to the ${amount} tier. Welcome!`,
-          type: 'system'
-        })
+  const session = event.data.object as Stripe.Checkout.Session
+  const userId = session.client_reference_id
+  const type = session.metadata?.type
+  const amount = session.metadata?.amount
 
-        console.log(`Upgraded user ${userId} to ${amount} tier`)
+  if (!userId) {
+    console.error(`Event ${event.id}: missing client_reference_id`)
+    // 200 intenționat: fără user_id nu are rost ca Stripe să reîncerce.
+    return new Response(JSON.stringify({ received: true, skipped: 'no user' }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  try {
+    if (type === 'credits') {
+      const creditAmount = Number.parseInt(amount ?? '', 10)
+      if (!Number.isFinite(creditAmount) || creditAmount <= 0) {
+        throw new Error(`Invalid credit amount in metadata: ${amount}`)
       }
+
+      // RPC idempotent: `event.id` e cheia. O reîncercare Stripe a aceluiași
+      // eveniment returnează false și nu acordă creditele a doua oară.
+      const { data: applied, error } = await supabase.rpc('grant_purchased_credits', {
+        p_event_id: event.id,
+        p_user_id: userId,
+        p_amount: creditAmount,
+      })
+      if (error) throw error
+
+      console.log(
+        applied
+          ? `Added ${creditAmount} credits to user ${userId}`
+          : `Event ${event.id} already processed, skipping`
+      )
+    } else if (type === 'subscription') {
+      const { data: applied, error } = await supabase.rpc('apply_subscription_tier', {
+        p_event_id: event.id,
+        p_user_id: userId,
+        p_tier: amount,
+      })
+      if (error) throw error
+
+      console.log(
+        applied
+          ? `Upgraded user ${userId} to ${amount} tier`
+          : `Event ${event.id} already processed, skipping`
+      )
+    } else {
+      console.warn(`Event ${event.id}: unknown metadata.type "${type}"`)
     }
+  } catch (err) {
+    console.error(`Failed to process event ${event.id}:`, err)
+    // 500 => Stripe reîncearcă. Sigur, pentru că acordarea e idempotentă.
+    return new Response(
+      JSON.stringify({ error: 'Processing failed' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 
   return new Response(JSON.stringify({ received: true }), {

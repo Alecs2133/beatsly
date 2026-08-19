@@ -1,12 +1,19 @@
 import { create } from 'zustand';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from './useAppStore';
+import { AppRole } from '../lib/roles';
 
-let realtimeChannel: any = null;
+let realtimeChannel: RealtimeChannel | null = null;
+let authSubscription: { unsubscribe: () => void } | null = null;
 
 export interface UserProfile {
   id: string;
+  /**
+   * Rolul vine din baza de date, nu din `user_metadata` (care e scriptibil
+   * de utilizator). Vezi src/lib/roles.ts.
+   */
+  role: AppRole;
   tier: 'free' | 'producer' | 'ultimate';
   credits: number;
   last_refill_date: string;
@@ -26,8 +33,12 @@ interface AuthState {
   setProfile: (profile: UserProfile | null) => void;
   initialize: () => Promise<void>;
   signOut: () => Promise<void>;
-  deductCredit: () => Promise<boolean>;
 }
+
+// NOTĂ: nu există `deductCredit` aici. Creditele se consumă exclusiv pe server,
+// în aceeași cerere cu operațiunea plătită (`get-download-url`,
+// `generate-audio`), ca ele să nu poată fi disociate. Valoarea nouă ajunge
+// înapoi în store prin abonamentul realtime de mai jos.
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -37,47 +48,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setProfile: (profile) => set({ profile }),
+
   initialize: async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
-      await fetchAndProcessProfile(session.user.id, set);
-    }
-    
-    set({ session, user: session?.user || null, initialized: true });
-    
-    const setupRealtime = (userId: string) => {
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-      }
-      realtimeChannel = supabase.channel('public:profiles')
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
-          (payload) => {
-            const newProfile = payload.new as UserProfile;
-            const currentProfile = get().profile;
-            set({ profile: newProfile });
-            
-            if (currentProfile && newProfile.credits > currentProfile.credits) {
-              const diff = newProfile.credits - currentProfile.credits;
-              useAppStore.getState().showToast(`+${diff} Credits received! 🎉`, 'success');
-            } else if (currentProfile && newProfile.tier !== currentProfile.tier) {
-              useAppStore.getState().showToast(`Tier upgraded to ${newProfile.tier.toUpperCase()}! 🎉`, 'success');
-            }
-          }
-        )
-        .subscribe();
-    };
 
     if (session?.user) {
-      setupRealtime(session.user.id);
+      await loadProfile(session.user.id, set);
+      subscribeToProfile(session.user.id, get, set);
     }
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        await fetchAndProcessProfile(session.user.id, set);
-        setupRealtime(session.user.id);
+    set({ session, user: session?.user ?? null, initialized: true });
+
+    // Evită abonamente duplicate dacă initialize() e apelat de două ori
+    // (StrictMode montează efectele de două ori în dev).
+    authSubscription?.unsubscribe();
+    const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (nextSession?.user) {
+        await loadProfile(nextSession.user.id, set);
+        subscribeToProfile(nextSession.user.id, get, set);
       } else {
         set({ profile: null });
         if (realtimeChannel) {
@@ -85,81 +73,108 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           realtimeChannel = null;
         }
       }
-      set({ session, user: session?.user || null });
+      set({ session: nextSession, user: nextSession?.user ?? null });
     });
+    authSubscription = data.subscription;
   },
+
   signOut: async () => {
     await supabase.auth.signOut();
+    if (realtimeChannel) {
+      supabase.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
     set({ user: null, session: null, profile: null });
   },
-  deductCredit: async () => {
-    const { profile, user, session } = get();
-    if (!profile || !user) return false;
-    
-    const role = session?.user?.user_metadata?.role;
-    if (profile.tier === 'ultimate' || role === 'OWNER') return true; // Ultimate & Owner have unlimited
-    if (profile.credits <= 0) return false;
-    
-    const newCredits = profile.credits - 1;
-    const { error } = await supabase
-      .from('profiles')
-      .update({ credits: newCredits })
-      .eq('id', user.id);
-      
-    if (error) {
-      console.error('Failed to deduct credit:', error);
-      return false;
-    }
-    
-    set({ profile: { ...profile, credits: newCredits } });
-    return true;
-  }
+
 }));
 
-async function fetchAndProcessProfile(userId: string, set: any) {
-  let { data: profile, error } = await supabase
+type SetState = (partial: Partial<AuthState>) => void;
+
+/**
+ * Încarcă profilul și revendică refill-ul zilnic.
+ * Ambele decizii (cât refill, când) sunt luate în baza de date — clientul doar
+ * cere, nu calculează.
+ */
+async function loadProfile(userId: string, set: SetState) {
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code === 'PGRST116') {
-    // No profile exists, create one
-    const { data: newProfile, error: insertError } = await supabase
+  if (error) {
+    console.error('Failed to load profile:', error);
+    return;
+  }
+
+  // Profilul e creat de trigger-ul `on_auth_user_created`. Fallback-ul acoperă
+  // conturile create înainte de existența trigger-ului.
+  if (!profile) {
+    const { data: created, error: insertError } = await supabase
       .from('profiles')
-      .insert({ id: userId, tier: 'free', credits: 5, last_refill_date: new Date().toISOString().split('T')[0] })
+      .insert({ id: userId })
       .select()
       .single();
-      
-    if (!insertError && newProfile) {
-      profile = newProfile;
+
+    if (insertError) {
+      console.error('Failed to create profile:', insertError);
+      return;
     }
+    set({ profile: created as UserProfile });
+  } else {
+    set({ profile: profile as UserProfile });
   }
 
-  if (profile) {
-    // Daily Refill Logic
-    const today = new Date().toISOString().split('T')[0];
-    if (profile.last_refill_date !== today) {
-      let newCredits = profile.credits;
-      
-      if (profile.tier === 'free' && newCredits < 5) {
-        newCredits = 5;
-      } else if (profile.tier === 'producer' && newCredits < 100) {
-        newCredits = 100;
-      }
-      
-      // Update DB if date or credits changed
-      const { data: updatedProfile } = await supabase
-        .from('profiles')
-        .update({ credits: newCredits, last_refill_date: today })
-        .eq('id', userId)
-        .select()
-        .single();
-        
-      if (updatedProfile) {
-        profile = updatedProfile;
-      }
-    }
-    set({ profile });
+  const { data: refreshed, error: refillError } = await supabase.rpc('claim_daily_refill');
+  if (refillError) {
+    console.error('claim_daily_refill failed:', refillError);
+    return;
   }
+  if (refreshed) {
+    set({ profile: refreshed as UserProfile });
+  }
+}
+
+function subscribeToProfile(
+  userId: string,
+  get: () => AuthState,
+  set: SetState
+) {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel);
+  }
+
+  realtimeChannel = supabase
+    .channel(`profiles:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${userId}`,
+      },
+      (payload) => {
+        const newProfile = payload.new as UserProfile;
+        const currentProfile = get().profile;
+        set({ profile: newProfile });
+
+        if (!currentProfile) return;
+
+        if (newProfile.credits > currentProfile.credits) {
+          const diff = newProfile.credits - currentProfile.credits;
+          useAppStore.getState().showToast(`+${diff} Credits received! 🎉`, 'success');
+        } else if (newProfile.tier !== currentProfile.tier) {
+          useAppStore
+            .getState()
+            .showToast(`Tier upgraded to ${newProfile.tier.toUpperCase()}! 🎉`, 'success');
+        } else if (newProfile.role !== currentProfile.role) {
+          useAppStore
+            .getState()
+            .showToast(`Role updated to ${newProfile.role}! 🎉`, 'success');
+        }
+      }
+    )
+    .subscribe();
 }

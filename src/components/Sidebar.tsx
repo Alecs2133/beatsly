@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { isAdminRole, isPublisherRole } from '../lib/roles';
 import { Headphones, Library, Bot, HardDrive, Settings } from 'lucide-react';
 import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
-  const { session } = useAuthStore();
+  const { profile } = useAuthStore();
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const role = session?.user?.user_metadata?.role;
-  const canPublish = role === 'PRODUCER' || role === 'VIDEO MAKER' || role === 'PRODUCER ADMIN';
+  const role = profile?.role;
+  const canPublish = isPublisherRole(role);
 
   return (
     <aside className={`sidebar glass ${isCollapsed ? 'collapsed' : ''}`}>
@@ -63,7 +64,7 @@ export const Sidebar: React.FC = () => {
                 </NavLink>
               </li>
             )}
-            {(role === 'PRODUCER ADMIN' || role === 'OWNER') && (
+            {isAdminRole(role) && (
               <li>
                 <NavLink to="/admin" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                   <span className="nav-icon"><Settings size={20} /></span>

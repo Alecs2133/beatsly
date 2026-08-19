@@ -29,7 +29,8 @@ export const Pricing: React.FC = () => {
       showToast(`${t('processing_payment')}...`, 'info');
 
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { amount, item_type: 'credits', user_id: user.id }
+        // user_id se derivă din JWT în edge function, nu se trimite din client.
+        body: { amount, item_type: 'credits' }
       });
 
       if (error) throw error;

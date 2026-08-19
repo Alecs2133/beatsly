@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import { hasUnlimitedCredits } from '../lib/roles';
 import { Search, Settings, X, Plus, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './TopBar.css';
@@ -133,7 +134,7 @@ export const TopBar: React.FC = () => {
         {profile && (
           <div className="credits" onClick={() => navigate('/store')} style={{ cursor: 'pointer' }} title="Get more credits">
             <span className="credits-amount">
-              {(profile.tier === 'ultimate' || user?.user_metadata?.role === 'OWNER') ? '∞' : profile.credits}
+              {hasUnlimitedCredits(profile.role, profile.tier) ? '∞' : profile.credits}
             </span>
             <span className="credits-label">{t('topbar_credits')}</span>
             <button className="add-credits-btn"><Plus size={16} strokeWidth={3} /></button>

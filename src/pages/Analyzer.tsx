@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { generateAudio } from '../lib/hfApi';
+import React, { useState, useEffect } from 'react';
+import { generateAudio, GenerationError } from '../lib/hfApi';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
+import { hasUnlimitedCredits } from '../lib/roles';
 import { useTranslation } from '../hooks/useTranslation';
 export const Analyzer: React.FC = () => {
   const { t } = useTranslation();
@@ -13,14 +15,22 @@ export const Analyzer: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { toggleSaveSound, isSaved } = useLibraryStore();
-  const { credits, setCredits, showToast } = useAppStore();
+  const { showToast } = useAppStore();
+  const { profile } = useAuthStore();
   
   // A unique ID for the generated sound to keep track in My Sounds
   const [currentGeneratedId, setCurrentGeneratedId] = useState<string | null>(null);
 
+  // Blob-urile generate rămân în memorie până sunt revocate explicit.
+  useEffect(() => () => {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+  }, [audioUrl]);
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-    if (credits < 1) {
+
+    const unlimited = hasUnlimitedCredits(profile?.role, profile?.tier);
+    if (!unlimited && (profile?.credits ?? 0) < 1) {
       setError(t('out_of_credits'));
       return;
     }
@@ -31,12 +41,23 @@ export const Analyzer: React.FC = () => {
     
     try {
       const finalPrompt = `${prompt}${bpm ? `, ${bpm} BPM` : ''}${musicalKey ? `, Key of ${musicalKey}` : ''}`;
+
+      // Creditul se consumă pe server, în aceeași cerere cu generarea.
+      // Nu îl deducem și aici, altfel userul ar fi taxat de două ori.
       const url = await generateAudio(finalPrompt);
-      setAudioUrl(url);
-      setCredits(prev => prev - 1);
+
+      // Eliberăm blob-ul precedent, altfel rămâne alocat până la reload.
+      setAudioUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
       setCurrentGeneratedId(Date.now().toString());
     } catch (err: any) {
-      setError(err.message);
+      if (err instanceof GenerationError && err.outOfCredits) {
+        setError(t('out_of_credits'));
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsGenerating(false);
     }

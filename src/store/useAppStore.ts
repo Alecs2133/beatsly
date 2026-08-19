@@ -9,11 +9,10 @@ interface ToastMessage {
 }
 
 interface AppState {
-  // --- App Global ---
-  credits: number;
-  setCredits: (credits: number | ((prev: number) => number)) => void;
-  decreaseCredits: () => void;
-  
+  // NOTĂ: creditele NU stau aici. Sursa unică de adevăr este
+  // `useAuthStore.profile.credits`, sincronizat cu baza de date.
+  // Consumul se face prin `useAuthStore.deductCredit()` (RPC server-side).
+
   // --- Search ---
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -29,12 +28,6 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  credits: 150,
-  setCredits: (creditsOrUpdater) => set((state) => ({
-    credits: typeof creditsOrUpdater === 'function' ? creditsOrUpdater(state.credits) : creditsOrUpdater
-  })),
-  decreaseCredits: () => set((state) => ({ credits: Math.max(0, state.credits - 1) })),
-  
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
 

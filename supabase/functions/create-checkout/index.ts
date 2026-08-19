@@ -1,14 +1,39 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import Stripe from "npm:stripe@^17.2.0"
+import { createClient } from "npm:@supabase/supabase-js@2.39.3"
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
   apiVersion: '2025-03-31.basil' as any,
   httpClient: Stripe.createFetchHttpClient(),
 })
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
+
+// Prețurile trăiesc DOAR pe server. Clientul trimite ce vrea să cumpere,
+// niciodată cât costă.
+const CREDIT_PRICES: Record<number, number> = {
+  10: 299,
+  25: 599,
+  50: 999,
+  150: 2499,
+  300: 3999,
+}
+
+const SUBSCRIPTION_PRICES: Record<string, number> = {
+  producer: 1499,
+  ultimate: 2999,
 }
 
 serve(async (req) => {
@@ -17,26 +42,49 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, item_type, user_id } = await req.json()
+    // --- Autentificare -------------------------------------------------
+    // `user_id` NU se mai ia din body. Se derivă din JWT-ul apelantului,
+    // altfel oricine putea crea sesiuni de checkout în numele altui cont.
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return json({ error: 'Missing Authorization header' }, 401)
+    }
 
-    if (!user_id) throw new Error('user_id is required')
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    })
 
-    let price = 0
-    let name = ""
+    // `getUser()` fără argument citește sesiunea din storage-ul clientului,
+    // care într-un edge function e gol — deci returnează 401 chiar și cu un
+    // header Authorization valid. Tokenul se dă explicit.
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.slice('Bearer '.length)
+    )
+    if (authError || !user) {
+      return json({ error: 'Sesiune invalida sau expirata' }, 401)
+    }
+
+    // --- Validarea produsului -------------------------------------------
+    const { amount, item_type } = await req.json()
+
+    let price: number
+    let name: string
+    let mode: 'payment' | 'subscription'
 
     if (item_type === 'credits') {
-      if (amount === 10) price = 299
-      else if (amount === 25) price = 599
-      else if (amount === 50) price = 999
-      else if (amount === 150) price = 2499
-      else if (amount === 300) price = 3999
-      else throw new Error('Invalid credit amount')
-      name = `${amount} Credits Pack`
+      const credits = Number(amount)
+      price = CREDIT_PRICES[credits]
+      if (!price) return json({ error: 'Invalid credit amount' }, 400)
+      name = `${credits} Credits Pack`
+      mode = 'payment'
     } else if (item_type === 'subscription') {
-      if (amount === 'producer') price = 1499
-      else if (amount === 'ultimate') price = 2999
-      else throw new Error('Invalid tier')
-      name = `${amount.toUpperCase()} Subscription`
+      const tier = String(amount).toLowerCase()
+      price = SUBSCRIPTION_PRICES[tier]
+      if (!price) return json({ error: 'Invalid tier' }, 400)
+      name = `${tier.toUpperCase()} Subscription`
+      mode = 'subscription'
+    } else {
+      return json({ error: 'Invalid item_type' }, 400)
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -44,33 +92,28 @@ serve(async (req) => {
         {
           price_data: {
             currency: 'usd',
-            product_data: {
-              name,
-              tax_code: 'txcd_10000000'
-            },
+            product_data: { name, tax_code: 'txcd_10000000' },
             unit_amount: price,
           },
           quantity: 1,
         },
       ],
-      mode: item_type === 'subscription' ? 'subscription' : 'payment',
+      mode,
       success_url: 'https://beatsly.app/success?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://beatsly.app/cancel',
-      client_reference_id: user_id, // We need this to identify the user in the webhook
+      client_reference_id: user.id,
+      customer_email: user.email,
       metadata: {
         type: item_type,
-        amount: amount.toString()
-      }
+        amount: String(amount),
+        user_id: user.id,
+      },
     })
 
-    return new Response(
-      JSON.stringify({ url: session.url }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ url: session.url })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+    console.error('create-checkout failed:', error)
+    // Nu returnăm mesajul intern al erorii către client.
+    return json({ error: 'Could not create checkout session' }, 400)
   }
 })

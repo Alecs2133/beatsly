@@ -8,6 +8,7 @@ import { ToastContainer } from './components/ToastContainer';
 import { LoadingScreen } from './components/LoadingScreen';
 import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
+import { isAdminRole, isPublisherRole } from './lib/roles';
 import './design.css';
 
 // Lazy loaded pages for performance
@@ -23,28 +24,50 @@ const Options = lazy(() => import('./pages/Options').then(m => ({ default: m.Opt
 const Packs = lazy(() => import('./pages/Packs').then(m => ({ default: m.Packs })));
 const PackDetails = lazy(() => import('./pages/PackDetails').then(m => ({ default: m.PackDetails })));
 
+const RouteFallback = () => (
+  <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
+);
+
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { session, initialized } = useAuthStore();
-  
-  if (!initialized) return <div style={{ padding: 40 }}>Loading...</div>;
+
+  if (!initialized) return <RouteFallback />;
   if (!session) return <Navigate to="/auth" replace />;
-  
+
   return children;
 };
 
-const AdminRoute = ({ children }: { children: JSX.Element }) => {
-  const { session, initialized } = useAuthStore();
-  
-  if (!initialized) return <div style={{ padding: 40 }}>Loading...</div>;
+/**
+ * Guard bazat pe rol. Rolul vine din `profile.role` (coloană în DB, protejată
+ * de RLS), nu din `user_metadata` — acela e scriptibil de utilizator.
+ *
+ * Așteptăm încărcarea profilului înainte de a decide, altfel un user legitim
+ * ar fi redirectat în fereastra dintre autentificare și sosirea profilului.
+ */
+const RoleRoute = ({
+  children,
+  allow,
+}: {
+  children: JSX.Element;
+  allow: (role?: string | null) => boolean;
+}) => {
+  const { session, profile, initialized } = useAuthStore();
+
+  if (!initialized) return <RouteFallback />;
   if (!session) return <Navigate to="/auth" replace />;
-  
-  const role = session.user.user_metadata?.role;
-  const isAuthorized = role === 'PRODUCER' || role === 'VIDEO MAKER' || role === 'PRODUCER ADMIN' || role === 'OWNER';
-  
-  if (!isAuthorized) return <Navigate to="/" replace />;
-  
+  if (!profile) return <RouteFallback />;
+  if (!allow(profile.role)) return <Navigate to="/" replace />;
+
   return children;
 };
+
+const PublisherRoute = ({ children }: { children: JSX.Element }) => (
+  <RoleRoute allow={isPublisherRole}>{children}</RoleRoute>
+);
+
+const AdminRoute = ({ children }: { children: JSX.Element }) => (
+  <RoleRoute allow={isAdminRole}>{children}</RoleRoute>
+);
 
 
 const PAGE_TITLES: Record<string, string> = {
@@ -114,7 +137,7 @@ const AppContent = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/library" element={<ProtectedRoute><MySounds /></ProtectedRoute>} />
               <Route path="/analyzer" element={<ProtectedRoute><Analyzer /></ProtectedRoute>} />
-              <Route path="/local" element={<AdminRoute><LocalFiles /></AdminRoute>} />
+              <Route path="/local" element={<PublisherRoute><LocalFiles /></PublisherRoute>} />
               <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
