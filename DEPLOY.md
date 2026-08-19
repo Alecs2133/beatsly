@@ -187,8 +187,22 @@ select count(*) from public.sounds where status = 'approved' and preview_url is 
 
 Abia acum mută migrarea deferată înapoi și aplic-o:
 
+PowerShell (Windows):
+
 ```bash
-mv supabase/migrations_deferred/20260819120400_make_sounds_private.sql supabase/migrations/ && npx supabase db push --linked
+Move-Item supabase\migrations_deferred\20260819120400_make_sounds_private.sql supabase\migrations\
+```
+
+Bash (macOS, Linux, Git Bash):
+
+```bash
+mv supabase/migrations_deferred/20260819120400_make_sounds_private.sql supabase/migrations/
+```
+
+Apoi, în ambele cazuri:
+
+```bash
+npx supabase db push --linked
 ```
 
 Migrarea are un guard care refuză să pornească dacă mai există sunete aprobate
