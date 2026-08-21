@@ -3,6 +3,7 @@ import { Layout } from './Layout';
 import { Home } from './pages/Home';
 import { Pricing } from './pages/Pricing';
 import { DownloadPage } from './pages/Download';
+import { Account } from './pages/Account';
 import './App.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="pricing" element={<Pricing />} />
           <Route path="download" element={<DownloadPage />} />
+          <Route path="account" element={<Account />} />
         </Route>
       </Routes>
     </BrowserRouter>

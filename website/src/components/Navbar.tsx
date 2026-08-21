@@ -71,8 +71,13 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
       <div className="nav-actions">
         {user ? (
           <div className="nav-user">
-            <UserCircle size={20} />
-            <span>{user.email?.split('@')[0]}</span>
+            {/* Link + buton separate ca frați, nu imbricate — un <button>
+                în interiorul unui <a> ar fi HTML invalid și ar da conflicte
+                de click. */}
+            <Link to="/account" className="nav-user-link">
+              <UserCircle size={20} />
+              <span>{user.email?.split('@')[0]}</span>
+            </Link>
             <button onClick={onSignOut} className="btn-icon" title="Sign Out">
               <LogOut size={16} />
             </button>
@@ -108,6 +113,9 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
             <Link to="/#features">Features</Link>
             <NavLink to="/pricing" className={NAV_LINK_CLASS}>Pricing</NavLink>
             <NavLink to="/download" className={NAV_LINK_CLASS}>Download</NavLink>
+            {user && (
+              <NavLink to="/account" className={NAV_LINK_CLASS}>Account</NavLink>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
