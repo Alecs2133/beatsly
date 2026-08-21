@@ -1,6 +1,7 @@
-import { Link, NavLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { LogOut, UserCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { LogOut, UserCircle, Menu, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 interface NavbarProps {
@@ -12,9 +13,49 @@ interface NavbarProps {
 
 const NAV_LINK_CLASS = ({ isActive }: { isActive: boolean }) => (isActive ? 'active' : undefined);
 
-export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps) {
+/** Link cu pastila animată sub el cât timp e ruta activă. Doar pentru navbar-ul desktop. */
+function DesktopNavLink({ to, label }: { to: string; label: string }) {
   return (
-    <nav className={`navbar ${scrolled ? 'glass scrolled' : 'transparent'}`}>
+    <NavLink to={to} className={NAV_LINK_CLASS}>
+      {({ isActive }) => (
+        <>
+          {label}
+          {isActive && (
+            <motion.span
+              layoutId="nav-underline"
+              className="nav-underline"
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+            />
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Închide meniul mobil la orice navigare — altfel rămâne deschis peste
+  // pagina nouă când userul dă tap pe un link.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname, location.hash]);
+
+  // Blochează scroll-ul din spatele meniului cât timp e deschis, ca pagina
+  // să nu alunece sub el pe telefon.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [menuOpen]);
+
+  return (
+    <nav className={`navbar ${scrolled || menuOpen ? 'glass scrolled' : 'transparent'}`}>
       {/* Click pe logo sau pe "Beats.ly" duce mereu la pagina principală. */}
       <Link to="/" className="nav-brand">
         <div className="logo-icon"><img src="/app-icon.png" alt="Beats.ly Logo" /></div>
@@ -23,34 +64,8 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
 
       <div className="nav-links">
         <Link to="/#features">Features</Link>
-        <NavLink to="/pricing" className={NAV_LINK_CLASS}>
-          {({ isActive }) => (
-            <>
-              Pricing
-              {isActive && (
-                <motion.span
-                  layoutId="nav-underline"
-                  className="nav-underline"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
-            </>
-          )}
-        </NavLink>
-        <NavLink to="/download" className={NAV_LINK_CLASS}>
-          {({ isActive }) => (
-            <>
-              Download
-              {isActive && (
-                <motion.span
-                  layoutId="nav-underline"
-                  className="nav-underline"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
-            </>
-          )}
-        </NavLink>
+        <DesktopNavLink to="/pricing" label="Pricing" />
+        <DesktopNavLink to="/download" label="Download" />
       </div>
 
       <div className="nav-actions">
@@ -67,7 +82,35 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
             Sign In
           </button>
         )}
+
+        <button
+          type="button"
+          className="nav-hamburger"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            id="mobile-menu"
+            className="mobile-menu glass"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+          >
+            <Link to="/#features">Features</Link>
+            <NavLink to="/pricing" className={NAV_LINK_CLASS}>Pricing</NavLink>
+            <NavLink to="/download" className={NAV_LINK_CLASS}>Download</NavLink>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

@@ -113,6 +113,12 @@
   background: var(--gradient-primary);
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .nav-user {
   display: flex;
   align-items: center;
@@ -133,12 +139,66 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 0;
+  justify-content: center;
+  padding: 6px;
+  margin: -6px;
   transition: color 0.2s;
 }
 
 .btn-icon:hover {
   color: #ff6b6b;
+}
+
+/* Hamburger — ascuns pe desktop, apare doar sub breakpoint-ul mobil. */
+.nav-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-strong);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+
+.nav-hamburger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(157, 78, 221, 0.4);
+}
+
+/* Panoul de navigare mobil, ancorat sub navbar. */
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 20px 16px;
+  border-top: 1px solid var(--border-light);
+  border-radius: 0 0 20px 20px;
+}
+
+.mobile-menu a {
+  padding: 14px 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 1px solid var(--border-light);
+  transition: color var(--transition-speed);
+}
+
+.mobile-menu a:last-child {
+  border-bottom: none;
+}
+
+.mobile-menu a.active,
+.mobile-menu a:hover {
+  color: var(--text-main);
 }
 
 /* Hero Section */
@@ -500,6 +560,14 @@
   justify-content: center;
 }
 
+.compare-hint {
+  display: none;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
 /* Mini FAQ pe pagina de Pricing */
 .pricing-faq {
   max-width: 700px;
@@ -552,6 +620,21 @@
   }
   .page-title {
     font-size: 38px;
+  }
+  .compare-section {
+    padding: 30px 16px 70px;
+  }
+  .compare-hint {
+    display: block;
+  }
+  .pricing-faq {
+    padding: 0 16px 70px;
+  }
+  .pricing-cta {
+    padding: 40px 16px 100px;
+  }
+  .pricing-cta h2 {
+    font-size: 28px;
   }
 }
 
@@ -1011,10 +1094,91 @@
 }
 
 @media (max-width: 768px) {
-  .hero-title { font-size: 48px; }
-  .hero-cta { flex-direction: column; }
-  .nav-links { display: none; }
-  .download-section h2 { font-size: 36px; }
-  .download-section { margin: 100px 20px; padding: 60px 20px; }
-  .hero-mockup-container { margin-top: 40px; }
+  /* Navbar: link-urile din mijloc dispar, hamburger-ul le înlocuiește. */
+  .navbar {
+    padding: 0 16px;
+  }
+  .nav-links {
+    display: none;
+  }
+  .nav-hamburger {
+    display: flex;
+  }
+
+  .hero {
+    padding: 120px 20px 40px;
+  }
+  .hero-title {
+    font-size: 42px;
+  }
+  .hero-subtitle {
+    font-size: 17px;
+    margin-bottom: 32px;
+  }
+  .hero-cta {
+    flex-direction: column;
+    max-width: 340px;
+    margin: 0 auto;
+  }
+  .hero-mockup-container {
+    margin-top: 40px;
+  }
+
+  .section-title {
+    font-size: 30px;
+    margin-bottom: 40px;
+  }
+
+  .features,
+  .pricing,
+  .steps-section,
+  .requirements-section,
+  .quick-links {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .download-section h2 {
+    font-size: 32px;
+  }
+  .download-section p {
+    font-size: 17px;
+  }
+  .download-section {
+    margin: 80px 16px;
+    padding: 50px 20px;
+  }
+
+  .page-title {
+    font-size: 40px;
+  }
+
+  /* Footer: brand și link-uri se așează pe două rânduri, centrat. */
+  .footer-content {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  .footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero-title {
+    font-size: 34px;
+  }
+  .page-title {
+    font-size: 32px;
+  }
+  .section-title {
+    font-size: 26px;
+  }
+  .hero {
+    padding-top: 110px;
+  }
+  .page-intro {
+    padding-top: 110px;
+  }
 }

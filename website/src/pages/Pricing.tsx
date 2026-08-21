@@ -92,6 +92,10 @@ export function Pricing() {
           <h2 className="section-title">Compare <span className="glow-text">Plans</span></h2>
         </motion.div>
 
+        {/* Vizibil doar sub breakpoint-ul mobil (via CSS) — tabelul rămâne cu
+            scroll orizontal pe ecrane înguste, deci indicăm asta explicit. */}
+        <p className="compare-hint">Swipe to compare →</p>
+
         <motion.div
           className="compare-table glass"
           initial="hidden"
