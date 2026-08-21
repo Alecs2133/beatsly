@@ -53,7 +53,14 @@ body::before {
 body::after {
   content: '';
   position: absolute;
-  bottom: -20%;
+  /* `bottom: -20%` era relativ la înălțimea ÎNTREGII pagini (body e position:
+     relative, deci e containing block-ul). Pe o pagină lungă, 20% din
+     înălțime plus cei 50vw ai elementului împingeau acest glow decorativ cu
+     sute de pixeli sub footer — iar fără niciun overflow:hidden care să-l
+     taie, browserul include acea zonă în înălțimea scrollabilă. Rezultatul:
+     se putea da scroll în gol după footer. `bottom: 0` ține glow-ul lipit de
+     marginea reală a paginii. */
+  bottom: 0;
   right: -10%;
   width: 50vw;
   height: 50vw;
