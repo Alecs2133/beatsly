@@ -43,3 +43,9 @@ build/
 src-tauri/bin/
 # Configurare locala de unelte
 .claude/
+
+# Iesiri de compilare TS/Vite ajunse accidental la radacina (tsc -b rulat
+# din directorul gresit in loc de website/)
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

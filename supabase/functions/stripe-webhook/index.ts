@@ -77,10 +77,18 @@ serve(async (req) => {
           : `Event ${event.id} already processed, skipping`
       )
     } else if (type === 'subscription') {
+      // `mode: 'subscription'` garantează că Stripe atașează un Customer
+      // sesiunii — spre deosebire de `mode: 'payment'` (credite), unde nu se
+      // creează unul automat. Îl salvăm ca userul să poată deschide ulterior
+      // Customer Portal-ul ("Manage Subscription").
+      const customerId =
+        typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null
+
       const { data: applied, error } = await supabase.rpc('apply_subscription_tier', {
         p_event_id: event.id,
         p_user_id: userId,
         p_tier: amount,
+        p_customer_id: customerId,
       })
       if (error) throw error
 

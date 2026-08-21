@@ -94,13 +94,18 @@ serve(async (req) => {
             currency: 'usd',
             product_data: { name, tax_code: 'txcd_10000000' },
             unit_amount: price,
+            // Stripe respinge un Checkout Session `mode: 'subscription'` dacă
+            // linia de preț nu are `recurring` — fără asta, apăsarea unui
+            // buton de abonament ar fi picat direct cu eroare de la Stripe.
+            // Pentru `mode: 'payment'` (credite), `recurring` trebuie omis.
+            ...(mode === 'subscription' ? { recurring: { interval: 'month' as const } } : {}),
           },
           quantity: 1,
         },
       ],
       mode,
-      success_url: 'https://beatsly.app/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://beatsly.app/cancel',
+      success_url: 'https://beatsly.vercel.app/account?checkout=success',
+      cancel_url: 'https://beatsly.vercel.app/pricing',
       client_reference_id: user.id,
       customer_email: user.email,
       metadata: {
