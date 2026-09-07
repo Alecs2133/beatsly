@@ -7,6 +7,7 @@ export const ro: Record<TranslationKeys, string> = {
   nav_ai_generator: 'Generator AI',
   nav_store: 'Magazin',
   nav_local_files: 'Fișiere Locale',
+  nav_crew: 'Crew',
   nav_admin: 'Admin',
 
   // TopBar

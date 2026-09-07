@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
-import { isAdminRole, isPublisherRole } from '../lib/roles';
-import { Headphones, Library, Bot, HardDrive, Settings } from 'lucide-react';
+import { useMyCrews } from '../hooks/useMyCrews';
+import { isAdminRole, isPublisherRole, hasUnlimitedCredits } from '../lib/roles';
+import { Headphones, Library, Bot, HardDrive, Settings, Users } from 'lucide-react';
 import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
   const { profile } = useAuthStore();
   const { t } = useTranslation();
+  const { crews } = useMyCrews();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const role = profile?.role;
   const canPublish = isPublisherRole(role);
+  // Un membru pe Free invitat într-un crew Ultimate trebuie să vadă link-ul
+  // la fel ca proprietarul — de-aia gating-ul se uită și la `crews.length`,
+  // nu doar la tier-ul propriu.
+  const showCrew = hasUnlimitedCredits(role, profile?.tier) || crews.length > 0;
 
   return (
     <aside className={`sidebar glass ${isCollapsed ? 'collapsed' : ''}`}>
@@ -61,6 +67,14 @@ export const Sidebar: React.FC = () => {
                 <NavLink to="/local" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                   <span className="nav-icon"><HardDrive size={20} /></span>
                   <span className="nav-text">{t('nav_local_files')}</span>
+                </NavLink>
+              </li>
+            )}
+            {showCrew && (
+              <li>
+                <NavLink to="/crew" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                  <span className="nav-icon"><Users size={20} /></span>
+                  <span className="nav-text">{t('nav_crew')}</span>
                 </NavLink>
               </li>
             )}

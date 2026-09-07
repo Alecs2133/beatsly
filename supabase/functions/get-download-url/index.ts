@@ -72,25 +72,37 @@ serve(async (req) => {
   const admin = createClient(supabaseUrl, supabaseServiceKey)
 
   // Rezolvăm calea înainte de a lua creditul: dacă sunetul nu există sau nu e
-  // aprobat, userul nu trebuie să plătească pentru nimic.
-  const { data: storagePath, error: pathError } = await admin.rpc(
+  // accesibil, userul nu trebuie să plătească pentru nimic. Trimitem id-ul
+  // apelantului explicit — funcția rulează cu service_role, unde auth.uid()
+  // e null (nu există sesiune de user în acel context), deci n-are cum
+  // verifica singură apartenența la crew fără să i-o dăm noi.
+  const { data: rows, error: pathError } = await admin.rpc(
     'get_sound_storage_path',
-    { p_sound_id: soundId }
+    { p_sound_id: soundId, p_requesting_user: user.id }
   )
 
   if (pathError) {
     console.error('get_sound_storage_path failed:', pathError)
     return json({ error: 'Could not resolve sound' }, 500)
   }
-  if (!storagePath) {
-    return json({ error: 'Sound not found or not approved' }, 404)
-  }
 
-  // --- Creditul ------------------------------------------------------------
-  const { error: creditError } = await supabase.rpc('deduct_credit')
-  if (creditError) {
-    console.warn(`deduct_credit failed for ${user.id}:`, creditError.message)
-    return json({ error: 'Not enough credits' }, 402)
+  const resolved = Array.isArray(rows) ? rows[0] : rows
+  if (!resolved?.storage_path) {
+    return json({ error: 'Sound not found or not accessible' }, 404)
+  }
+  const { storage_path: storagePath, is_crew: isCrew } = resolved
+
+  // --- Creditul --------------------------------------------------------------
+  // Conținutul de crew e privat, între oameni care deja au acces — nu e
+  // biblioteca publică pe care creditele sunt gândite s-o limiteze. Un membru
+  // pe Free, invitat într-un crew Ultimate, nu trebuie să-și ardă cele 3
+  // credite zilnice descărcând fișierele propriei echipe.
+  if (!isCrew) {
+    const { error: creditError } = await supabase.rpc('deduct_credit')
+    if (creditError) {
+      console.warn(`deduct_credit failed for ${user.id}:`, creditError.message)
+      return json({ error: 'Not enough credits' }, 402)
+    }
   }
 
   // --- URL-ul semnat -------------------------------------------------------
@@ -101,13 +113,15 @@ serve(async (req) => {
   if (signError || !signed?.signedUrl) {
     console.error('createSignedUrl failed:', signError)
 
-    // Creditul a fost deja consumat, dar userul nu primește fișierul.
-    const { error: refundError } = await admin.rpc('refund_credit', {
-      p_user_id: user.id,
-      p_reason: 'sign_url_failed',
-    })
-    if (refundError) {
-      console.error(`Refund failed for ${user.id}:`, refundError)
+    if (!isCrew) {
+      // Creditul a fost deja consumat, dar userul nu primește fișierul.
+      const { error: refundError } = await admin.rpc('refund_credit', {
+        p_user_id: user.id,
+        p_reason: 'sign_url_failed',
+      })
+      if (refundError) {
+        console.error(`Refund failed for ${user.id}:`, refundError)
+      }
     }
 
     return json({ error: 'Could not prepare download' }, 502)

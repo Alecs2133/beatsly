@@ -52,6 +52,11 @@ export const Admin: React.FC = () => {
         .from('sounds')
         .select('*')
         .eq('status', 'pending')
+        // Sunetele de crew intră direct cu status 'approved' (vezi migrarea
+        // crews), deci filtrul de mai sus le exclude deja — asta e doar o a
+        // doua barieră, ca sunetele private să nu ajungă niciodată în coada
+        // publică de moderare chiar dacă politica RLS s-ar schimba cumva.
+        .is('crew_id', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

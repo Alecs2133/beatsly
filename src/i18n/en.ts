@@ -5,6 +5,7 @@ export const en = {
   nav_ai_generator: 'AI Generator',
   nav_store: 'Store',
   nav_local_files: 'Local Files',
+  nav_crew: 'Crew',
   nav_admin: 'Admin',
 
   // TopBar

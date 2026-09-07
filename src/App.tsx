@@ -23,6 +23,7 @@ const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Acc
 const Options = lazy(() => import('./pages/Options').then(m => ({ default: m.Options })));
 const Packs = lazy(() => import('./pages/Packs').then(m => ({ default: m.Packs })));
 const PackDetails = lazy(() => import('./pages/PackDetails').then(m => ({ default: m.PackDetails })));
+const CrewPage = lazy(() => import('./pages/Crew').then(m => ({ default: m.CrewPage })));
 
 const RouteFallback = () => (
   <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
@@ -81,6 +82,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/account': 'Account – beats.ly',
   '/options': 'Settings – beats.ly',
   '/packs': 'Sound Packs – beats.ly',
+  '/crew': 'Crew – beats.ly',
 };
 
 const AppContent = () => {
@@ -144,6 +146,7 @@ const AppContent = () => {
               <Route path="/options" element={<Options />} />
               <Route path="/packs" element={<ProtectedRoute><Packs /></ProtectedRoute>} />
               <Route path="/pack/:tag" element={<ProtectedRoute><PackDetails /></ProtectedRoute>} />
+              <Route path="/crew" element={<ProtectedRoute><CrewPage /></ProtectedRoute>} />
             </Routes>
           </Suspense>
         </main>
