@@ -46,9 +46,12 @@ export const generateAudio = async (prompt: string): Promise<string> => {
       );
     }
     if (status === 503) {
+      // Serverul trimite `retryable` doar când chiar are sens (modelul se
+      // încarcă la HuggingFace). Dacă lipsește tokenul de pe server, e tot
+      // 503, dar reîncercarea n-ar rezolva nimic — nu marcăm asta ca retryable.
       throw new GenerationError(
-        detail.error ?? 'Modelul AI se încarcă. Încearcă din nou în ~30 de secunde.',
-        { retryable: true }
+        detail.error ?? 'Modelul AI nu răspunde momentan.',
+        { retryable: detail.retryable === true }
       );
     }
     if (status === 401) {

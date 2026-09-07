@@ -78,7 +78,8 @@ export const LocalFiles: React.FC = () => {
         tags: sample.tags,
         duration: sample.duration,
         type: 'loop', // default assumption for local files
-        file_url: convertFileSrc(sample.path) // Crucial: Convert local path to asset:// URI
+        file_url: convertFileSrc(sample.path), // Crucial: Convert local path to asset:// URI
+        local_path: sample.path, // calea brută, pentru drag-and-drop nativ către DAW
       }));
 
       setSounds(mappedSounds);
@@ -135,7 +136,16 @@ export const LocalFiles: React.FC = () => {
       )}
 
       {!loading && !error && sounds.length > 0 && (
-        <SoundGrid sounds={sounds} />
+        <SoundGrid
+          sounds={sounds}
+          // Fără asta, o corecție de BPM/key găsită prin analiză reală s-ar
+          // pierde la următoarea navigare: `SoundGrid` ține propriul state
+          // intern, resincronizat din `sounds` de fiecare dată când acest
+          // array se schimbă — deci trebuie scrisă și aici, în store.
+          onSoundUpdated={(id, updates) =>
+            setSounds(sounds.map(s => (s.id === id ? { ...s, ...updates } : s)))
+          }
+        />
       )}
 
       {!loading && !error && selectedFolder && sounds.length === 0 && (

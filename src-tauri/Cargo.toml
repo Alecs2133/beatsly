@@ -26,6 +26,14 @@ tauri-plugin-drag = "2.1.1"
 tauri-plugin-shell = "2.3.5"
 tauri-plugin-http = "2"
 
+# Analiză audio reală (BPM/key din conținutul fișierului, nu din regex pe
+# numele lui). Pur Rust, fără dependințe C — nu adaugă risc la build-ul
+# cross-platform din CI. `symphonia` e listat direct fiindcă îi folosim
+# tipurile în main.rs pentru decodare; e deja o dependință a stratum-dsp,
+# dar Rust cere declarare directă pentru orice folosești direct.
+stratum-dsp = "1.0"
+symphonia = { version = "0.5", features = ["all"] }
+
 # reqwest / tokio / dotenvy au fost eliminate odată cu comanda
 # generate_audio_backend: aceea primea tokenul HuggingFace de la frontend,
 # iar generarea s-a mutat în edge function-ul Supabase.

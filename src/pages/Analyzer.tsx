@@ -13,6 +13,7 @@ export const Analyzer: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorRetryable, setErrorRetryable] = useState(false);
   
   const { toggleSaveSound, isSaved } = useLibraryStore();
   const { showToast } = useAppStore();
@@ -32,13 +33,15 @@ export const Analyzer: React.FC = () => {
     const unlimited = hasUnlimitedCredits(profile?.role, profile?.tier);
     if (!unlimited && (profile?.credits ?? 0) < 1) {
       setError(t('out_of_credits'));
+      setErrorRetryable(false);
       return;
     }
-    
+
     setIsGenerating(true);
     setError(null);
+    setErrorRetryable(false);
     setAudioUrl(null);
-    
+
     try {
       const finalPrompt = `${prompt}${bpm ? `, ${bpm} BPM` : ''}${musicalKey ? `, Key of ${musicalKey}` : ''}`;
 
@@ -55,8 +58,10 @@ export const Analyzer: React.FC = () => {
     } catch (err: any) {
       if (err instanceof GenerationError && err.outOfCredits) {
         setError(t('out_of_credits'));
+        setErrorRetryable(false);
       } else {
         setError(err.message);
+        setErrorRetryable(err instanceof GenerationError && err.retryable);
       }
     } finally {
       setIsGenerating(false);
@@ -71,31 +76,6 @@ export const Analyzer: React.FC = () => {
       </div>
 
       <div className="generator-card glass" style={{ padding: '32px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative', overflow: 'hidden' }}>
-        
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(10, 10, 15, 0.95)',
-          backdropFilter: 'blur(64px)',
-          WebkitBackdropFilter: 'blur(64px)',
-          zIndex: 10,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: '24px', textAlign: 'center', borderRadius: '12px'
-        }}>
-          <div style={{
-            background: 'var(--gradient-primary)', padding: '8px 24px', borderRadius: '100px',
-            fontSize: '14px', fontWeight: 'bold', color: 'white', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px',
-            boxShadow: '0 4px 15px rgba(255, 51, 102, 0.4)'
-          }}>
-            Coming Soon
-          </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
-            Advanced AI Generation
-          </h2>
-          <p style={{ color: 'var(--text-muted)', maxWidth: '400px', lineHeight: '1.5' }}>
-            Lucrăm la integrarea celui mai performant model AI pentru a-ți permite să generezi instrumentale la calitate de studio direct din text. Revino curând!
-          </p>
-        </div>
         <div className="input-group">
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--accent-primary)' }}>{t('prompt_label')}</label>
           <textarea 
@@ -155,9 +135,15 @@ export const Analyzer: React.FC = () => {
         </div>
 
         {error && (
-          <div style={{ color: '#ff4d4d', padding: '16px', background: 'rgba(255, 77, 77, 0.1)', borderRadius: '8px', border: '1px solid rgba(255, 77, 77, 0.3)' }}>
-            <strong>Error:</strong> {error}
-          </div>
+          errorRetryable ? (
+            <div style={{ color: 'var(--accent-secondary)', padding: '16px', background: 'rgba(0, 187, 249, 0.1)', borderRadius: '8px', border: '1px solid rgba(0, 187, 249, 0.3)' }}>
+              {error}
+            </div>
+          ) : (
+            <div style={{ color: '#ff4d4d', padding: '16px', background: 'rgba(255, 77, 77, 0.1)', borderRadius: '8px', border: '1px solid rgba(255, 77, 77, 0.3)' }}>
+              <strong>Error:</strong> {error}
+            </div>
+          )
         )}
 
         <button 

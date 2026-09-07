@@ -6,6 +6,8 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import { ALL_KEYS, isHarmonicallyCompatible, parseKey } from '../lib/musicKey';
+import { SlidersHorizontal, ChevronDown } from 'lucide-react';
 
 export const Library: React.FC = () => {
   const { searchQuery } = useAppStore();
@@ -18,6 +20,15 @@ export const Library: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
+
+  // Filtre avansate: interval de BPM + compatibilitate armonică de
+  // tonalitate (regula Camelot). Ascunse implicit sub un toggle, ca pagina
+  // să rămână simplă pentru cine doar răsfoiește.
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [bpmMin, setBpmMin] = useState('');
+  const [bpmMax, setBpmMax] = useState('');
+  const [keyFilterIndex, setKeyFilterIndex] = useState('');
+  const referenceKey = keyFilterIndex === '' ? null : ALL_KEYS[Number(keyFilterIndex)].key;
 
   const categories = ['ALL', 'Loop', 'One-Shot', 'FX'];
 
@@ -100,7 +111,7 @@ export const Library: React.FC = () => {
   // Reset to page 1 when search query or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeFilter]);
+  }, [searchQuery, activeFilter, bpmMin, bpmMax, keyFilterIndex]);
 
   if (!session) {
     return (
@@ -189,7 +200,7 @@ export const Library: React.FC = () => {
       </div>
       )}
 
-      <div className="filter-container">
+      <div className="filter-container" style={{ alignItems: 'center' }}>
         {categories.map(cat => (
           <button
             key={cat}
@@ -199,7 +210,75 @@ export const Library: React.FC = () => {
             {cat === 'ALL' ? t('filter_all') : cat}
           </button>
         ))}
+        <button
+          className="filter-btn"
+          onClick={() => setShowAdvanced(v => !v)}
+          style={{
+            marginLeft: 'auto',
+            display: 'flex', alignItems: 'center', gap: '6px',
+            background: (bpmMin || bpmMax || referenceKey) ? 'var(--gradient-primary)' : undefined,
+            color: (bpmMin || bpmMax || referenceKey) ? 'white' : undefined,
+          }}
+        >
+          <SlidersHorizontal size={14} />
+          Filters
+          <ChevronDown size={14} style={{ transform: showAdvanced ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+        </button>
       </div>
+
+      {showAdvanced && (
+        <div
+          className="glass"
+          style={{
+            display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end',
+            padding: '20px', borderRadius: '12px', marginBottom: '24px', marginTop: '-8px'
+          }}
+        >
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              BPM range
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="number" placeholder="Min" value={bpmMin}
+                onChange={e => setBpmMin(e.target.value)}
+                style={{ width: '80px', padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)' }}
+              />
+              <span style={{ color: 'var(--text-muted)' }}>–</span>
+              <input
+                type="number" placeholder="Max" value={bpmMax}
+                onChange={e => setBpmMax(e.target.value)}
+                style={{ width: '80px', padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Harmonically compatible with
+            </label>
+            <select
+              value={keyFilterIndex}
+              onChange={e => setKeyFilterIndex(e.target.value)}
+              style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)', minWidth: '140px' }}
+            >
+              <option value="">Any key</option>
+              {ALL_KEYS.map((k, i) => (
+                <option key={k.label} value={i}>{k.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {(bpmMin || bpmMax || referenceKey) && (
+            <button
+              onClick={() => { setBpmMin(''); setBpmMax(''); setKeyFilterIndex(''); }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--accent-tertiary)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, padding: '8px 0' }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
@@ -214,12 +293,30 @@ export const Library: React.FC = () => {
           <p>{t('no_sounds_found')}</p>
         </div>
       ) : (() => {
+        const minBpm = bpmMin ? Number(bpmMin) : null;
+        const maxBpm = bpmMax ? Number(bpmMax) : null;
+
         const filteredSounds = sounds.filter(s => {
           const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
           const matchesFilter = activeFilter === 'ALL' || s.type.toLowerCase() === activeFilter.toLowerCase();
-          return matchesSearch && matchesFilter;
+
+          const matchesBpm =
+            (minBpm === null || (s.bpm !== null && s.bpm >= minBpm)) &&
+            (maxBpm === null || (s.bpm !== null && s.bpm <= maxBpm));
+
+          // Fără tonalitate de referință selectată, orice sunet trece.
+          // Cu una selectată, un sunet fără tonalitate parsabilă (lipsă sau
+          // format necunoscut) e exclus — mai bine ascuns decât potrivit greșit.
+          const matchesKey =
+            !referenceKey ||
+            (() => {
+              const candidateKey = parseKey(s.key);
+              return !!candidateKey && isHarmonicallyCompatible(referenceKey, candidateKey);
+            })();
+
+          return matchesSearch && matchesFilter && matchesBpm && matchesKey;
         });
 
         const totalPages = Math.ceil(filteredSounds.length / ITEMS_PER_PAGE);

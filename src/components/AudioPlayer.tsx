@@ -8,7 +8,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { WaveformVisualizer } from './WaveformVisualizer';
-import { Play, Pause, Volume2, Heart, Download } from 'lucide-react';
+import { Play, Pause, Volume2, Heart, Download, SkipBack, SkipForward, Shuffle, Repeat, Repeat1 } from 'lucide-react';
 import './AudioPlayer.css';
 
 export const AudioPlayer: React.FC = () => {
@@ -19,10 +19,20 @@ export const AudioPlayer: React.FC = () => {
   const volume = usePlayerStore(state => state.volume);
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const changeVolume = usePlayerStore(state => state.changeVolume);
+  const queue = usePlayerStore(state => state.queue);
+  const queueIndex = usePlayerStore(state => state.queueIndex);
+  const shuffle = usePlayerStore(state => state.shuffle);
+  const repeat = usePlayerStore(state => state.repeat);
+  const next = usePlayerStore(state => state.next);
+  const prev = usePlayerStore(state => state.prev);
+  const toggleShuffle = usePlayerStore(state => state.toggleShuffle);
+  const cycleRepeat = usePlayerStore(state => state.cycleRepeat);
   const { showToast } = useAppStore();
   const { toggleSaveSound, isSaved } = useLibraryStore();
   const { session } = useAuthStore();
   const { t } = useTranslation();
+
+  const hasQueue = queue.length > 1;
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
@@ -89,13 +99,50 @@ export const AudioPlayer: React.FC = () => {
       </div>
       
       <div className="player-controls">
-        <button 
-           className="play-btn" 
+        <button
+          className={`action-btn queue-btn ${shuffle ? 'active' : ''}`}
+          onClick={toggleShuffle}
+          disabled={!hasQueue}
+          title="Shuffle"
+        >
+          <Shuffle size={16} />
+        </button>
+        <button
+          className="action-btn queue-btn"
+          onClick={prev}
+          disabled={!currentTrack}
+          title="Previous"
+        >
+          <SkipBack size={18} fill="currentColor" />
+        </button>
+        <button
+           className="play-btn"
            onClick={togglePlay}
            disabled={!currentTrack}
         >
           {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
         </button>
+        <button
+          className="action-btn queue-btn"
+          onClick={next}
+          disabled={!hasQueue}
+          title="Next"
+        >
+          <SkipForward size={18} fill="currentColor" />
+        </button>
+        <button
+          className={`action-btn queue-btn ${repeat !== 'off' ? 'active' : ''}`}
+          onClick={cycleRepeat}
+          disabled={!currentTrack}
+          title={`Repeat: ${repeat}`}
+        >
+          {repeat === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
+        </button>
+        {hasQueue && (
+          <span className="queue-position" title="Position in queue">
+            {queueIndex + 1}/{queue.length}
+          </span>
+        )}
       </div>
       
       <div className="player-waveform">

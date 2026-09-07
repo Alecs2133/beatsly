@@ -14,15 +14,34 @@ import { useTranslation } from '../hooks/useTranslation';
 import { requestDownloadUrl, InsufficientCreditsError } from '../lib/soundUpload';
 import { previewObjectName } from '../lib/audioPreview';
 import { isAdminRole, isPublisherRole } from '../lib/roles';
-import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2 } from 'lucide-react';
+import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2, Wand2, Loader2 } from 'lucide-react';
+import { startDrag } from '@crabnebula/tauri-plugin-drag';
+import { invoke } from '@tauri-apps/api/core';
 import './SoundGrid.css';
 
-const SoundRow = React.memo(({ 
-  sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, t,
-  onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete 
+const SoundRow = React.memo(({
+  sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, t,
+  onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete, onAnalyze
 }: any) => {
+  // Drag nativ către alte aplicații (un DAW) e posibil doar pentru fișiere
+  // deja pe disc — sunetele din cloud nu au o cale locală de oferit
+  // sistemului de operare. `startDrag` are nevoie de calea brută, nu de
+  // `file_url` (care pentru fișierele locale e deja convertit în asset://).
+  const isDraggable = sound.id.toString().startsWith('local-') && !!sound.local_path;
+
   return (
-    <div className="grid-row">
+    <div
+      className={`grid-row${isDraggable ? ' draggable-row' : ''}`}
+      draggable={isDraggable}
+      onDragStart={(e) => {
+        if (!isDraggable) return;
+        // Interceptăm drag-ul HTML5 și pornim unul nativ prin Tauri, ca
+        // fișierul să poată fi plasat direct într-un DAW extern.
+        e.preventDefault();
+        startDrag({ item: [sound.local_path], icon: 'icon.png' });
+      }}
+      title={isDraggable ? 'Drag into your DAW' : undefined}
+    >
       <div className="col col-play">
         <button 
           className="row-play-btn"
@@ -57,6 +76,16 @@ const SoundRow = React.memo(({
         </button>
         <button className="row-action-btn download" onClick={() => onDownload(sound)} title={t('download')}><Download size={18} /></button>
         <button className="row-action-btn" onClick={() => onShare(sound)} title="Share"><Share2 size={18} /></button>
+        {sound.id.toString().startsWith('local-') && !!sound.local_path && (
+          <button
+            className="row-action-btn"
+            onClick={() => onAnalyze(sound)}
+            disabled={isAnalyzing}
+            title="Detect real BPM & key from the audio"
+          >
+            {isAnalyzing ? <Loader2 size={18} className="spin" /> : <Wand2 size={18} />}
+          </button>
+        )}
         {sound.id.toString().startsWith('local-') && canPublish && (
           <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud"><CloudUpload size={18} /></button>
         )}
@@ -73,12 +102,28 @@ const SoundRow = React.memo(({
 
 interface SoundGridProps {
   sounds: SoundItem[];
+  /**
+   * Apelat după o analiză audio reușită (sau o editare), ca pagina părinte
+   * să poată persista corecția în propriul store — necesar în special pentru
+   * fișierele locale, care nu au nicio persistență server-side; fără asta,
+   * corecția s-ar pierde la următoarea navigare, fiindcă `sounds` intern se
+   * resincronizează din prop-ul `sounds` primit de la părinte.
+   */
+  onSoundUpdated?: (id: string | number, updates: Partial<SoundItem>) => void;
 }
 
-export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) => {
+interface AudioAnalysis {
+  bpm: number;
+  key: string;
+  bpm_confidence: number;
+  key_confidence: number;
+}
+
+export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onSoundUpdated }) => {
   const [sounds, setSounds] = useState<SoundItem[]>(initialSounds);
   const [editingSound, setEditingSound] = useState<SoundItem | null>(null);
   const [publishingSound, setPublishingSound] = useState<SoundItem | null>(null);
+  const [analyzingId, setAnalyzingId] = useState<string | number | null>(null);
 
   useEffect(() => {
     setSounds(initialSounds);
@@ -86,31 +131,47 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
 
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
-  const playTrack = usePlayerStore(state => state.playTrack);
-  
+  const playQueue = usePlayerStore(state => state.playQueue);
+  const togglePlay = usePlayerStore(state => state.togglePlay);
+  const nextTrack = usePlayerStore(state => state.next);
+  const prevTrack = usePlayerStore(state => state.prev);
+
+  // Deleagă la coada reală a player-ului, în loc să caute local în `sounds`.
+  // Varianta veche funcționa doar dacă piesa curentă era în lista AFIȘATĂ ÎN
+  // ACEASTĂ grilă — dacă porneai redarea din Discover și navigai la My
+  // Sounds fără să oprești, săgețile nu mai găseau piesa (index -1) și nu
+  // făceau nimic. Coada reală urmărește ce redă efectiv player-ul, nu ce
+  // pagină se întâmplă să fie deschisă.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
       if (!currentTrack) return;
 
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      if (e.key === 'ArrowUp') {
         e.preventDefault();
-        const index = sounds.findIndex(s => s.id === currentTrack.id);
-        
-        if (index !== -1) {
-          if (e.key === 'ArrowUp' && index > 0) {
-            playTrack(sounds[index - 1]);
-          } else if (e.key === 'ArrowDown' && index < sounds.length - 1) {
-            playTrack(sounds[index + 1]);
-          }
-        }
+        prevTrack();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        nextTrack();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTrack, sounds, playTrack]);
+  }, [currentTrack, nextTrack, prevTrack]);
+
+  // Click pe play: dacă e deja piesa activă, doar pauză/reluare (nu strică
+  // nicio coadă existentă). Altfel, coada devine lista curent afișată în
+  // grilă, pornind de la sunetul apăsat — așa alimentăm next/prev cu context
+  // real, nu doar redăm un singur sunet izolat.
+  const handlePlay = useCallback((sound: SoundItem) => {
+    if (currentTrack?.id === sound.id) {
+      togglePlay();
+      return;
+    }
+    const index = sounds.findIndex(s => s.id === sound.id);
+    playQueue(sounds, index === -1 ? 0 : index);
+  }, [sounds, currentTrack, togglePlay, playQueue]);
 
   const savedSounds = useLibraryStore(state => state.savedSounds);
   const toggleSaveSound = useLibraryStore(state => state.toggleSaveSound);
@@ -170,7 +231,36 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
 
   const handleEditSuccess = useCallback((soundId: string | number, updated: Partial<SoundItem>) => {
     setSounds(prev => prev.map(s => s.id === soundId ? { ...s, ...updated } as SoundItem : s));
-  }, []);
+    onSoundUpdated?.(soundId, updated);
+  }, [onSoundUpdated]);
+
+  const handleAnalyze = useCallback(async (sound: SoundItem) => {
+    if (!sound.local_path) return;
+    setAnalyzingId(sound.id);
+    try {
+      const result = await invoke<AudioAnalysis>('analyze_sample_audio', { path: sound.local_path });
+      const bpm = Math.round(result.bpm);
+      const updates: Partial<SoundItem> = { bpm, key: result.key };
+
+      setSounds(prev => prev.map(s => s.id === sound.id ? { ...s, ...updates } : s));
+      onSoundUpdated?.(sound.id, updates);
+
+      // Biblioteca de analiză își raportează singură cât de sigură e —
+      // sub 0.3 chiar ea consideră rezultatul nesigur (fișiere fără
+      // tonalitate clară: percuție pură, zgomot, FX). Un rezultat afișat
+      // fără această avertizare ar părea la fel de sigur ca unul cert.
+      if (result.key_confidence < 0.3) {
+        showToast(`Detected ${bpm} BPM. Key confidence is low (${result.key} may be inaccurate) — verify manually.`, 'info');
+      } else {
+        showToast(`Detected ${bpm} BPM, key ${result.key}`, 'success');
+      }
+    } catch (err: any) {
+      console.error('analyze_sample_audio failed:', err);
+      showToast('Analysis failed: ' + (err?.message ?? String(err)), 'error');
+    } finally {
+      setAnalyzingId(null);
+    }
+  }, [showToast, onSoundUpdated]);
 
   const handleLike = useCallback((sound: SoundItem) => {
     toggleSaveSound(sound);
@@ -257,14 +347,16 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds }) =
               isSaved={isSaved}
               canPublish={canPublish}
               canModerate={canManage(sound)}
+              isAnalyzing={analyzingId === sound.id}
               t={t}
-              onPlay={playTrack}
+              onPlay={handlePlay}
               onLike={handleLike}
               onDownload={handleDownload}
               onShare={handleShare}
               onPublish={handlePublishClick}
               onEdit={setEditingSound}
               onDelete={handleDelete}
+              onAnalyze={handleAnalyze}
             />
           );
         })}
