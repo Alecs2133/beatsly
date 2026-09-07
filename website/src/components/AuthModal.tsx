@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Loader2, Music } from 'lucide-react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../lib/supabase';
 import './AuthModal.css';
+
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string | undefined;
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -18,6 +21,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const captchaRef = useRef<HCaptcha>(null);
 
   const reset = () => {
     setEmail('');
@@ -25,6 +30,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     setUsername('');
     setError('');
     setSuccessMsg('');
+    setCaptchaToken('');
+    captchaRef.current?.resetCaptcha();
   };
 
   const switchMode = (m: 'login' | 'signup') => {
@@ -32,15 +39,31 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     reset();
   };
 
+  // Resetăm widget-ul la închiderea modalului — un token hCaptcha e de unică
+  // folosință, deci unul rămas din încercarea trecută n-ar mai fi valid oricum.
+  useEffect(() => {
+    if (!isOpen) reset();
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError('Please complete the captcha.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccessMsg('');
 
     try {
       if (mode === 'login') {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+          options: { captchaToken },
+        });
         if (error) throw error;
         if (data.user) {
           onSuccess({ email: data.user.email!, id: data.user.id });
@@ -50,7 +73,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { username } }
+          options: {
+            data: { username },
+            emailRedirectTo: `${window.location.origin}/email-confirmed`,
+            captchaToken,
+          }
         });
         if (error) throw error;
         if (data.user) {
@@ -62,6 +89,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       setError(msg);
     } finally {
       setLoading(false);
+      // Token-ul e consumat indiferent de rezultat — Supabase îl invalidează
+      // după prima verificare, reușită sau nu.
+      setCaptchaToken('');
+      captchaRef.current?.resetCaptcha();
     }
   };
 
@@ -127,6 +158,17 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   required
                 />
               </div>
+
+              {HCAPTCHA_SITE_KEY && (
+                <div className="auth-captcha">
+                  <HCaptcha
+                    ref={captchaRef}
+                    sitekey={HCAPTCHA_SITE_KEY}
+                    onVerify={setCaptchaToken}
+                    onExpire={() => setCaptchaToken('')}
+                  />
+                </div>
+              )}
 
               {error && <div className="auth-error">{error}</div>}
               {successMsg && <div className="auth-success">{successMsg}</div>}

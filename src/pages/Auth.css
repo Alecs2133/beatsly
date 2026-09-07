@@ -122,6 +122,13 @@
   box-shadow: 0 0 0 4px rgba(176, 38, 255, 0.1);
 }
 
+.auth-captcha {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
 .auth-btn {
   width: 100%;
   padding: 16px;

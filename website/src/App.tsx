@@ -4,6 +4,7 @@ import { Home } from './pages/Home';
 import { Pricing } from './pages/Pricing';
 import { DownloadPage } from './pages/Download';
 import { Account } from './pages/Account';
+import { EmailConfirmed } from './pages/EmailConfirmed';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="pricing" element={<Pricing />} />
           <Route path="download" element={<DownloadPage />} />
           <Route path="account" element={<Account />} />
+          <Route path="email-confirmed" element={<EmailConfirmed />} />
         </Route>
       </Routes>
     </BrowserRouter>

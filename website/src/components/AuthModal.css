@@ -127,6 +127,11 @@
   color: var(--text-muted);
 }
 
+.auth-captcha {
+  display: flex;
+  justify-content: center;
+}
+
 .auth-error {
   background: rgba(255, 80, 80, 0.1);
   border: 1px solid rgba(255, 80, 80, 0.3);

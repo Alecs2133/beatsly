@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import './Auth.css';
+
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string | undefined;
 
 export const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,21 +13,50 @@ export const Auth: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const captchaRef = useRef<HCaptcha>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  // Un token hCaptcha e de unică folosință — resetăm widget-ul de fiecare
+  // dată când userul schimbă între login/signup, ca să nu rămână unul expirat.
+  useEffect(() => {
+    setCaptchaToken('');
+    captchaRef.current?.resetCaptcha();
+  }, [isLogin]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError('Te rugăm să confirmi captcha-ul.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+          options: { captchaToken },
+        });
         if (error) throw error;
         navigate('/library');
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            // Aplicația nu are un origin web real (Tauri rulează pe
+            // tauri://localhost) — link-ul de confirmare din email trebuie
+            // trimis explicit către pagina de pe site.
+            emailRedirectTo: 'https://beatsly.vercel.app/email-confirmed',
+            captchaToken,
+          },
+        });
         if (error) throw error;
         setIsLogin(true);
       }
@@ -32,6 +64,8 @@ export const Auth: React.FC = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+      setCaptchaToken('');
+      captchaRef.current?.resetCaptcha();
     }
   };
 
@@ -63,6 +97,17 @@ export const Auth: React.FC = () => {
               required
             />
           </div>
+
+          {HCAPTCHA_SITE_KEY && (
+            <div className="auth-captcha">
+              <HCaptcha
+                ref={captchaRef}
+                sitekey={HCAPTCHA_SITE_KEY}
+                onVerify={setCaptchaToken}
+                onExpire={() => setCaptchaToken('')}
+              />
+            </div>
+          )}
 
           <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? '...' : (isLogin ? t('sign_in') : t('sign_up'))}
