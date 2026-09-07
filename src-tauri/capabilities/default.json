@@ -20,7 +20,8 @@
             "identifier": "shell:allow-open",
             "allow": [
                 { "url": "https://*.stripe.com/*" },
-                { "url": "https://stripe.com/*" }
+                { "url": "https://stripe.com/*" },
+                { "url": "https://beatsly.vercel.app/*" }
             ]
         }
     ]

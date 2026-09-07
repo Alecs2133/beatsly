@@ -106,15 +106,18 @@ export const en = {
   update_password: 'Update Password',
   updating: 'Updating...',
 
-  // Auth
-  welcome_back: 'Welcome back to Beats.ly',
-  create_account: 'Create your Beats.ly account',
-  sign_in: 'Sign In',
-  sign_up: 'Sign Up',
-  email: 'Email',
-  password: 'Password',
-  no_account: "Don't have an account?",
-  have_account: "Already have an account?",
+  // Auth — login/signup happen on the website, not in the app; see Auth.tsx.
+  auth_heading: 'Sign in to Beats.ly',
+  auth_desc: 'Your account is managed on the website. Sign in there once — this window continues automatically.',
+  auth_btn_start: 'Sign In in Browser',
+  auth_waiting: 'Waiting for you to finish in your browser…',
+  auth_open_manually: "Didn't open automatically? Copy this link:",
+  auth_link_copied: 'Link copied!',
+  auth_cancel: 'Cancel',
+  auth_error: 'Could not connect your account. Please try again.',
+  auth_retry: 'Try Again',
+  auth_timeout: 'This is taking a while — you can keep waiting or try again.',
+  auth_success: "You're signed in! Redirecting…",
 
   // Options
   preferences: 'Preferences',

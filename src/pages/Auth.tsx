@@ -2,70 +2,112 @@ import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { open } from '@tauri-apps/plugin-shell';
+import { Loader2, LogIn, Copy, Check } from 'lucide-react';
 import './Auth.css';
 
-const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string | undefined;
+const WEBSITE_URL = 'https://beatsly.vercel.app';
+const POLL_INTERVAL_MS = 2500;
+const TIMEOUT_MS = 5 * 60 * 1000; // Sincronizat cu expirarea codului pe server.
+
+/** 256 biți — spațiul de căutare face ghicitul irelevant, indiferent de rata de cereri. */
+function generateCode(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+type Status = 'idle' | 'waiting' | 'success' | 'error' | 'timeout';
 
 export const Auth: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState('');
-  const captchaRef = useRef<HCaptcha>(null);
+  const [status, setStatus] = useState<Status>('idle');
+  const [code, setCode] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Un token hCaptcha e de unică folosință — resetăm widget-ul de fiecare
-  // dată când userul schimbă între login/signup, ca să nu rămână unul expirat.
-  useEffect(() => {
-    setCaptchaToken('');
-    captchaRef.current?.resetCaptcha();
-  }, [isLogin]);
+  const stopPolling = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    pollRef.current = null;
+    timeoutRef.current = null;
+  };
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => stopPolling, []);
 
-    if (HCAPTCHA_SITE_KEY && !captchaToken) {
-      setError('Te rugăm să confirmi captcha-ul.');
-      return;
-    }
+  const pollForSession = (activeCode: string) => {
+    pollRef.current = setInterval(async () => {
+      let exchanged: { access_token: string; refresh_token: string } | null = null;
+      try {
+        const { data, error } = await supabase.functions.invoke('exchange-auth-code', {
+          body: { code: activeCode },
+        });
+        // Codul nu e încă revendicat — răspunsul "pending" ajunge aici ca eroare
+        // (functions.invoke tratează orice status non-2xx ca error), nu ca succes.
+        // O eroare izolată de rețea nu trebuie să oprească tot pollingul —
+        // încercăm din nou la următorul tick, doar timeout-ul global renunță.
+        if (error || !data?.access_token) return;
+        exchanged = data;
+      } catch (err) {
+        console.error('exchange-auth-code failed:', err);
+        return;
+      }
+      if (!exchanged) return;
 
-    setLoading(true);
-    setError('');
+      // Codul e ars pe server la acest punct — indiferent ce urmează, n-are
+      // rost să continuăm pollingul cu el.
+      stopPolling();
+
+      try {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: exchanged.access_token,
+          refresh_token: exchanged.refresh_token,
+        });
+        if (sessionError) throw sessionError;
+
+        setStatus('success');
+        setTimeout(() => navigate('/library'), 800);
+      } catch (err) {
+        console.error('setSession failed:', err);
+        setStatus('error');
+      }
+    }, POLL_INTERVAL_MS);
+
+    timeoutRef.current = setTimeout(() => {
+      stopPolling();
+      setStatus('timeout');
+    }, TIMEOUT_MS);
+  };
+
+  const handleStart = async () => {
+    const newCode = generateCode();
+    setCode(newCode);
+    setStatus('waiting');
+    setLinkCopied(false);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-          options: { captchaToken },
-        });
-        if (error) throw error;
-        navigate('/library');
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            // Aplicația nu are un origin web real (Tauri rulează pe
-            // tauri://localhost) — link-ul de confirmare din email trebuie
-            // trimis explicit către pagina de pe site.
-            emailRedirectTo: 'https://beatsly.vercel.app/email-confirmed',
-            captchaToken,
-          },
-        });
-        if (error) throw error;
-        setIsLogin(true);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-      setCaptchaToken('');
-      captchaRef.current?.resetCaptcha();
+      await open(`${WEBSITE_URL}/app-login?code=${newCode}`);
+    } catch (err) {
+      console.error('Failed to open browser:', err);
+      // Nu e fatal — link-ul rămâne disponibil de copiat manual mai jos.
+    }
+
+    pollForSession(newCode);
+  };
+
+  const handleCancel = () => {
+    stopPolling();
+    setStatus('idle');
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${WEBSITE_URL}/app-login?code=${code}`);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Clipboard write failed:', err);
     }
   };
 
@@ -73,53 +115,54 @@ export const Auth: React.FC = () => {
     <div className="auth-page">
       <div className="auth-container glass">
         <div className="auth-logo">🎹</div>
-        <h2>{isLogin ? t('welcome_back') : t('create_account')}</h2>
-        
-        {error && <div className="error-message">{error}</div>}
+        <h2>{t('auth_heading')}</h2>
 
-        <form onSubmit={handleAuth} className="auth-form">
-          <div className="form-group">
-            <label>{t('email')}</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>{t('password')}</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+        {status === 'idle' && (
+          <>
+            <p className="auth-desc">{t('auth_desc')}</p>
+            <button className="auth-btn" onClick={handleStart}>
+              <LogIn size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              {t('auth_btn_start')}
+            </button>
+          </>
+        )}
 
-          {HCAPTCHA_SITE_KEY && (
-            <div className="auth-captcha">
-              <HCaptcha
-                ref={captchaRef}
-                sitekey={HCAPTCHA_SITE_KEY}
-                onVerify={setCaptchaToken}
-                onExpire={() => setCaptchaToken('')}
-              />
+        {(status === 'waiting' || status === 'timeout') && (
+          <>
+            <div className="auth-waiting">
+              {status === 'waiting' && <Loader2 size={28} className="spin" />}
+              <p>{status === 'timeout' ? t('auth_timeout') : t('auth_waiting')}</p>
             </div>
-          )}
 
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? '...' : (isLogin ? t('sign_in') : t('sign_up'))}
-          </button>
-        </form>
+            <p className="auth-manual-hint">{t('auth_open_manually')}</p>
+            <div className="auth-link-box" onClick={handleCopyLink} title={t('auth_open_manually')}>
+              <span>{`${WEBSITE_URL}/app-login?code=${code.slice(0, 12)}…`}</span>
+              {linkCopied ? <Check size={16} /> : <Copy size={16} />}
+            </div>
+            {linkCopied && <p className="auth-copied">{t('auth_link_copied')}</p>}
 
-        <p className="toggle-text">
-          {isLogin ? t('no_account') : t('have_account')}{' '}
-          <span onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? t('sign_up') : t('sign_in')}
-          </span>
-        </p>
+            <div className="auth-actions">
+              {status === 'timeout' && (
+                <button className="auth-btn" onClick={handleStart}>{t('auth_retry')}</button>
+              )}
+              <button className="auth-btn-secondary" onClick={handleCancel}>{t('auth_cancel')}</button>
+            </div>
+          </>
+        )}
+
+        {status === 'success' && (
+          <div className="auth-waiting">
+            <Loader2 size={28} className="spin" />
+            <p>{t('auth_success')}</p>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <>
+            <p className="error-message">{t('auth_error')}</p>
+            <button className="auth-btn" onClick={handleStart}>{t('auth_retry')}</button>
+          </>
+        )}
       </div>
     </div>
   );

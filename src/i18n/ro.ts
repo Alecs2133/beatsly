@@ -108,15 +108,18 @@ export const ro: Record<TranslationKeys, string> = {
   update_password: 'Actualizează Parola',
   updating: 'Se actualizează...',
 
-  // Auth
-  welcome_back: 'Bine ai revenit pe Beats.ly',
-  create_account: 'Creează-ți contul Beats.ly',
-  sign_in: 'Autentificare',
-  sign_up: 'Creare Cont',
-  email: 'Email',
-  password: 'Parolă',
-  no_account: "Nu ai un cont?",
-  have_account: "Ai deja un cont?",
+  // Auth — login/signup se fac pe site, nu în aplicație; vezi Auth.tsx.
+  auth_heading: 'Autentificare Beats.ly',
+  auth_desc: 'Contul tău e gestionat pe site. Loghează-te acolo o dată — fereastra asta continuă automat.',
+  auth_btn_start: 'Autentificare în Browser',
+  auth_waiting: 'Se așteaptă să termini în browser…',
+  auth_open_manually: 'Nu s-a deschis automat? Copiază acest link:',
+  auth_link_copied: 'Link copiat!',
+  auth_cancel: 'Anulează',
+  auth_error: 'Nu am putut conecta contul. Încearcă din nou.',
+  auth_retry: 'Încearcă Din Nou',
+  auth_timeout: 'Durează cam mult — poți aștepta în continuare sau încerca din nou.',
+  auth_success: 'Ești autentificat! Se redirecționează…',
 
   // Options
   preferences: 'Preferințe',

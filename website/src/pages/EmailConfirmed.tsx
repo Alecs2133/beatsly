@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { useLayoutContext } from '../Layout';
+import { submitPendingAppAuthCode } from '../lib/appHandoff';
 
 const ERROR_STYLE = {
   color: '#ff6b6b',
@@ -14,6 +15,12 @@ const ERROR_STYLE = {
 export function EmailConfirmed() {
   const { user } = useLayoutContext();
   const [searchParams] = useSearchParams();
+
+  // Doar dacă userul a pornit signup-ul din /app-login (deci aplicația
+  // desktop încă așteaptă un cod) — pentru oricine confirmă emailul normal,
+  // de pe site, asta rămâne mereu false și nu schimbă nimic din mesaj.
+  const appHandoffAttempted = useRef(false);
+  const [appConnected, setAppConnected] = useState(false);
 
   // Supabase redirects erori fie ca query string, fie ca hash fragment,
   // în funcție de tipul de link — verificăm ambele ca să nu ratăm mesajul.
@@ -29,6 +36,14 @@ export function EmailConfirmed() {
     const timer = setTimeout(() => setSettled(true), 600);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!user || appHandoffAttempted.current) return;
+    appHandoffAttempted.current = true;
+    submitPendingAppAuthCode()
+      .then(setAppConnected)
+      .catch((err) => console.error('submitPendingAppAuthCode failed:', err));
+  }, [user]);
 
   const failed = !!errorDescription;
 
@@ -56,7 +71,9 @@ export function EmailConfirmed() {
             ? errorDescription || 'This confirmation link is invalid or has expired. Try signing up again to get a new one.'
             : !settled && !user
               ? 'Confirming your email…'
-              : `Your account is verified${user?.email ? ` — ${user.email}` : ''}. You can close this tab and sign in from the app.`}
+              : appConnected
+                ? `Your account is verified${user?.email ? ` — ${user.email}` : ''}. The Beats.ly app has been connected automatically — you can go back to it now.`
+                : `Your account is verified${user?.email ? ` — ${user.email}` : ''}. You can close this tab now.`}
         </motion.p>
 
         <motion.div
