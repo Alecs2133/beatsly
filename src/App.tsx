@@ -9,6 +9,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
 import { isAdminRole, isPublisherRole } from './lib/roles';
+import { WelcomeTour } from './components/WelcomeTour';
 import './design.css';
 
 // Lazy loaded pages for performance
@@ -24,6 +25,7 @@ const Options = lazy(() => import('./pages/Options').then(m => ({ default: m.Opt
 const Packs = lazy(() => import('./pages/Packs').then(m => ({ default: m.Packs })));
 const PackDetails = lazy(() => import('./pages/PackDetails').then(m => ({ default: m.PackDetails })));
 const CrewPage = lazy(() => import('./pages/Crew').then(m => ({ default: m.CrewPage })));
+const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 
 const RouteFallback = () => (
   <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
@@ -86,10 +88,11 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 const AppContent = () => {
-  const { initialize, user, initialized } = useAuthStore();
+  const { initialize, user, profile, initialized } = useAuthStore();
   const { fetchLibrary } = useLibraryStore();
   const location = useLocation();
   const [appReady, setAppReady] = useState(false);
+  const [tourDismissed, setTourDismissed] = useState(false);
 
   useEffect(() => {
     initialize();
@@ -147,6 +150,7 @@ const AppContent = () => {
               <Route path="/packs" element={<ProtectedRoute><Packs /></ProtectedRoute>} />
               <Route path="/pack/:tag" element={<ProtectedRoute><PackDetails /></ProtectedRoute>} />
               <Route path="/crew" element={<ProtectedRoute><CrewPage /></ProtectedRoute>} />
+              <Route path="/producer/:userId" element={<Profile />} />
             </Routes>
           </Suspense>
         </main>
@@ -154,6 +158,9 @@ const AppContent = () => {
 
       {!hideLayout && <AudioPlayer />}
       <ToastContainer />
+      {appReady && user && profile && !profile.onboarded_at && !tourDismissed && (
+        <WelcomeTour userId={user.id} onDone={() => setTourDismissed(true)} />
+      )}
     </div>
     </>
   );

@@ -40,7 +40,8 @@ export const PackDetails: React.FC = () => {
           file_url: item.file_url || audioFallbacks[index % audioFallbacks.length],
           preview_url: item.preview_url ?? undefined,
           storage_path: item.storage_path ?? undefined,
-          owner_id: item.owner_id ?? undefined
+          owner_id: item.owner_id ?? undefined,
+          license: item.license
         }));
 
         setSounds(mappedData);

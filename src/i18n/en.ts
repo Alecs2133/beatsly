@@ -39,6 +39,10 @@ export const en = {
   my_sounds_subtitle: 'Your personal collection of saved samples and loops.',
   no_saved_sounds: 'You haven\'t saved any sounds yet.',
   explore_discover: 'Explore Discover',
+  collections_saved: 'Saved',
+  collections_delete_hint: 'Double-click to delete this collection',
+  collections_new_placeholder: 'New collection…',
+  license_label: 'License',
 
   // Audio Player
   save_to_my_sounds: 'Save to My Sounds',

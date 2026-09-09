@@ -2,7 +2,7 @@
 name = "beatsly"
 # Versiunea aplicației livrate vine din package.json, prin tauri.conf.json.
 # Aceasta e doar versiunea crate-ului și nu apare în installer.
-version = "0.1.8"
+version = "0.1.9"
 description = "Sample library and sound manager for producers"
 authors = ["Beats.ly"]
 edition = "2021"

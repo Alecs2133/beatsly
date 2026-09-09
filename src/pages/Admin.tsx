@@ -18,17 +18,53 @@ interface RoleRequest {
   created_at: string;
 }
 
+interface ErrorReport {
+  id: string;
+  user_id: string | null;
+  platform: string;
+  context: string;
+  message: string;
+  stack: string | null;
+  app_version: string | null;
+  created_at: string;
+}
+
 export const Admin: React.FC = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'requests' | 'batch_upload' | 'moderation'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'batch_upload' | 'moderation' | 'errors'>('requests');
   const [requests, setRequests] = useState<RoleRequest[]>([]);
   const [pendingSounds, setPendingSounds] = useState<SoundItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [missingPreviews, setMissingPreviews] = useState<number | null>(null);
   const [backfilling, setBackfilling] = useState(false);
   const [backfillProgress, setBackfillProgress] = useState({ done: 0, total: 0, failed: 0 });
+  const [errorReports, setErrorReports] = useState<ErrorReport[]>([]);
+  const [errorReportsLoaded, setErrorReportsLoaded] = useState(false);
+  const [expandedErrorId, setExpandedErrorId] = useState<string | null>(null);
   const { showToast } = useAppStore();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayerStore();
+
+  // Lazy — nu are rost să tragem potențial sute de rânduri de fiecare dată
+  // când un admin deschide pagina, dacă nu se uită niciodată la tabul ăsta.
+  useEffect(() => {
+    if (activeTab !== 'errors' || errorReportsLoaded) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('client_error_reports')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        setErrorReports(data || []);
+      } catch (err: any) {
+        console.error(err);
+        showToast('Failed to load error reports', 'error');
+      } finally {
+        setErrorReportsLoaded(true);
+      }
+    })();
+  }, [activeTab, errorReportsLoaded, showToast]);
 
   const fetchRequests = async () => {
     try {
@@ -305,11 +341,17 @@ export const Admin: React.FC = () => {
         >
           {t('batch_upload_studio')}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('moderation')}
           style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: activeTab === 'moderation' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)', color: activeTab === 'moderation' ? 'black' : 'white', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
         >
           Sound Moderation ({pendingSounds.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('errors')}
+          style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: activeTab === 'errors' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)', color: activeTab === 'errors' ? 'black' : 'white', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
+        >
+          Error Reports
         </button>
       </div>
 
@@ -449,6 +491,54 @@ export const Admin: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </>
+      ) : activeTab === 'errors' ? (
+        <>
+          {!errorReportsLoaded ? (
+            <p>Loading…</p>
+          ) : errorReports.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-panel)', borderRadius: '12px' }}>
+              <p style={{ color: 'var(--text-muted)' }}>No errors reported. 🎉</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {errorReports.map(report => (
+                <div key={report.id} style={{ background: 'var(--bg-panel)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                    onClick={() => setExpandedErrorId(id => id === report.id ? null : report.id)}
+                  >
+                    <div>
+                      <span style={{
+                        fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', marginRight: '10px',
+                        background: report.platform === 'desktop' ? 'rgba(176,38,255,0.15)' : 'rgba(0,187,249,0.15)',
+                        color: report.platform === 'desktop' ? 'var(--accent-primary)' : 'var(--accent-secondary)',
+                      }}>
+                        {report.platform.toUpperCase()}
+                      </span>
+                      <span style={{ fontWeight: 'bold' }}>{report.context}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '13px', marginLeft: '10px' }}>{report.message}</span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', marginLeft: '12px' }}>
+                      {new Date(report.created_at).toLocaleString()} {report.app_version ? `· v${report.app_version}` : ''}
+                    </span>
+                  </div>
+                  {expandedErrorId === report.id && (
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-light)' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                        User: {report.user_id || 'anonymous'}
+                      </p>
+                      {report.stack && (
+                        <pre style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', maxHeight: '240px', overflowY: 'auto' }}>
+                          {report.stack}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </>

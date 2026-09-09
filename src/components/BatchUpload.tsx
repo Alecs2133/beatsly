@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { useAuthStore } from '../store/useAuthStore';
+import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 
 interface StagedFile {
   id: string;
@@ -17,6 +18,7 @@ interface StagedFile {
   bpm: string;
   key: string;
   tags: string;
+  license: SoundLicense;
   duration: string;
   selected: boolean;
   status: 'pending' | 'uploading' | 'success' | 'error';
@@ -83,6 +85,7 @@ export const BatchUpload: React.FC = () => {
           bpm: '',
           key: '',
           tags: 'trap, hip-hop',
+          license: 'royalty_free',
           duration,
           selected: true,
           status: 'pending'
@@ -150,7 +153,8 @@ export const BatchUpload: React.FC = () => {
           storage_path: uploaded.storagePath,
           preview_url: uploaded.previewUrl,
           file_url: uploaded.legacyPublicUrl,
-          status: 'pending'
+          status: 'pending',
+          license: file.license
         });
 
         if (dbError) throw dbError;
@@ -248,6 +252,15 @@ export const BatchUpload: React.FC = () => {
                       <input type="number" value={f.bpm} onChange={e => updateFile(f.id, 'bpm', e.target.value)} placeholder="BPM" style={{...inputStyle, width: '70px'}} />
                       <input type="text" value={f.key} onChange={e => updateFile(f.id, 'key', e.target.value)} placeholder="Key" style={{...inputStyle, width: '60px'}} />
                     </div>
+                    <select
+                      value={f.license}
+                      onChange={e => updateFile(f.id, 'license', e.target.value as SoundLicense)}
+                      style={{...inputStyle, marginTop: '8px'}}
+                    >
+                      {LICENSE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </td>
                   <td style={{ padding: '15px' }}>
                     <input type="text" value={f.tags} onChange={e => updateFile(f.id, 'tags', e.target.value)} placeholder="Tags (comma sep)" style={inputStyle} />

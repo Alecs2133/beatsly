@@ -58,7 +58,7 @@
 .col-bpm { flex: 1; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .col-key { flex: 1; color: var(--text-muted); }
 .col-tags { flex: 2; gap: 8px; flex-wrap: wrap; }
-.col-actions { width: 140px; justify-content: flex-end; gap: 12px; }
+.col-actions { width: 170px; justify-content: flex-end; gap: 12px; }
 
 .row-play-btn {
   width: 32px;
@@ -91,6 +91,108 @@
 .sound-author {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.sound-author-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sound-author-link:hover {
+  color: var(--accent-secondary);
+  text-decoration: underline;
+}
+
+.license-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-secondary);
+  background: rgba(0, 187, 249, 0.1);
+  border: 1px solid rgba(0, 187, 249, 0.25);
+  vertical-align: middle;
+}
+
+.collection-menu-anchor {
+  position: relative;
+  display: flex;
+}
+
+.collection-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 180px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-panel, #16161f);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.collection-menu-empty {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.collection-menu-item {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.collection-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.collection-menu-new {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-light);
+  padding-top: 6px;
+}
+
+.collection-menu-new input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.collection-menu-new button {
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  width: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tag {

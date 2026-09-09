@@ -10,6 +10,7 @@ import { useMyCrews } from '../hooks/useMyCrews';
 import { CrewMember, fetchCrewMembers, createCrew, addCrewMember, removeCrewMember } from '../lib/crews';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { hasUnlimitedCredits } from '../lib/roles';
+import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 import { SoundGrid } from '../components/SoundGrid';
 import { SoundItem } from '../data/mockData';
 
@@ -42,6 +43,7 @@ export const CrewPage: React.FC = () => {
   const [uploadBpm, setUploadBpm] = useState('');
   const [uploadKey, setUploadKey] = useState('');
   const [uploadTags, setUploadTags] = useState('');
+  const [uploadLicense, setUploadLicense] = useState<SoundLicense>('royalty_free');
   const [uploadPath, setUploadPath] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -83,6 +85,7 @@ export const CrewPage: React.FC = () => {
         preview_url: item.preview_url ?? undefined,
         storage_path: item.storage_path ?? undefined,
         owner_id: item.owner_id ?? undefined,
+        license: item.license,
       }));
       setSounds(mapped);
     } catch (err: any) {
@@ -178,6 +181,7 @@ export const CrewPage: React.FC = () => {
         preview_url: uploaded.previewUrl,
         file_url: uploaded.legacyPublicUrl,
         status: 'approved',
+        license: uploadLicense,
       });
       if (error) throw error;
 
@@ -187,6 +191,7 @@ export const CrewPage: React.FC = () => {
       setUploadBpm('');
       setUploadKey('');
       setUploadTags('');
+      setUploadLicense('royalty_free');
       await loadCrewData(selectedCrewId);
     } catch (err: any) {
       console.error(err);
@@ -340,6 +345,15 @@ export const CrewPage: React.FC = () => {
                   <input value={uploadBpm} onChange={e => setUploadBpm(e.target.value)} placeholder="BPM" type="number" style={{ ...inputStyle, width: 80 }} />
                   <input value={uploadKey} onChange={e => setUploadKey(e.target.value)} placeholder="Key" style={{ ...inputStyle, width: 80 }} />
                   <input value={uploadTags} onChange={e => setUploadTags(e.target.value)} placeholder="tags, comma, separated" style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
+                  <select
+                    value={uploadLicense}
+                    onChange={e => setUploadLicense(e.target.value as SoundLicense)}
+                    style={{ ...inputStyle, width: 160 }}
+                  >
+                    {LICENSE_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                   <button
                     type="submit"
                     disabled={uploading}

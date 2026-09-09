@@ -67,7 +67,8 @@ export const Auth: React.FC = () => {
         if (sessionError) throw sessionError;
 
         setStatus('success');
-        setTimeout(() => navigate('/library'), 800);
+        // '/' e Discover — '/library' e de fapt My Sounds, în ciuda numelui.
+        setTimeout(() => navigate('/'), 800);
       } catch (err) {
         console.error('setSession failed:', err);
         setStatus('error');

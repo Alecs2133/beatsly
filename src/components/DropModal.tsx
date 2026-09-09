@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
+import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 
 interface DropModalProps {
   filePath: string;
@@ -23,6 +24,7 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
   const [key, setKey] = useState('');
   const [tags, setTags] = useState('');
   const [duration, setDuration] = useState('0:00');
+  const [license, setLicense] = useState<SoundLicense>('royalty_free');
   const [isPublishing, setIsPublishing] = useState(false);
   
 
@@ -95,7 +97,8 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
           storage_path: uploaded.storagePath,
           preview_url: uploaded.previewUrl,
           file_url: uploaded.legacyPublicUrl,
-          status: 'pending'
+          status: 'pending',
+          license
         });
 
       if (dbError) throw dbError;
@@ -195,6 +198,19 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
               style={inputStyle} 
               placeholder="trap, piano, loop"
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>{t('license_label')}</label>
+            <select
+              value={license}
+              onChange={e => setLicense(e.target.value as SoundLicense)}
+              style={inputStyle}
+            >
+              {LICENSE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ marginTop: '10px', fontSize: '14px', color: 'var(--accent-secondary)' }}>

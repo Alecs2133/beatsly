@@ -21,6 +21,8 @@ export interface UserProfile {
   last_name?: string;
   username?: string;
   phone_number?: string;
+  /** null = n-a văzut încă turul de bun venit. */
+  onboarded_at?: string | null;
 }
 
 interface AuthState {

@@ -21,6 +21,8 @@ export interface SoundItem {
    * are nevoie de calea de fișier brută, nu de URL-ul convertit.
    */
   local_path?: string;
+  /** 'royalty_free' | 'attribution_required' | 'exclusive'. Absent pe date vechi/mock. */
+  license?: string;
 }
 
 export const mockSounds: SoundItem[] = [

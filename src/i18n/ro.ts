@@ -41,6 +41,10 @@ export const ro: Record<TranslationKeys, string> = {
   my_sounds_subtitle: 'Colecția ta personală de sample-uri și loop-uri salvate.',
   no_saved_sounds: 'Nu ai salvat încă niciun sunet.',
   explore_discover: 'Explorează',
+  collections_saved: 'Salvate',
+  collections_delete_hint: 'Dublu-click pentru a șterge colecția',
+  collections_new_placeholder: 'Colecție nouă…',
+  license_label: 'Licență',
 
   // Audio Player
   save_to_my_sounds: 'Salvează la Sunetele Mele',

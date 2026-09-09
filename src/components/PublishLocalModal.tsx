@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { SoundItem } from '../data/mockData';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
+import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 
 interface PublishLocalModalProps {
   sound: SoundItem;
@@ -23,6 +24,7 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
   const [bpm, setBpm] = useState(sound.bpm ? String(sound.bpm) : '');
   const [key, setKey] = useState(sound.key || '');
   const [tags, setTags] = useState(sound.tags?.join(', ') || '');
+  const [license, setLicense] = useState<SoundLicense>('royalty_free');
   const [isPublishing, setIsPublishing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +61,8 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
           storage_path: uploaded.storagePath,
           preview_url: uploaded.previewUrl,
           file_url: uploaded.legacyPublicUrl,
-          status: 'pending'
+          status: 'pending',
+          license
         });
 
       if (dbError) throw dbError;
@@ -150,13 +153,26 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
 
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>{t('tags_label')}</label>
-            <input 
-              type="text" 
-              value={tags} 
-              onChange={e => setTags(e.target.value)} 
-              style={inputStyle} 
+            <input
+              type="text"
+              value={tags}
+              onChange={e => setTags(e.target.value)}
+              style={inputStyle}
               placeholder="trap, piano, loop"
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>{t('license_label')}</label>
+            <select
+              value={license}
+              onChange={e => setLicense(e.target.value as SoundLicense)}
+              style={inputStyle}
+            >
+              {LICENSE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>

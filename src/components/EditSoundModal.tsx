@@ -4,6 +4,7 @@ import { SoundItem } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 
 interface EditSoundModalProps {
   sound: SoundItem;
@@ -20,6 +21,7 @@ export const EditSoundModal: React.FC<EditSoundModalProps> = ({ sound, onClose, 
   const [bpm, setBpm] = useState(sound.bpm?.toString() || '');
   const [keySignature, setKeySignature] = useState(sound.key || '');
   const [tags, setTags] = useState(sound.tags.join(', '));
+  const [license, setLicense] = useState<SoundLicense>((sound.license as SoundLicense) || 'royalty_free');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -39,14 +41,15 @@ export const EditSoundModal: React.FC<EditSoundModalProps> = ({ sound, onClose, 
           type,
           bpm: numBpm,
           key_signature: keySignature,
-          tags: updatedTags
+          tags: updatedTags,
+          license
         })
         .eq('id', sound.id);
 
       if (error) throw error;
 
       showToast(t('sound_updated'), 'success');
-      onSuccess({ title, author, type, bpm: numBpm || undefined, key: keySignature, tags: updatedTags });
+      onSuccess({ title, author, type, bpm: numBpm || undefined, key: keySignature, tags: updatedTags, license });
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -106,6 +109,15 @@ export const EditSoundModal: React.FC<EditSoundModalProps> = ({ sound, onClose, 
           <div>
             <label style={labelStyle}>{t('tags_label')}</label>
             <input type="text" style={inputStyle} value={tags} onChange={e => setTags(e.target.value)} placeholder={t('tags_placeholder')} />
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t('license_label')}</label>
+            <select style={inputStyle} value={license} onChange={e => setLicense(e.target.value as SoundLicense)}>
+              {LICENSE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>

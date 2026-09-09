@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SoundItem } from '../data/mockData';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useLibraryStore } from '../store/useLibraryStore';
@@ -14,20 +15,27 @@ import { useTranslation } from '../hooks/useTranslation';
 import { requestDownloadUrl, InsufficientCreditsError } from '../lib/soundUpload';
 import { previewObjectName } from '../lib/audioPreview';
 import { isAdminRole, isPublisherRole } from '../lib/roles';
-import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2, Wand2, Loader2 } from 'lucide-react';
+import { licenseShortLabel, licenseLabel } from '../lib/licenses';
+import { useCollections } from '../hooks/useCollections';
+import { createCollection, addSoundToCollection } from '../lib/collections';
+import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2, Wand2, Loader2, FolderPlus, Check } from 'lucide-react';
 import { startDrag } from '@crabnebula/tauri-plugin-drag';
 import { invoke } from '@tauri-apps/api/core';
 import './SoundGrid.css';
 
 const SoundRow = React.memo(({
-  sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, t,
-  onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete, onAnalyze
+  sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, isLoggedIn, t,
+  collectionMenuOpen, collections,
+  onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete, onAnalyze,
+  onNavigateToProfile, onToggleCollectionMenu, onAddToCollection, onCreateCollection
 }: any) => {
   // Drag nativ către alte aplicații (un DAW) e posibil doar pentru fișiere
   // deja pe disc — sunetele din cloud nu au o cale locală de oferit
   // sistemului de operare. `startDrag` are nevoie de calea brută, nu de
   // `file_url` (care pentru fișierele locale e deja convertit în asset://).
   const isDraggable = sound.id.toString().startsWith('local-') && !!sound.local_path;
+  const isLocal = sound.id.toString().startsWith('local-');
+  const [newCollectionName, setNewCollectionName] = React.useState('');
 
   return (
     <div
@@ -43,7 +51,7 @@ const SoundRow = React.memo(({
       title={isDraggable ? 'Drag into your DAW' : undefined}
     >
       <div className="col col-play">
-        <button 
+        <button
           className="row-play-btn"
           onClick={() => onPlay(sound)}
           style={{
@@ -54,8 +62,19 @@ const SoundRow = React.memo(({
         </button>
       </div>
       <div className="col col-title">
-        <div className="sound-title">{sound.title}</div>
-        <div className="sound-author">{sound.author}</div>
+        <div className="sound-title">
+          {sound.title}
+          {sound.license && sound.license !== 'royalty_free' && (
+            <span className="license-badge" title={licenseLabel(sound.license)}>{licenseShortLabel(sound.license)}</span>
+          )}
+        </div>
+        {sound.owner_id ? (
+          <button className="sound-author sound-author-link" onClick={() => onNavigateToProfile(sound.owner_id)}>
+            {sound.author}
+          </button>
+        ) : (
+          <div className="sound-author">{sound.author}</div>
+        )}
       </div>
       <div className="col col-bpm">{sound.bpm || '-'}</div>
       <div className="col col-key">{sound.key || '-'}</div>
@@ -65,7 +84,7 @@ const SoundRow = React.memo(({
         ))}
       </div>
       <div className="col col-actions">
-        <button 
+        <button
           className="row-action-btn"
           onClick={() => onLike(sound)}
           style={{
@@ -76,7 +95,47 @@ const SoundRow = React.memo(({
         </button>
         <button className="row-action-btn download" onClick={() => onDownload(sound)} title={t('download')}><Download size={18} /></button>
         <button className="row-action-btn" onClick={() => onShare(sound)} title="Share"><Share2 size={18} /></button>
-        {sound.id.toString().startsWith('local-') && !!sound.local_path && (
+        {isLoggedIn && !isLocal && (
+          <div className="collection-menu-anchor">
+            <button
+              className="row-action-btn"
+              onClick={() => onToggleCollectionMenu(sound.id)}
+              title="Add to collection"
+            >
+              <FolderPlus size={18} />
+            </button>
+            {collectionMenuOpen && (
+              <div className="collection-menu">
+                {collections.length === 0 && (
+                  <div className="collection-menu-empty">No collections yet</div>
+                )}
+                {collections.map((c: any) => (
+                  <button key={c.id} className="collection-menu-item" onClick={() => onAddToCollection(sound, c.id)}>
+                    {c.name}
+                  </button>
+                ))}
+                <form
+                  className="collection-menu-new"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newCollectionName.trim()) return;
+                    onCreateCollection(sound, newCollectionName.trim());
+                    setNewCollectionName('');
+                  }}
+                >
+                  <input
+                    value={newCollectionName}
+                    onChange={e => setNewCollectionName(e.target.value)}
+                    placeholder="New collection…"
+                    onClick={e => e.stopPropagation()}
+                  />
+                  <button type="submit" title="Create"><Check size={14} /></button>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
+        {isLocal && !!sound.local_path && (
           <button
             className="row-action-btn"
             onClick={() => onAnalyze(sound)}
@@ -86,10 +145,10 @@ const SoundRow = React.memo(({
             {isAnalyzing ? <Loader2 size={18} className="spin" /> : <Wand2 size={18} />}
           </button>
         )}
-        {sound.id.toString().startsWith('local-') && canPublish && (
+        {isLocal && canPublish && (
           <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud"><CloudUpload size={18} /></button>
         )}
-        {!sound.id.toString().startsWith('local-') && canModerate && (
+        {!isLocal && canModerate && (
           <>
             <button className="row-action-btn" onClick={() => onEdit(sound)} title="Edit Sound"><Pencil size={18} /></button>
             <button className="row-action-btn" onClick={() => onDelete(sound)} title="Delete Sound" style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
@@ -124,10 +183,28 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
   const [editingSound, setEditingSound] = useState<SoundItem | null>(null);
   const [publishingSound, setPublishingSound] = useState<SoundItem | null>(null);
   const [analyzingId, setAnalyzingId] = useState<string | number | null>(null);
+  const [collectionMenuId, setCollectionMenuId] = useState<string | number | null>(null);
+  const navigate = useNavigate();
+  const { collections, refetch: refetchCollections } = useCollections();
 
   useEffect(() => {
     setSounds(initialSounds);
   }, [initialSounds]);
+
+  // Închide meniul de colecții la click în afara lui — un singur meniu poate
+  // fi deschis odată, oricare rând, deci verificăm prin `closest` în loc de
+  // un ref per-rând (SoundRow e memoizat separat, un ref n-ar avea cum să
+  // urmărească rândul curent activ).
+  useEffect(() => {
+    if (collectionMenuId === null) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.collection-menu-anchor')) {
+        setCollectionMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [collectionMenuId]);
 
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
@@ -323,6 +400,38 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
     setPublishingSound(sound);
   }, []);
 
+  const handleNavigateToProfile = useCallback((ownerId: string) => {
+    navigate(`/producer/${ownerId}`);
+  }, [navigate]);
+
+  const handleToggleCollectionMenu = useCallback((soundId: string | number) => {
+    setCollectionMenuId(prev => prev === soundId ? null : soundId);
+  }, []);
+
+  const handleAddToCollection = useCallback(async (sound: SoundItem, collectionId: string) => {
+    try {
+      await addSoundToCollection(collectionId, sound.id);
+      showToast(`Added to collection`, 'success');
+    } catch (err: any) {
+      showToast('Failed to add to collection: ' + err.message, 'error');
+    } finally {
+      setCollectionMenuId(null);
+    }
+  }, [showToast]);
+
+  const handleCreateCollection = useCallback(async (sound: SoundItem, name: string) => {
+    try {
+      const collection = await createCollection(name);
+      await addSoundToCollection(collection.id, sound.id);
+      await refetchCollections();
+      showToast(`Created "${collection.name}" and added the sound`, 'success');
+    } catch (err: any) {
+      showToast('Failed to create collection: ' + err.message, 'error');
+    } finally {
+      setCollectionMenuId(null);
+    }
+  }, [showToast, refetchCollections]);
+
   return (
     <div className="sound-grid">
       <div className="grid-header">
@@ -348,6 +457,9 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
               canPublish={canPublish}
               canModerate={canManage(sound)}
               isAnalyzing={analyzingId === sound.id}
+              isLoggedIn={!!session}
+              collectionMenuOpen={collectionMenuId === sound.id}
+              collections={collections}
               t={t}
               onPlay={handlePlay}
               onLike={handleLike}
@@ -356,6 +468,10 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
               onPublish={handlePublishClick}
               onEdit={setEditingSound}
               onDelete={handleDelete}
+              onNavigateToProfile={handleNavigateToProfile}
+              onToggleCollectionMenu={handleToggleCollectionMenu}
+              onAddToCollection={handleAddToCollection}
+              onCreateCollection={handleCreateCollection}
               onAnalyze={handleAnalyze}
             />
           );

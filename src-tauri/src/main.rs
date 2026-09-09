@@ -333,6 +333,32 @@ fn scan_directory(app: AppHandle, folder_path: &str) -> Result<Vec<LocalSample>,
     Ok(samples)
 }
 
+/// Un panic aici nu ajunge niciodată în `client_error_reports` — nu există
+/// runtime async disponibil într-un panic hook, iar un apel de rețea acolo
+/// ar putea el însuși agrava crash-ul. Scriem local, ca userul să poată
+/// trimite fișierul dacă raportează o problemă.
+fn install_panic_log(log_path: std::path::PathBuf) {
+    std::panic::set_hook(Box::new(move |panic_info| {
+        use std::io::Write;
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+
+        if let Some(parent) = log_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_path)
+        {
+            let _ = writeln!(file, "[{timestamp}] {panic_info}");
+        }
+    }));
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
@@ -342,6 +368,14 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_drag::init())
+        .setup(|app| {
+            let log_dir = app
+                .path()
+                .app_log_dir()
+                .unwrap_or_else(|_| std::env::temp_dir());
+            install_panic_log(log_dir.join("panic.log"));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             scan_directory,
             allow_asset_path,
