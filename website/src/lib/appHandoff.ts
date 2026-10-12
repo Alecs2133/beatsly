@@ -14,9 +14,21 @@ export const PENDING_APP_CODE_KEY = 'beatsly_pending_app_code';
  * așteptare sau dacă userul nu e de fapt logat — ambele sunt stări normale,
  * nu erori (majoritatea vizitelor pe site n-au nicio aplicație care așteaptă).
  */
+/** Sesiunea din browser arată valid local, dar a fost revocată pe server. */
+export class SessionExpiredError extends Error {}
+
 export async function submitPendingAppAuthCode(): Promise<boolean> {
   const code = localStorage.getItem(PENDING_APP_CODE_KEY);
   if (!code) return false;
+
+  // `getSession()` citește doar din localStorage — un token revocat pe
+  // server (ex. logout "global" din altă parte) trece de verificarea asta
+  // până expiră. `getUser()` întreabă serverul.
+  const { error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    await supabase.auth.signOut({ scope: 'local' });
+    throw new SessionExpiredError(userError.message);
+  }
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return false;

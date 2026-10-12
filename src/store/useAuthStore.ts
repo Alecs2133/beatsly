@@ -81,7 +81,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    await supabase.auth.signOut();
+    // 'local': implicit e 'global', care revocă sesiunile userului pe TOATE
+    // dispozitivele — inclusiv pe site, care rămânea apoi cu un token aparent
+    // valid dar mort, și handoff-ul de login pica cu 401.
+    await supabase.auth.signOut({ scope: 'local' });
     if (realtimeChannel) {
       supabase.removeChannel(realtimeChannel);
       realtimeChannel = null;

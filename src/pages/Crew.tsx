@@ -13,6 +13,7 @@ import { hasUnlimitedCredits } from '../lib/roles';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 import { SoundGrid } from '../components/SoundGrid';
 import { SoundItem } from '../data/mockData';
+import { mapSoundRow } from '../lib/soundRow';
 
 const inputStyle: React.CSSProperties = {
   padding: '8px 12px',
@@ -72,22 +73,7 @@ export const CrewPage: React.FC = () => {
       setMembers(membersData);
 
       if (soundsResult.error) throw soundsResult.error;
-      const mapped: SoundItem[] = (soundsResult.data ?? []).map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        author: item.author,
-        bpm: item.bpm,
-        key: item.key_signature,
-        tags: item.tags || [],
-        duration: item.duration || '0:00',
-        type: item.type,
-        file_url: item.file_url,
-        preview_url: item.preview_url ?? undefined,
-        storage_path: item.storage_path ?? undefined,
-        owner_id: item.owner_id ?? undefined,
-        license: item.license,
-      }));
-      setSounds(mapped);
+      setSounds((soundsResult.data ?? []).map(mapSoundRow));
     } catch (err: any) {
       console.error('Failed to load crew data:', err);
       showToast('Failed to load crew: ' + err.message, 'error');

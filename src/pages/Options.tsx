@@ -4,8 +4,9 @@ import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
 import { check } from '@tauri-apps/plugin-updater';
-import { openUrl } from '@tauri-apps/plugin-opener';
+import { open } from '@tauri-apps/plugin-shell';
 import { getVersion } from '@tauri-apps/api/app';
+import { FEATURES } from '../lib/features';
 import './Options.css';
 
 export const Options: React.FC = () => {
@@ -65,18 +66,18 @@ export const Options: React.FC = () => {
         showToast(t('up_to_date'), 'success');
       }
     } catch (e) {
-      console.warn("Update check failed (no server configured):", e);
-      // Fallback for demo
-      setTimeout(() => showToast(`${t('up_to_date')} (${appVersion})`, 'success'), 1500);
+      console.error('Update check failed:', e);
+      showToast(t('update_check_failed'), 'error');
     }
   };
 
+  // `plugin-opener` nu e înregistrat în Rust, iar beatsly.com nu e domeniul
+  // nostru — varianta veche pica mereu și afișa totuși "Opening Help Center".
   const handleHelp = async () => {
     try {
-      await openUrl('https://beatsly.com/help');
+      await open('https://beatsly.vercel.app/help');
     } catch (e) {
-      console.warn("Opener failed:", e);
-      showToast(t('opening_help'), 'info');
+      console.error('Failed to open help:', e);
     }
   };
 
@@ -146,7 +147,14 @@ export const Options: React.FC = () => {
                 <span className="options-item-title">{t('help_support')}</span>
                 <span className="options-item-desc">{t('help_support_desc')}</span>
               </div>
-              <button className="options-action-btn" onClick={handleHelp}>{t('btn_help')}</button>
+              <button
+                className="options-action-btn"
+                onClick={handleHelp}
+                disabled={!FEATURES.helpCenter}
+                style={FEATURES.helpCenter ? undefined : { opacity: 0.5, cursor: 'not-allowed' }}
+              >
+                {FEATURES.helpCenter ? t('btn_help') : t('coming_soon')}
+              </button>
             </div>
             
             <div className="options-item">

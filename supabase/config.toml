@@ -434,3 +434,24 @@ entrypoint = "./functions/stripe-webhook/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/stripe-webhook/*.html" ]
+
+# Proiectul semnează sesiunile userilor cu chei asimetrice (ES256 — vezi
+# /auth/v1/.well-known/jwks.json), iar verificarea `verify_jwt` de la
+# gateway înțelege doar vechiul secret HS256: respingea cu 401 ORICE apel
+# făcut cu token-ul unui user logat. Funcțiile de mai jos își verifică
+# singure userul prin `auth.getUser(token)`, deci gateway-ul nu mai e
+# necesar. `exchange-auth-code` e apelat intenționat fără sesiune.
+[functions.get-download-url]
+verify_jwt = false
+
+[functions.generate-audio]
+verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false
+
+[functions.submit-auth-code]
+verify_jwt = false
+
+[functions.exchange-auth-code]
+verify_jwt = false

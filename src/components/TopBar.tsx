@@ -30,16 +30,30 @@ export const TopBar: React.FC = () => {
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      
-      // Simple polling for notifications since we are keeping it client side
-      // Realtime subscription would be better for production
-      const interval = setInterval(fetchNotifications, 30000); // Check every 30s
-      return () => clearInterval(interval);
-    } else {
+    if (!user) {
       setNotifications([]);
+      return;
     }
+
+    fetchNotifications();
+
+    // Notificările noi vin prin Realtime (vezi migrarea
+    // notifications_realtime), nu prin polling — apar instant și nu mai
+    // facem o cerere la 30s pentru fiecare user deschis.
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          setNotifications(prev => [payload.new as Notification, ...prev].slice(0, 20));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const fetchNotifications = async () => {

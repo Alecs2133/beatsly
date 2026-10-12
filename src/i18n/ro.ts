@@ -89,6 +89,8 @@ export const ro: Record<TranslationKeys, string> = {
   purchase_success: 'Credite cumpărate cu succes! 🎉',
   payment_failed: 'Plata a eșuat.',
   coming_soon: 'În curând',
+  coming_soon_desc: 'Încă lucrăm la asta — va fi disponibil într-un update viitor.',
+  coming_soon_short: 'CURÂND',
   processing_subscription: 'Se procesează abonamentul pentru',
   subscription_success: 'Bun venit în pachetul ales! 🚀',
   subscription_failed: 'Abonamentul a eșuat.',
@@ -144,6 +146,7 @@ export const ro: Record<TranslationKeys, string> = {
   checking_updates: 'Se verifică actualizările...',
   update_available: 'Actualizare disponibilă!',
   up_to_date: 'Beats.ly este la zi',
+  update_check_failed: 'Nu am putut verifica actualizările. Verifică conexiunea și încearcă din nou.',
   opening_help: 'Se deschide Centrul de Ajutor...',
 
   // AI Generator

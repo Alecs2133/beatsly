@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { SoundGrid } from '../components/SoundGrid';
 import { SoundItem } from '../data/mockData';
+import { mapSoundRow } from '../lib/soundRow';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const PackDetails: React.FC = () => {
@@ -29,19 +30,8 @@ export const PackDetails: React.FC = () => {
 
         const audioFallbacks = ['/audio/bass.wav', '/audio/kick.wav', '/audio/vocal.wav'];
         const mappedData = (data || []).map((item, index) => ({
-          id: item.id,
-          title: item.title,
-          author: item.author,
-          bpm: item.bpm,
-          key: item.key_signature,
-          tags: item.tags || [],
-          duration: item.duration || '0:00',
-          type: item.type,
+          ...mapSoundRow(item),
           file_url: item.file_url || audioFallbacks[index % audioFallbacks.length],
-          preview_url: item.preview_url ?? undefined,
-          storage_path: item.storage_path ?? undefined,
-          owner_id: item.owner_id ?? undefined,
-          license: item.license
         }));
 
         setSounds(mappedData);

@@ -3,6 +3,7 @@ import { SoundItem } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from './useAuthStore';
 import { useAppStore } from './useAppStore';
+import { mapSoundRow } from '../lib/soundRow';
 
 interface LibraryState {
   savedSounds: SoundItem[];
@@ -41,7 +42,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         .in('id', soundIds);
         
       if (soundsData) {
-        set({ savedSounds: soundsData as SoundItem[] });
+        set({ savedSounds: soundsData.map(mapSoundRow) });
       }
     } else {
       set({ savedSounds: [] });

@@ -213,7 +213,7 @@ export function Account() {
                 ) : (
                   <>
                     <p className="account-upgrade-hint">
-                      You're on the Free plan. Upgrade for unlimited downloads and the AI generator.
+                      You're on the Free plan. Paid plans with unlimited downloads are coming soon.
                     </p>
                     <Link to="/pricing" className="btn btn-secondary glass-btn">
                       Upgrade Plan

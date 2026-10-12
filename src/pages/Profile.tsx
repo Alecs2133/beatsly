@@ -7,6 +7,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getPublicProfile, isFollowing, followUser, unfollowUser, PublicProfile } from '../lib/social';
 import { SoundGrid } from '../components/SoundGrid';
 import { SoundItem } from '../data/mockData';
+import { mapSoundRow } from '../lib/soundRow';
 
 export const Profile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -42,22 +43,7 @@ export const Profile: React.FC = () => {
       setFollowing(followState);
 
       if (soundsResult.error) throw soundsResult.error;
-      const mapped: SoundItem[] = (soundsResult.data ?? []).map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        author: item.author,
-        bpm: item.bpm,
-        key: item.key_signature,
-        tags: item.tags || [],
-        duration: item.duration || '0:00',
-        type: item.type,
-        file_url: item.file_url,
-        preview_url: item.preview_url ?? undefined,
-        storage_path: item.storage_path ?? undefined,
-        owner_id: item.owner_id ?? undefined,
-        license: item.license,
-      }));
-      setSounds(mapped);
+      setSounds((soundsResult.data ?? []).map(mapSoundRow));
     } catch (err: any) {
       console.error('Failed to load profile:', err);
       showToast('Failed to load profile: ' + err.message, 'error');

@@ -87,6 +87,8 @@ export const en = {
   purchase_success: 'Successfully purchased credits! 🎉',
   payment_failed: 'Payment failed.',
   coming_soon: 'Coming Soon',
+  coming_soon_desc: "We're still polishing this one — it'll be available in an upcoming update.",
+  coming_soon_short: 'SOON',
   processing_subscription: 'Processing subscription for',
   subscription_success: 'Welcome to the pack! 🚀',
   subscription_failed: 'Subscription failed.',
@@ -142,6 +144,7 @@ export const en = {
   checking_updates: 'Checking for updates...',
   update_available: 'Update available!',
   up_to_date: 'Beats.ly is up to date',
+  update_check_failed: "Couldn't check for updates. Check your connection and try again.",
   opening_help: 'Opening Help Center...',
 
   // AI Generator

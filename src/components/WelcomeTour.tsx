@@ -28,7 +28,7 @@ const STEPS: Step[] = [
   {
     icon: <Sparkles size={32} />,
     title: 'As you grow',
-    body: 'Ultimate members get the AI Generator and can create private Crews to share sounds with a team. Producers can publish local files straight to the cloud from Local Files.',
+    body: 'Producers can publish local files straight to the cloud from Local Files. Private Crews for sharing sounds with a team, and an AI sound generator, are on the way.',
   },
   {
     icon: <Music2 size={32} />,

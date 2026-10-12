@@ -10,6 +10,8 @@ import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
 import { isAdminRole, isPublisherRole } from './lib/roles';
 import { WelcomeTour } from './components/WelcomeTour';
+import { ComingSoon } from './components/ComingSoon';
+import { FEATURES } from './lib/features';
 import './design.css';
 
 // Lazy loaded pages for performance
@@ -141,7 +143,10 @@ const AppContent = () => {
               <Route path="/" element={<Library />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/library" element={<ProtectedRoute><MySounds /></ProtectedRoute>} />
-              <Route path="/analyzer" element={<ProtectedRoute><Analyzer /></ProtectedRoute>} />
+              <Route
+                path="/analyzer"
+                element={FEATURES.aiGenerator ? <ProtectedRoute><Analyzer /></ProtectedRoute> : <ComingSoon feature="AI Generator" />}
+              />
               <Route path="/local" element={<PublisherRoute><LocalFiles /></PublisherRoute>} />
               <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

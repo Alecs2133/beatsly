@@ -21,7 +21,7 @@ export function Home() {
             <span className="glow-text">Music Producers</span>
           </motion.h1>
           <motion.p className="hero-subtitle" variants={fadeInUp}>
-            Manage your sounds, generate new samples with AI, and sync your entire library to the cloud. All in one beautiful, lightning-fast Windows application.
+            Manage your sounds, detect BPM and key automatically, and sync your entire library to the cloud. All in one beautiful, lightning-fast Windows application.
           </motion.p>
           <motion.div className="hero-cta" variants={fadeInUp}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -93,8 +93,8 @@ export function Home() {
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
             <div className="feature-icon" style={{ color: 'var(--accent-tertiary)' }}><Sparkles size={32} /></div>
-            <h3>AI Generator</h3>
-            <p>Stuck on an idea? Use our advanced AI to generate infinite unique royalty-free samples.</p>
+            <h3>AI Generator <span className="version-badge" style={{ marginTop: 0, marginLeft: 8, fontSize: 11, padding: '3px 10px', verticalAlign: 'middle' }}>Coming soon</span></h3>
+            <p>Stuck on an idea? Generate unique royalty-free samples with AI — landing in an upcoming update.</p>
           </motion.div>
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>

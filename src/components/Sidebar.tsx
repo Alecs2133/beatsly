@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { useMyCrews } from '../hooks/useMyCrews';
 import { isAdminRole, isPublisherRole, hasUnlimitedCredits } from '../lib/roles';
+import { FEATURES } from '../lib/features';
 import { Headphones, Library, Bot, HardDrive, Settings, Users } from 'lucide-react';
 import './Sidebar.css';
 
@@ -58,7 +59,7 @@ export const Sidebar: React.FC = () => {
               <NavLink to="/analyzer" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                 <span className="nav-icon"><Bot size={20} /></span>
                 <span className="nav-text">{t('nav_ai_generator')}</span>
-                <span className="beta-badge">ULTIMATE</span>
+                <span className="beta-badge">{FEATURES.aiGenerator ? 'ULTIMATE' : t('coming_soon_short')}</span>
               </NavLink>
             </li>
 

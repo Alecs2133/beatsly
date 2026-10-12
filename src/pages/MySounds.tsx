@@ -9,6 +9,7 @@ import { useCollections } from '../hooks/useCollections';
 import { createCollection, deleteCollection, fetchCollectionSoundIds } from '../lib/collections';
 import { supabase } from '../lib/supabase';
 import { SoundItem } from '../data/mockData';
+import { mapSoundRow } from '../lib/soundRow';
 
 export const MySounds: React.FC = () => {
   const { savedSounds } = useLibraryStore();
@@ -40,22 +41,7 @@ export const MySounds: React.FC = () => {
         }
         const { data, error } = await supabase.from('sounds').select('*').in('id', ids);
         if (error) throw error;
-        const mapped: SoundItem[] = (data ?? []).map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          author: item.author,
-          bpm: item.bpm,
-          key: item.key_signature,
-          tags: item.tags || [],
-          duration: item.duration || '0:00',
-          type: item.type,
-          file_url: item.file_url,
-          preview_url: item.preview_url ?? undefined,
-          storage_path: item.storage_path ?? undefined,
-          owner_id: item.owner_id ?? undefined,
-          license: item.license,
-        }));
-        if (!cancelled) setCollectionSounds(mapped);
+        if (!cancelled) setCollectionSounds((data ?? []).map(mapSoundRow));
       } catch (err: any) {
         console.error('Failed to load collection:', err);
         showToast('Failed to load collection: ' + err.message, 'error');

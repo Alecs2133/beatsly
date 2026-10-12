@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, XCircle, LogIn } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { useLayoutContext } from '../Layout';
-import { PENDING_APP_CODE_KEY, submitPendingAppAuthCode } from '../lib/appHandoff';
+import { PENDING_APP_CODE_KEY, SessionExpiredError, submitPendingAppAuthCode } from '../lib/appHandoff';
 
 const ERROR_STYLE = {
   color: '#ff6b6b',
@@ -34,23 +34,29 @@ export function AppLogin() {
       return;
     }
     if (submittedRef.current) return;
+    submit();
+  }, [user, code]);
+
+  const submit = () => {
     submittedRef.current = true;
     setStatus('submitting');
     submitPendingAppAuthCode()
       .then((submitted) => setStatus(submitted ? 'done' : 'error'))
       .catch((err) => {
+        // Sesiune moartă pe server: am delogat deja local, deci `user`
+        // devine null și pagina cere login din nou; după login, efectul de
+        // mai sus retrimite automat.
+        if (err instanceof SessionExpiredError) {
+          submittedRef.current = false;
+          setStatus('need-login');
+          return;
+        }
         console.error('submitPendingAppAuthCode failed:', err);
         setStatus('error');
       });
-  }, [user, code]);
-
-  const retry = () => {
-    submittedRef.current = false;
-    setStatus('submitting');
-    submitPendingAppAuthCode()
-      .then((submitted) => setStatus(submitted ? 'done' : 'error'))
-      .catch(() => setStatus('error'));
   };
+
+  const retry = submit;
 
   if (!code) {
     return (
