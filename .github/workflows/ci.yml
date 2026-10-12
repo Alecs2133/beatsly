@@ -1,0 +1,61 @@
+name: CI
+
+# Prinde erorile de tip/build înainte să ajungă într-un release. Rulează la
+# fiecare push pe main și pe fiecare PR; build-urile de installer rămân în
+# release.yml (doar pe tag-uri).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Desktop app (tsc + vite + cargo check)
+    # Windows = platforma pe care o livrăm; evită și dependențele GTK/WebKit
+    # de care ar avea nevoie `cargo check` pe Linux.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `tsc && vite build`. Produce și `dist/`, de care `generate_context!`
+      # din Rust are nevoie la compilare.
+      - run: npm run build
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: cargo check
+        run: cargo check --locked
+        working-directory: src-tauri
+
+  website:
+    name: Website (tsc + vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

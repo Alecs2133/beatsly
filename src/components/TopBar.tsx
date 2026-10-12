@@ -6,16 +6,10 @@ import { useTranslation } from '../hooks/useTranslation';
 import { hasUnlimitedCredits } from '../lib/roles';
 import { Search, Settings, X, Plus, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import type { Tables } from '../lib/database.types';
 import './TopBar.css';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  is_read: boolean;
-  created_at: string;
-}
+type Notification = Tables<'notifications'>;
 
 export const TopBar: React.FC = () => {
   const { searchQuery, setSearchQuery } = useAppStore();
@@ -35,7 +29,7 @@ export const TopBar: React.FC = () => {
       return;
     }
 
-    fetchNotifications();
+    fetchNotifications(user.id);
 
     // Notificările noi vin prin Realtime (vezi migrarea
     // notifications_realtime), nu prin polling — apar instant și nu mai
@@ -56,12 +50,12 @@ export const TopBar: React.FC = () => {
     };
   }, [user]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (userId: string) => {
     try {
       const { data } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
       
@@ -194,9 +188,11 @@ export const TopBar: React.FC = () => {
                       >
                         <div className="notification-title">{notif.title}</div>
                         <div className="notification-message">{notif.message}</div>
-                        <div className="notification-time">
-                          {new Date(notif.created_at).toLocaleDateString()} {new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </div>
+                        {notif.created_at && (
+                          <div className="notification-time">
+                            {new Date(notif.created_at).toLocaleDateString()} {new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}

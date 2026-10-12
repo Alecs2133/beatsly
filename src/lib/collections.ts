@@ -49,7 +49,7 @@ export async function fetchCollectionSoundIds(collectionId: string): Promise<str
 export async function addSoundToCollection(collectionId: string, soundId: string | number): Promise<void> {
   const { error } = await supabase
     .from('collection_sounds')
-    .insert({ collection_id: collectionId, sound_id: soundId });
+    .insert({ collection_id: collectionId, sound_id: String(soundId) });
   if (error) throw error;
 }
 
@@ -58,6 +58,6 @@ export async function removeSoundFromCollection(collectionId: string, soundId: s
     .from('collection_sounds')
     .delete()
     .eq('collection_id', collectionId)
-    .eq('sound_id', soundId);
+    .eq('sound_id', String(soundId));
   if (error) throw error;
 }

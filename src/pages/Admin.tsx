@@ -8,26 +8,11 @@ import { Play, Pause } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { createPreviewMp3, previewObjectName } from '../lib/audioPreview';
+import { mapSoundRow } from '../lib/soundRow';
+import type { Tables } from '../lib/database.types';
 
-interface RoleRequest {
-  id: string;
-  user_id: string;
-  social_links: string;
-  status: string;
-  requested_role: string;
-  created_at: string;
-}
-
-interface ErrorReport {
-  id: string;
-  user_id: string | null;
-  platform: string;
-  context: string;
-  message: string;
-  stack: string | null;
-  app_version: string | null;
-  created_at: string;
-}
+type RoleRequest = Tables<'role_requests'>;
+type ErrorReport = Tables<'client_error_reports'>;
 
 export const Admin: React.FC = () => {
   const { t } = useTranslation();
@@ -96,7 +81,7 @@ export const Admin: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPendingSounds(data || []);
+      setPendingSounds((data || []).map(mapSoundRow));
     } catch (err: any) {
       console.error(err);
       showToast('Failed to load pending sounds', 'error');
@@ -113,6 +98,8 @@ export const Admin: React.FC = () => {
   }, []);
 
   const handleApprove = async (req: RoleRequest) => {
+    // Coloana e nullable în schemă; o cerere fără user n-are cui să-i dea rolul.
+    if (!req.user_id) return;
     try {
       showToast(t('approving'), 'info');
       // Apelăm funcția RPC din baza de date pentru a schimba metadatele
@@ -133,6 +120,7 @@ export const Admin: React.FC = () => {
   };
 
   const handleReject = async (req: RoleRequest) => {
+    if (!req.user_id) return;
     try {
       showToast(t('rejecting'), 'info');
       const { error } = await supabase
@@ -378,7 +366,7 @@ export const Admin: React.FC = () => {
                       Role: {req.requested_role || 'PRODUCER'}
                     </p>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
-                      {t('requested_on')} {new Date(req.created_at).toLocaleDateString()}
+                      {t('requested_on')} {req.created_at ? new Date(req.created_at).toLocaleDateString() : '—'}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
