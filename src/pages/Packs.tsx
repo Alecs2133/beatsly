@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { fetchAllPages } from '../lib/paging';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,12 +16,15 @@ export const Packs: React.FC = () => {
 
     const fetchSounds = async () => {
       try {
-        const { data, error } = await supabase
-          .from('sounds')
-          .select('tags')
-          .eq('status', 'approved');
-
-        if (error) throw error;
+        const data = await fetchAllPages((from, to) =>
+          supabase
+            .from('sounds')
+            .select('tags')
+            .eq('status', 'approved')
+            .is('crew_id', null)
+            .order('id')
+            .range(from, to)
+        );
 
         const allTags = (data || []).flatMap((s: any) => s.tags || []);
         const tagCounts = allTags.reduce((acc: any, tag: string) => {

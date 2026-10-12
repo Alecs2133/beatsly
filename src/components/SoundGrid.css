@@ -236,3 +236,9 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Ținta pentru IntersectionObserver: când intră în viewport, SoundGrid
+   montează următorul lot de rânduri. */
+.grid-sentinel {
+  height: 1px;
+}

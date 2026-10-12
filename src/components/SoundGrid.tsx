@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SoundItem } from '../data/mockData';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -178,8 +178,18 @@ interface AudioAnalysis {
   key_confidence: number;
 }
 
+/**
+ * Câte rânduri montăm odată. Listele pot avea mii de sunete (Local Files, un
+ * profil, My Sounds); le randăm progresiv, pe măsură ce userul ajunge la
+ * capăt, în loc de virtualizare clasică — aceea ar tăia meniul de colecții
+ * (poziționat absolut) și ar cere propriul container de scroll.
+ */
+const RENDER_BATCH = 100;
+
 export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onSoundUpdated }) => {
   const [sounds, setSounds] = useState<SoundItem[]>(initialSounds);
+  const [renderCount, setRenderCount] = useState(RENDER_BATCH);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [editingSound, setEditingSound] = useState<SoundItem | null>(null);
   const [publishingSound, setPublishingSound] = useState<SoundItem | null>(null);
   const [analyzingId, setAnalyzingId] = useState<string | number | null>(null);
@@ -188,8 +198,25 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
   const { collections, refetch: refetchCollections } = useCollections();
 
   useEffect(() => {
+    // `renderCount` nu se resetează aici: unele pagini trimit un array nou la
+    // fiecare randare (filtrare inline), iar resetul ar strânge lista
+    // înapoi la 100 de rânduri sub cursorul userului.
     setSounds(initialSounds);
   }, [initialSounds]);
+
+  const hasMoreToRender = renderCount < sounds.length;
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMoreToRender) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) {
+        setRenderCount(count => count + RENDER_BATCH);
+      }
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreToRender, renderCount]);
 
   // Închide meniul de colecții la click în afara lui — un singur meniu poate
   // fi deschis odată, oricare rând, deci verificăm prin `closest` în loc de
@@ -251,6 +278,8 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
   }, [sounds, currentTrack, togglePlay, playQueue]);
 
   const savedSounds = useLibraryStore(state => state.savedSounds);
+  // Set în loc de `savedSounds.some(...)` pe fiecare rând (O(rânduri × salvate)).
+  const savedIds = useMemo(() => new Set(savedSounds.map(s => s.id)), [savedSounds]);
   const toggleSaveSound = useLibraryStore(state => state.toggleSaveSound);
   const showToast = useAppStore(state => state.showToast);
   const session = useAuthStore(state => state.session);
@@ -444,16 +473,17 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
       </div>
       
       <div className="grid-body">
-        {sounds.map(sound => {
-          const isSaved = savedSounds.some(s => s.id === sound.id);
+        {sounds.slice(0, renderCount).map(sound => {
           const isCurrentTrack = currentTrack?.id === sound.id;
           return (
-            <SoundRow 
+            <SoundRow
               key={sound.id}
               sound={sound}
               isCurrentTrack={isCurrentTrack}
-              isPlaying={isPlaying}
-              isSaved={isSaved}
+              // Doar rândul activ primește starea reală — altfel fiecare
+              // play/pauză re-randa toate rândurile (memo-ul nu mai ajuta).
+              isPlaying={isCurrentTrack && isPlaying}
+              isSaved={savedIds.has(sound.id)}
               canPublish={canPublish}
               canModerate={canManage(sound)}
               isAnalyzing={analyzingId === sound.id}
@@ -476,6 +506,7 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
             />
           );
         })}
+        {hasMoreToRender && <div ref={sentinelRef} className="grid-sentinel" aria-hidden />}
       </div>
 
       {editingSound && (

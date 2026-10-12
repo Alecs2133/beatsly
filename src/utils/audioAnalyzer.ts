@@ -48,7 +48,7 @@ export async function extractRealPeaks(url: string, numberOfBars: number = 32): 
     
     return finalPeaks;
 
-  } catch (error) {
-    return Array(numberOfBars).fill(0.1); 
+  } catch {
+    return Array(numberOfBars).fill(0.1);
   }
 }

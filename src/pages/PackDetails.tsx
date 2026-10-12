@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { fetchAllPages } from '../lib/paging';
 import { SoundGrid } from '../components/SoundGrid';
 import { SoundItem } from '../data/mockData';
 import { mapSoundRow } from '../lib/soundRow';
@@ -19,14 +20,17 @@ export const PackDetails: React.FC = () => {
 
     const fetchSounds = async () => {
       try {
-        const { data, error } = await supabase
-          .from('sounds')
-          .select('*')
-          .eq('status', 'approved')
-          .contains('tags', [tag])
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        const data = await fetchAllPages((from, to) =>
+          supabase
+            .from('sounds')
+            .select('*')
+            .eq('status', 'approved')
+            .is('crew_id', null)
+            .contains('tags', [tag])
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(from, to)
+        );
 
         const audioFallbacks = ['/audio/bass.wav', '/audio/kick.wav', '/audio/vocal.wav'];
         const mappedData = (data || []).map((item, index) => ({

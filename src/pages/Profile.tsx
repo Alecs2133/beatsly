@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { UserRound, UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { fetchAllPages } from '../lib/paging';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
 import { getPublicProfile, isFollowing, followUser, unfollowUser, PublicProfile } from '../lib/social';
@@ -27,23 +28,25 @@ export const Profile: React.FC = () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const [publicProfile, soundsResult, followState] = await Promise.all([
+      const [publicProfile, soundRows, followState] = await Promise.all([
         getPublicProfile(userId),
-        supabase
-          .from('sounds')
-          .select('*')
-          .eq('owner_id', userId)
-          .eq('status', 'approved')
-          .is('crew_id', null)
-          .order('created_at', { ascending: false }),
+        fetchAllPages((from, to) =>
+          supabase
+            .from('sounds')
+            .select('*')
+            .eq('owner_id', userId)
+            .eq('status', 'approved')
+            .is('crew_id', null)
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(from, to)
+        ),
         user && user.id !== userId ? isFollowing(userId) : Promise.resolve(false),
       ]);
 
       setProfile(publicProfile);
       setFollowing(followState);
-
-      if (soundsResult.error) throw soundsResult.error;
-      setSounds((soundsResult.data ?? []).map(mapSoundRow));
+      setSounds(soundRows.map(mapSoundRow));
     } catch (err: any) {
       console.error('Failed to load profile:', err);
       showToast('Failed to load profile: ' + err.message, 'error');

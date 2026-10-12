@@ -9,6 +9,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { createPreviewMp3, previewObjectName } from '../lib/audioPreview';
 import { mapSoundRow } from '../lib/soundRow';
+import { fetchAllPages } from '../lib/paging';
 import type { Tables } from '../lib/database.types';
 
 type RoleRequest = Tables<'role_requests'>;
@@ -95,6 +96,9 @@ export const Admin: React.FC = () => {
       setLoading(false);
     };
     loadAll();
+    // Încărcare unică la montare; funcțiile de fetch sunt recreate la fiecare
+    // randare, deci dacă le-am pune aici efectul ar rula în buclă.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleApprove = async (req: RoleRequest) => {
@@ -230,14 +234,16 @@ export const Admin: React.FC = () => {
     setBackfillProgress({ done: 0, total: 0, failed: 0 });
 
     try {
-      const { data, error } = await supabase
-        .from('sounds')
-        .select('id, title, file_url, storage_path')
-        .is('preview_url', null);
-
-      if (error) throw error;
-
-      const pending = data ?? [];
+      // Lista completă e citită înainte de a modifica vreun rând, deci
+      // paginarea nu e afectată de `preview_url` care se completează pe parcurs.
+      const pending = await fetchAllPages((from, to) =>
+        supabase
+          .from('sounds')
+          .select('id, title, file_url, storage_path')
+          .is('preview_url', null)
+          .order('id')
+          .range(from, to)
+      );
       setBackfillProgress({ done: 0, total: pending.length, failed: 0 });
 
       if (pending.length === 0) {

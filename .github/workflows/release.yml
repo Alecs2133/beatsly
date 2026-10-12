@@ -21,6 +21,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Release-ul se numește după versiunea din package.json, nu după tag. Un
+      # tag `v0.2.0` pe un commit cu versiunea 0.1.9 ar suprascrie release-ul
+      # 0.1.9 — oprim build-ul înainte de asta.
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} nu se potrivește cu versiunea din package.json (${version}). Folosește 'npm run release'."
+            exit 1
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -57,6 +70,9 @@ jobs:
           tagName: v__VERSION__
           releaseName: 'Beats.ly v__VERSION__'
           releaseBody: 'Download the installer for your operating system below.'
+          # Draft până termină TOATE platformele; jobul `publish` de mai jos îl
+          # publică doar dacă ambele build-uri au reușit, ca updater-ul să nu
+          # servească un latest.json cu o singură platformă.
           releaseDraft: true
           # NU prerelease: updater-ul citește `/releases/latest/download/...`,
           # iar GitHub exclude pre-release-urile din `latest` — cu `true`,
@@ -65,3 +81,31 @@ jobs:
           prerelease: false
           # Generează și atașează `latest.json`, pe care îl consumă updater-ul.
           includeUpdaterJson: true
+
+  publish:
+    name: Publish release
+    needs: build-tauri
+    # Doar pentru tag-uri; o rulare manuală (workflow_dispatch) rămâne draft.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false --latest --repo "$GITHUB_REPOSITORY"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Verifică producția după publicare (DB, funcții, site, latest.json).
+      # Scriptul folosește doar module Node built-in, deci nu e nevoie de npm ci.
+      - name: Smoke test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node scripts/smoke.mjs

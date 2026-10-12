@@ -4,6 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { Users, Plus, Trash2, UploadCloud, Crown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { fetchAllPages } from '../lib/paging';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
 import { useMyCrews } from '../hooks/useMyCrews';
@@ -66,14 +67,20 @@ export const CrewPage: React.FC = () => {
   const loadCrewData = useCallback(async (crewId: string) => {
     setLoadingSounds(true);
     try {
-      const [membersData, soundsResult] = await Promise.all([
+      const [membersData, soundRows] = await Promise.all([
         fetchCrewMembers(crewId),
-        supabase.from('sounds').select('*').eq('crew_id', crewId).order('created_at', { ascending: false }),
+        fetchAllPages((from, to) =>
+          supabase
+            .from('sounds')
+            .select('*')
+            .eq('crew_id', crewId)
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(from, to)
+        ),
       ]);
       setMembers(membersData);
-
-      if (soundsResult.error) throw soundsResult.error;
-      setSounds((soundsResult.data ?? []).map(mapSoundRow));
+      setSounds(soundRows.map(mapSoundRow));
     } catch (err: any) {
       console.error('Failed to load crew data:', err);
       showToast('Failed to load crew: ' + err.message, 'error');

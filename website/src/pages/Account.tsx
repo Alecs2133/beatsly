@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Crown, Coins, ExternalLink, Lock, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
-import { useLayoutContext } from '../Layout';
+import { useLayoutContext } from '../lib/layoutContext';
 import { supabase } from '../lib/supabase';
 
 interface Profile {

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from './useAuthStore';
 import { useAppStore } from './useAppStore';
 import { mapSoundRow } from '../lib/soundRow';
+import { fetchAllPages, fetchByIdChunks } from '../lib/paging';
 
 interface LibraryState {
   savedSounds: SoundItem[];
@@ -22,30 +23,25 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       return;
     }
     
-    // Extragem toate link-urile (sound_id) din user_libraries
-    const { data: userLibs, error } = await supabase
-      .from('user_libraries')
-      .select('sound_id')
-      .eq('user_id', user.id);
-      
-    if (error) {
-      console.error(error);
-      return;
-    }
-    
-    if (userLibs && userLibs.length > 0) {
-      const soundIds = userLibs.map(l => l.sound_id);
+    try {
+      // Extragem toate link-urile (sound_id) din user_libraries
+      const userLibs = await fetchAllPages((from, to) =>
+        supabase
+          .from('user_libraries')
+          .select('sound_id')
+          .eq('user_id', user.id)
+          .order('sound_id')
+          .range(from, to)
+      );
+
       // Fetch details for these sounds from the 'sounds' table
-      const { data: soundsData } = await supabase
-        .from('sounds')
-        .select('*')
-        .in('id', soundIds);
-        
-      if (soundsData) {
-        set({ savedSounds: soundsData.map(mapSoundRow) });
-      }
-    } else {
-      set({ savedSounds: [] });
+      const soundsData = await fetchByIdChunks(
+        userLibs.map(l => l.sound_id),
+        chunk => supabase.from('sounds').select('*').in('id', chunk)
+      );
+      set({ savedSounds: soundsData.map(mapSoundRow) });
+    } catch (error) {
+      console.error(error);
     }
   },
 

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { fetchAllPages } from './paging';
 
 export interface Collection {
   id: string;
@@ -37,13 +38,16 @@ export async function deleteCollection(collectionId: string): Promise<void> {
 
 /** Doar id-urile sunetelor — pagina care afișează colecția le rezolvă din `sounds`. */
 export async function fetchCollectionSoundIds(collectionId: string): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('collection_sounds')
-    .select('sound_id')
-    .eq('collection_id', collectionId)
-    .order('added_at', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(row => row.sound_id);
+  const rows = await fetchAllPages((from, to) =>
+    supabase
+      .from('collection_sounds')
+      .select('sound_id')
+      .eq('collection_id', collectionId)
+      .order('added_at', { ascending: false })
+      .order('sound_id')
+      .range(from, to)
+  );
+  return rows.map(row => row.sound_id);
 }
 
 export async function addSoundToCollection(collectionId: string, soundId: string | number): Promise<void> {

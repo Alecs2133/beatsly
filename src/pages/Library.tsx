@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SoundGrid } from '../components/SoundGrid';
 import { SoundItem } from '../data/mockData';
 import { supabase } from '../lib/supabase';
+import { fetchAllPages } from '../lib/paging';
 import { mapSoundRow } from '../lib/soundRow';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -35,20 +36,27 @@ export const Library: React.FC = () => {
 
   const [dynamicPacks, setDynamicPacks] = useState<any[]>([]);
 
+  // Reîncărcăm doar când se schimbă userul, nu la fiecare refresh de token
+  // (care produce un obiect `session` nou cu același user).
+  const userId = session?.user?.id;
+
   useEffect(() => {
-    if (!session) return; // Do not fetch if not logged in
+    if (!userId) return; // Do not fetch if not logged in
 
     const fetchSounds = async () => {
       try {
-        const { data, error } = await supabase
-          .from('sounds')
-          .select('*')
-          .eq('status', 'approved')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
+        const data = await fetchAllPages((from, to) =>
+          supabase
+            .from('sounds')
+            .select('*')
+            .eq('status', 'approved')
+            // Sunetele de crew sunt private: RLS le arată membrilor, dar
+            // locul lor e pe pagina Crew, nu în catalogul public.
+            .is('crew_id', null)
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(from, to)
+        );
 
         // Map database columns to our React properties
         const audioFallbacks = ['/audio/bass.wav', '/audio/kick.wav', '/audio/vocal.wav'];
@@ -97,7 +105,7 @@ export const Library: React.FC = () => {
     };
 
     fetchSounds();
-  }, [session?.user?.id]);
+  }, [userId]);
 
   // Reset to page 1 when search query or filter changes
   useEffect(() => {

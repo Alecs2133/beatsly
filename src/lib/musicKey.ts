@@ -55,10 +55,15 @@ const CIRCLE_OF_FIFTHS_MAJOR = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 // Relativa minoră a fiecărei poziții majore corespunzătoare.
 const CIRCLE_OF_FIFTHS_MINOR = [9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2];
 
+/**
+ * Codul Camelot real: C major = 8B, A minor = 8A (B = major, A = minor).
+ * Roata de mai sus începe de la C, iar pe roata Camelot C e pe poziția 8,
+ * de-aici decalajul de 7.
+ */
 export function toCamelot(key: ParsedKey): string {
   const wheel = key.mode === 'major' ? CIRCLE_OF_FIFTHS_MAJOR : CIRCLE_OF_FIFTHS_MINOR;
   const position = wheel.indexOf(key.root);
-  return `${position + 1}${key.mode === 'major' ? 'A' : 'B'}`;
+  return `${((position + 7) % 12) + 1}${key.mode === 'major' ? 'B' : 'A'}`;
 }
 
 /**

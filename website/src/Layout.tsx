@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { pageTransition } from './lib/animations';
+import type { LayoutContext } from './lib/layoutContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
 import { CookieBanner } from './components/CookieBanner';
-
-export interface LayoutContext {
-  user: User | null;
-  requestAuth: () => void;
-}
-
-/** Pagini (Pricing, Download) citesc user/requestAuth prin acest hook. */
-export function useLayoutContext() {
-  return useOutletContext<LayoutContext>();
-}
 
 /**
  * Derulează la secțiunea din hash după navigare (ex: link-ul "Features" din

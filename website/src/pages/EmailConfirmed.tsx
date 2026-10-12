@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
-import { useLayoutContext } from '../Layout';
+import { useLayoutContext } from '../lib/layoutContext';
 import { submitPendingAppAuthCode } from '../lib/appHandoff';
 
 const ERROR_STYLE = {

@@ -10,6 +10,7 @@ import { createCollection, deleteCollection, fetchCollectionSoundIds } from '../
 import { supabase } from '../lib/supabase';
 import { SoundItem } from '../data/mockData';
 import { mapSoundRow } from '../lib/soundRow';
+import { fetchByIdChunks } from '../lib/paging';
 
 export const MySounds: React.FC = () => {
   const { savedSounds } = useLibraryStore();
@@ -39,9 +40,15 @@ export const MySounds: React.FC = () => {
           if (!cancelled) setCollectionSounds([]);
           return;
         }
-        const { data, error } = await supabase.from('sounds').select('*').in('id', ids);
-        if (error) throw error;
-        if (!cancelled) setCollectionSounds((data ?? []).map(mapSoundRow));
+        const rows = await fetchByIdChunks(ids, chunk => supabase.from('sounds').select('*').in('id', chunk));
+        // Păstrăm ordinea din colecție (cel mai recent adăugat primul);
+        // `.in()` întoarce rândurile în ordinea tabelei.
+        const byId = new Map(rows.map(row => [row.id, row]));
+        const ordered = ids.flatMap(id => {
+          const row = byId.get(id);
+          return row ? [mapSoundRow(row)] : [];
+        });
+        if (!cancelled) setCollectionSounds(ordered);
       } catch (err: any) {
         console.error('Failed to load collection:', err);
         showToast('Failed to load collection: ' + err.message, 'error');

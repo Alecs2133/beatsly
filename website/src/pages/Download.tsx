@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Download as DownloadIcon, MonitorCheck, LogIn, FolderDown, PlayCircle } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { AppleIcon, WindowsIcon } from '../components/PlatformIcons';
-import { useLayoutContext } from '../Layout';
+import { useLayoutContext } from '../lib/layoutContext';
 import { useLatestRelease } from '../lib/useLatestRelease';
 
 // Fallback derivat din package.json, folosit doar cât timp cererea către

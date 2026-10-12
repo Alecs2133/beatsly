@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import Stripe from "npm:stripe@^17.2.0"
-import { createClient } from "npm:@supabase/supabase-js@2.39.3"
+import { createClient } from "npm:@supabase/supabase-js@2.110.2"
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
   apiVersion: '2025-03-31.basil' as any,

@@ -28,9 +28,13 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run lint
+
       # `tsc && vite build`. Produce și `dist/`, de care `generate_context!`
       # din Rust are nevoie la compilare.
       - run: npm run build
+
+      - run: npm test
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -41,6 +45,20 @@ jobs:
       - name: cargo check
         run: cargo check --locked
         working-directory: src-tauri
+
+  functions:
+    name: Edge functions (deno check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # `none`: altfel Deno caută pachetele npm în node_modules-ul aplicației
+      # (package.json din rădăcină), unde Stripe nu există.
+      - run: deno check --node-modules-dir=none --no-lock supabase/functions/*/index.ts
 
   website:
     name: Website (tsc + vite)
@@ -58,4 +76,5 @@ jobs:
           cache-dependency-path: website/package-lock.json
 
       - run: npm ci
+      - run: npm run lint
       - run: npm run build

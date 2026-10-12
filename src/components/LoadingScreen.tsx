@@ -23,7 +23,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isReady }) => {
       
       return () => clearTimeout(timer);
     }
-  }, [isReady]);
+  }, [isReady, t]);
 
   useEffect(() => {
     if (!isReady) {
@@ -47,7 +47,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isReady }) => {
       
       return () => clearInterval(interval);
     }
-  }, [isReady]);
+  }, [isReady, t]);
 
   if (!shouldRender) return null;
 
