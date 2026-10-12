@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
-import { check } from '@tauri-apps/plugin-updater';
+import { findUpdate, installUpdate } from '../lib/updater';
+import { reportError } from '../lib/errorReporting';
 import { open } from '@tauri-apps/plugin-shell';
 import { getVersion } from '@tauri-apps/api/app';
 import { FEATURES } from '../lib/features';
@@ -57,17 +58,28 @@ export const Options: React.FC = () => {
 
   const handleCheckUpdates = async () => {
     showToast(t('checking_updates'), 'info');
+    let update;
     try {
-      const update = await check();
-      if (update) {
-        showToast(`${t('update_available')} (v${update.version})`, 'success');
-        // update.downloadAndInstall();
-      } else {
-        showToast(t('up_to_date'), 'success');
-      }
+      update = await findUpdate();
     } catch (e) {
       console.error('Update check failed:', e);
       showToast(t('update_check_failed'), 'error');
+      return;
+    }
+
+    if (!update) {
+      showToast(t('up_to_date'), 'success');
+      return;
+    }
+
+    if (!window.confirm(t('update_confirm').replace('{version}', update.version))) return;
+
+    showToast(t('update_installing'), 'info');
+    try {
+      await installUpdate(update);
+    } catch (e) {
+      reportError('updater.install', e);
+      showToast(t('update_failed'), 'error');
     }
   };
 

@@ -147,6 +147,13 @@ export const ro: Record<TranslationKeys, string> = {
   update_available: 'Actualizare disponibilă!',
   up_to_date: 'Beats.ly este la zi',
   update_check_failed: 'Nu am putut verifica actualizările. Verifică conexiunea și încearcă din nou.',
+  update_ready_title: 'Actualizare disponibilă',
+  update_ready_desc: 'O versiune nouă Beats.ly e gata. Se instalează în câteva secunde și repornește aplicația.',
+  update_install: 'Instalează și repornește',
+  update_installing: 'Se descarcă actualizarea…',
+  update_later: 'Mai târziu',
+  update_failed: 'Actualizarea nu s-a putut instala. Încearcă din nou din Opțiuni.',
+  update_confirm: 'Instalezi versiunea {version} acum? Beats.ly va reporni.',
   opening_help: 'Se deschide Centrul de Ajutor...',
 
   // AI Generator

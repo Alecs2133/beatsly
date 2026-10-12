@@ -41,8 +41,8 @@ function fetchLatestPublishedRelease(): Promise<GitHubRelease | null> {
       .then((releases) => {
         // API-ul public, neautentificat, nu întoarce niciodată draft-uri —
         // dar filtrăm oricum, ca să nu depindem tacit de acel comportament.
-        // Nu excludem prerelease-urile: pipeline-ul curent marchează TOATE
-        // build-urile astfel (tauri-action `prerelease: true`), iar cererea
+        // Nu excludem prerelease-urile: v0.1.6–v0.1.8 au fost publicate așa
+        // (tauri-action `prerelease: true`, schimbat de atunci), iar cererea
         // userului e explicit "ultima versiune încărcată pe GitHub", nu
         // "ultima versiune stabilă".
         const published = releases.filter((r) => !r.draft && r.published_at);

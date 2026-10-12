@@ -11,6 +11,7 @@ import { useLibraryStore } from './store/useLibraryStore';
 import { isAdminRole, isPublisherRole } from './lib/roles';
 import { WelcomeTour } from './components/WelcomeTour';
 import { ComingSoon } from './components/ComingSoon';
+import { UpdatePrompt } from './components/UpdatePrompt';
 import { FEATURES } from './lib/features';
 import './design.css';
 
@@ -163,6 +164,7 @@ const AppContent = () => {
 
       {!hideLayout && <AudioPlayer />}
       <ToastContainer />
+      {appReady && <UpdatePrompt />}
       {appReady && user && profile && !profile.onboarded_at && !tourDismissed && (
         <WelcomeTour userId={user.id} onDone={() => setTourDismissed(true)} />
       )}

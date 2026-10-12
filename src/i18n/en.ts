@@ -145,6 +145,13 @@ export const en = {
   update_available: 'Update available!',
   up_to_date: 'Beats.ly is up to date',
   update_check_failed: "Couldn't check for updates. Check your connection and try again.",
+  update_ready_title: 'Update available',
+  update_ready_desc: 'A new version of Beats.ly is ready. It installs in a few seconds and restarts the app.',
+  update_install: 'Install & restart',
+  update_installing: 'Downloading update…',
+  update_later: 'Later',
+  update_failed: 'The update failed to install. Try again from Options.',
+  update_confirm: 'Install version {version} now? Beats.ly will restart.',
   opening_help: 'Opening Help Center...',
 
   // AI Generator

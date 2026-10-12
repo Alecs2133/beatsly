@@ -25,6 +25,9 @@ tauri-plugin-fs = "2"
 tauri-plugin-drag = "2.1.1"
 tauri-plugin-shell = "2.3.5"
 tauri-plugin-http = "2"
+# Repornirea după un auto-update. Fixat pe 2.3.x: 2.4 cere Tauri 2.12 și ar
+# fi tras după el un upgrade de framework (Rust + JS) doar pentru asta.
+tauri-plugin-process = "~2.3.1"
 
 # Analiză audio reală (BPM/key din conținutul fișierului, nu din regex pe
 # numele lui). Pur Rust, fără dependințe C — nu adaugă risc la build-ul

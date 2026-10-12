@@ -50,6 +50,7 @@
     "bundle": {
         "active": true,
         "targets": "all",
+        "createUpdaterArtifacts": true,
         "icon": [
             "icons/32x32.png",
             "icons/128x128.png",
@@ -63,7 +64,7 @@
             "endpoints": [
                 "https://github.com/Alecs2133/beatsly/releases/latest/download/latest.json"
             ],
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1MjNDNzcwRDI3QkM4RkMKSlduRStiVjRDaUVkSWI1U1U2bVVrd055Q1M1WXZtUStLNDNOazV5UGI1YmIK"
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3RTlBMDg2NDUyQUUyODMKUldTRDRpcEZocURwcDM3WUxNODlUWE95empJUHB5bFBJMWY0ZjRjc2FXdUgwMHFMTHRZeWxHUVMK"
         }
     }
 }
