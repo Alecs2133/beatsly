@@ -8,9 +8,10 @@ import { useNavigate } from 'react-router-dom';
 import { useCollections } from '../hooks/useCollections';
 import { createCollection, deleteCollection, fetchCollectionSoundIds } from '../lib/collections';
 import { supabase } from '../lib/supabase';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
 import { fetchByIdChunks } from '../lib/paging';
+import { errorMessage } from '../lib/errors';
 
 export const MySounds: React.FC = () => {
   const { savedSounds } = useLibraryStore();
@@ -49,15 +50,15 @@ export const MySounds: React.FC = () => {
           return row ? [mapSoundRow(row)] : [];
         });
         if (!cancelled) setCollectionSounds(ordered);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to load collection:', err);
-        showToast('Failed to load collection: ' + err.message, 'error');
+        showToast(`${t('collections_load_failed')} ${errorMessage(err)}`, 'error');
       } finally {
         if (!cancelled) setLoadingCollection(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [activeCollectionId, showToast]);
+  }, [activeCollectionId, showToast, t]);
 
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,19 +68,19 @@ export const MySounds: React.FC = () => {
       setNewCollectionName('');
       await refetchCollections();
       setActiveCollectionId(collection.id);
-    } catch (err: any) {
-      showToast('Failed to create collection: ' + err.message, 'error');
+    } catch (err) {
+      showToast(`${t('grid_create_failed')} ${errorMessage(err)}`, 'error');
     }
   };
 
   const handleDeleteCollection = async (collectionId: string) => {
-    if (!window.confirm('Delete this collection? The sounds themselves are not affected.')) return;
+    if (!window.confirm(t('collections_delete_confirm'))) return;
     try {
       await deleteCollection(collectionId);
       if (activeCollectionId === collectionId) setActiveCollectionId(null);
       await refetchCollections();
-    } catch (err: any) {
-      showToast('Failed to delete collection: ' + err.message, 'error');
+    } catch (err) {
+      showToast(`${t('collections_delete_failed')} ${errorMessage(err)}`, 'error');
     }
   };
 
@@ -145,7 +146,7 @@ export const MySounds: React.FC = () => {
       </div>
 
       {loadingCollection ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-secondary)' }}>Loading…</div>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-secondary)' }}>{t('common_loading')}</div>
       ) : filteredSounds.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎧</div>

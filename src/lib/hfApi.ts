@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { readFunctionError } from './errors';
 
 export class GenerationError extends Error {
   /** Providerul își încarcă modelul — reîncercarea are șanse să reușească. */
@@ -30,14 +31,7 @@ export const generateAudio = async (prompt: string): Promise<string> => {
   });
 
   if (error) {
-    // Corpul răspunsului de eroare e disponibil pe `context` (obiectul Response).
-    const status = (error as any)?.context?.status as number | undefined;
-    let detail: { error?: string; retryable?: boolean } = {};
-    try {
-      detail = await (error as any)?.context?.json?.() ?? {};
-    } catch {
-      // Corp non-JSON: rămânem pe mesajul implicit de mai jos.
-    }
+    const { status, detail } = await readFunctionError(error);
 
     if (status === 402) {
       throw new GenerationError(

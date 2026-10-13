@@ -32,7 +32,7 @@ export const Sidebar: React.FC = () => {
         <button 
           className="hamburger-btn"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          title="Toggle Sidebar"
+          title={t('sidebar_toggle')}
         >
           <div className="hamburger-line"></div>
           <div className="hamburger-line"></div>

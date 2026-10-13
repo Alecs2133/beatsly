@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 
-export function FaqItem({ q, a }: { q: string; a: string }) {
+export function FaqItem({ id, q, a }: { id: string; q: string; a: string }) {
   const [open, setOpen] = useState(false);
-  const panelId = `faq-panel-${q.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+  // Din id, nu din textul întrebării — textul se schimbă cu limba.
+  const panelId = `faq-panel-${id}`;
 
   return (
     <div className={`faq-item glass ${open ? 'open' : ''}`}>

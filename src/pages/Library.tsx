@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SoundGrid } from '../components/SoundGrid';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { supabase } from '../lib/supabase';
 import { fetchAllPages } from '../lib/paging';
 import { mapSoundRow } from '../lib/soundRow';
@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { ALL_KEYS, isHarmonicallyCompatible, parseKey } from '../lib/musicKey';
 import { SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { errorMessage } from '../lib/errors';
+import { buildTagPacks, TagPack } from '../lib/packs';
 
 export const Library: React.FC = () => {
   const { searchQuery } = useAppStore();
@@ -34,7 +36,7 @@ export const Library: React.FC = () => {
 
   const categories = ['ALL', 'Loop', 'One-Shot', 'FX'];
 
-  const [dynamicPacks, setDynamicPacks] = useState<any[]>([]);
+  const [dynamicPacks, setDynamicPacks] = useState<TagPack[]>([]);
 
   // Reîncărcăm doar când se schimbă userul, nu la fiecare refresh de token
   // (care produce un obiect `session` nou cu același user).
@@ -67,38 +69,11 @@ export const Library: React.FC = () => {
         }));
         setSounds(mappedData);
 
-        // Compute frequencies to show top 5
-        const allTags = mappedData.flatMap((s: any) => s.tags || []);
-        const tagCounts = allTags.reduce((acc: any, tag: string) => {
-           if (tag && tag.trim().length > 0) {
-             acc[tag] = (acc[tag] || 0) + 1;
-           }
-           return acc;
-        }, {});
-        
-        const uniqueTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
-        
-        const colors = [
-          'linear-gradient(135deg, #ff007f, #7928ca)',
-          'linear-gradient(135deg, #00c6ff, #0072ff)',
-          'linear-gradient(135deg, #fceabb, #f8b500)',
-          'linear-gradient(135deg, #11998e, #38ef7d)',
-          'linear-gradient(135deg, #ff416c, #ff4b2b)',
-          'linear-gradient(135deg, #9d4edd, #ff007f)',
-        ];
-        // Slice top 5
-        const generatedPacks = uniqueTags.slice(0, 5).map((tag, index) => ({
-          id: tag,
-          title: `${tag.charAt(0).toUpperCase() + tag.slice(1)} Pack`,
-          author: 'Community',
-          count: tagCounts[tag],
-          color: colors[index % colors.length],
-          tag: tag
-        }));
-        setDynamicPacks(generatedPacks);
-      } catch (err: any) {
+        // Top 5 tag-uri ca „Featured Packs”
+        setDynamicPacks(buildTagPacks(mappedData.map(s => s.tags), 5));
+      } catch (err) {
         console.error("Error fetching sounds:", err);
-        setError(err.message);
+        setError(errorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -159,7 +134,7 @@ export const Library: React.FC = () => {
               fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' 
             }}
           >
-            Show All
+            {t('show_all')}
           </button>
         </div>
         <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', margin: '0 -10px', padding: '0 10px 16px 10px' }}>
@@ -190,7 +165,7 @@ export const Library: React.FC = () => {
               onClick={() => navigate(`/pack/${pack.tag}`)}
             >
               <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)', marginBottom: '4px' }}>{pack.title}</h3>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontWeight: '600' }}>by {pack.author}</p>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontWeight: '600' }}>{t('pack_by_community')}</p>
             </div>
           )) : (
             <p style={{ color: 'var(--text-muted)' }}>{t('no_sounds_found')}</p>
@@ -220,7 +195,7 @@ export const Library: React.FC = () => {
           }}
         >
           <SlidersHorizontal size={14} />
-          Filters
+          {t('filters')}
           <ChevronDown size={14} style={{ transform: showAdvanced ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
         </button>
       </div>
@@ -235,17 +210,17 @@ export const Library: React.FC = () => {
         >
           <div>
             <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              BPM range
+              {t('filter_bpm_range')}
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input
-                type="number" placeholder="Min" value={bpmMin}
+                type="number" placeholder={t('filter_min')} value={bpmMin}
                 onChange={e => setBpmMin(e.target.value)}
                 style={{ width: '80px', padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)' }}
               />
               <span style={{ color: 'var(--text-muted)' }}>–</span>
               <input
-                type="number" placeholder="Max" value={bpmMax}
+                type="number" placeholder={t('filter_max')} value={bpmMax}
                 onChange={e => setBpmMax(e.target.value)}
                 style={{ width: '80px', padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)' }}
               />
@@ -254,14 +229,14 @@ export const Library: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Harmonically compatible with
+              {t('filter_harmonic')}
             </label>
             <select
               value={keyFilterIndex}
               onChange={e => setKeyFilterIndex(e.target.value)}
               style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)', minWidth: '140px' }}
             >
-              <option value="">Any key</option>
+              <option value="">{t('filter_any_key')}</option>
               {ALL_KEYS.map((k, i) => (
                 <option key={k.label} value={i}>{k.label}</option>
               ))}
@@ -273,7 +248,7 @@ export const Library: React.FC = () => {
               onClick={() => { setBpmMin(''); setBpmMax(''); setKeyFilterIndex(''); }}
               style={{ background: 'transparent', border: 'none', color: 'var(--accent-tertiary)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, padding: '8px 0' }}
             >
-              Clear filters
+              {t('filter_clear')}
             </button>
           )}
         </div>

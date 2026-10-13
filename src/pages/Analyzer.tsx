@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { hasUnlimitedCredits } from '../lib/roles';
 import { useTranslation } from '../hooks/useTranslation';
+import { errorMessage } from '../lib/errors';
 export const Analyzer: React.FC = () => {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
@@ -55,12 +56,12 @@ export const Analyzer: React.FC = () => {
         return url;
       });
       setCurrentGeneratedId(Date.now().toString());
-    } catch (err: any) {
+    } catch (err) {
       if (err instanceof GenerationError && err.outOfCredits) {
         setError(t('out_of_credits'));
         setErrorRetryable(false);
       } else {
-        setError(err.message);
+        setError(errorMessage(err));
         setErrorRetryable(err instanceof GenerationError && err.retryable);
       }
     } finally {
@@ -71,7 +72,7 @@ export const Analyzer: React.FC = () => {
   return (
     <div className="analyzer-page" style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
       <div className="page-header" style={{ marginBottom: '40px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '12px' }}>AI <span style={{color: 'var(--accent-secondary)'}}>Generator</span></h1>
+        <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '12px' }}>{t('nav_ai_generator')}</h1>
         <p style={{ color: 'var(--text-muted)' }}>{t('ai_generator_subtitle')}</p>
       </div>
 
@@ -141,7 +142,7 @@ export const Analyzer: React.FC = () => {
             </div>
           ) : (
             <div style={{ color: '#ff4d4d', padding: '16px', background: 'rgba(255, 77, 77, 0.1)', borderRadius: '8px', border: '1px solid rgba(255, 77, 77, 0.3)' }}>
-              <strong>Error:</strong> {error}
+              <strong>{t('error_prefix')}</strong> {error}
             </div>
           )
         )}

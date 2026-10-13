@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { createPreviewMp3, previewObjectName } from './audioPreview';
+import { readFunctionError } from './errors';
 
 export interface UploadedSound {
   /** Cheia obiectului în bucket-ul privat `sounds`. */
@@ -108,13 +109,7 @@ export async function requestDownloadUrl(soundId: string): Promise<string> {
   });
 
   if (error) {
-    const status = (error as any)?.context?.status as number | undefined;
-    let detail: { error?: string } = {};
-    try {
-      detail = (await (error as any)?.context?.json?.()) ?? {};
-    } catch {
-      // corp non-JSON
-    }
+    const { status, detail } = await readFunctionError(error);
 
     if (status === 402) throw new InsufficientCreditsError();
 

@@ -9,6 +9,9 @@ import { mapSoundRow } from './soundRow';
 import { previewObjectName } from './audioPreview';
 import { slugifyForStorage } from './soundUpload';
 import { downloadPercent } from './updater';
+import { buildTagPacks } from './packs';
+import { errorMessage, readFunctionError } from './errors';
+import { cleanSocialLinks, normalizeUrl, readSocialLinks } from './socialLinks';
 import type { Tables } from './database.types';
 
 describe('roles', () => {
@@ -102,6 +105,86 @@ describe('storage names', () => {
     expect(slugifyForStorage('  808 -- Bass  ')).toBe('808_bass');
     expect(slugifyForStorage('!!!')).toBe('untitled');
     expect(slugifyForStorage('Șoaptă')).toBe('oapt');
+  });
+});
+
+describe('buildTagPacks', () => {
+  const tagLists = [['trap', 'dark'], ['trap'], null, ['dark', 'trap', '  '], ['lofi']];
+
+  it('ranks tags by how many sounds use them', () => {
+    const packs = buildTagPacks(tagLists);
+    expect(packs.map(p => [p.tag, p.count])).toEqual([['trap', 3], ['dark', 2], ['lofi', 1]]);
+    expect(packs[0].title).toBe('Trap Pack');
+  });
+
+  it('respects the limit and ignores blank tags', () => {
+    expect(buildTagPacks(tagLists, 2).map(p => p.tag)).toEqual(['trap', 'dark']);
+  });
+
+  it('gives neighbouring packs different colours', () => {
+    const [a, b] = buildTagPacks(tagLists);
+    expect(a.color).not.toBe(b.color);
+  });
+});
+
+describe('errorMessage', () => {
+  it('reads Error, Supabase error objects and strings', () => {
+    expect(errorMessage(new Error('boom'))).toBe('boom');
+    expect(errorMessage({ message: 'permission denied', code: '42501' })).toBe('permission denied');
+    expect(errorMessage('plain')).toBe('plain');
+    expect(errorMessage(null)).toBe('null');
+  });
+});
+
+describe('readFunctionError', () => {
+  it('extracts status and JSON body from the Response on error.context', async () => {
+    const error = { context: new Response(JSON.stringify({ error: 'Not enough credits' }), { status: 402 }) };
+    expect(await readFunctionError(error)).toEqual({ status: 402, detail: { error: 'Not enough credits' } });
+  });
+
+  it('survives a non-JSON body or a missing context', async () => {
+    expect(await readFunctionError({ context: new Response('oops', { status: 500 }) })).toEqual({ status: 500, detail: {} });
+    expect(await readFunctionError(new Error('network'))).toEqual({ status: undefined, detail: {} });
+  });
+});
+
+describe('social links', () => {
+  it('accepts http(s) links and adds a missing scheme', () => {
+    expect(normalizeUrl('https://instagram.com/beatsly')).toBe('https://instagram.com/beatsly');
+    expect(normalizeUrl('soundcloud.com/someone')).toBe('https://soundcloud.com/someone');
+    expect(normalizeUrl('  http://example.com  ')).toBe('http://example.com/');
+  });
+
+  it('rejects scripts and other schemes', () => {
+    expect(normalizeUrl('javascript:alert(1)')).toBeNull();
+    expect(normalizeUrl('JavaScript:alert(1)')).toBeNull();
+    expect(normalizeUrl('data:text/html,<b>x</b>')).toBeNull();
+    expect(normalizeUrl('file:///C:/Windows')).toBeNull();
+  });
+
+  it('rejects junk and overly long links', () => {
+    expect(normalizeUrl('')).toBeNull();
+    expect(normalizeUrl('not a link')).toBeNull();
+    expect(normalizeUrl(`https://example.com/${'a'.repeat(300)}`)).toBeNull();
+  });
+
+  it('keeps only known keys and reports invalid ones', () => {
+    const { links, invalid } = cleanSocialLinks({
+      website: 'example.com',
+      instagram: 'javascript:alert(1)',
+      youtube: '',
+      tiktok: 'https://tiktok.com/@x',
+    });
+    expect(links).toEqual({ website: 'https://example.com/' });
+    expect(invalid).toEqual(['instagram']);
+  });
+
+  it('reads untrusted jsonb safely', () => {
+    expect(readSocialLinks(null)).toEqual({});
+    expect(readSocialLinks(['https://x.com'])).toEqual({});
+    expect(readSocialLinks({ spotify: 'https://open.spotify.com/artist/1', website: 'javascript:x' })).toEqual({
+      spotify: 'https://open.spotify.com/artist/1',
+    });
   });
 });
 

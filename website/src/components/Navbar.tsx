@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { SectionLink } from './SectionLink';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut, UserCircle, Menu, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import { useT } from '../i18n/context';
+import { LanguageToggle } from './LanguageToggle';
 
 interface NavbarProps {
   user: User | null;
+  authReady: boolean;
   scrolled: boolean;
   onSignOut: () => void;
   onRequestAuth: () => void;
@@ -33,7 +37,8 @@ function DesktopNavLink({ to, label }: { to: string; label: string }) {
   );
 }
 
-export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps) {
+export function Navbar({ user, authReady, scrolled, onSignOut, onRequestAuth }: NavbarProps) {
+  const { t } = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -41,7 +46,7 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
   // pagina nouă când userul dă tap pe un link.
   useEffect(() => {
     setMenuOpen(false);
-  }, [location.pathname, location.hash]);
+  }, [location.key]);
 
   // Blochează scroll-ul din spatele meniului cât timp e deschis, ca pagina
   // să nu alunece sub el pe telefon.
@@ -54,6 +59,9 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
     };
   }, [menuOpen]);
 
+  const displayName =
+    (user?.user_metadata?.username as string | undefined) ?? user?.email?.split('@')[0];
+
   return (
     <nav className={`navbar ${scrolled || menuOpen ? 'glass scrolled' : 'transparent'}`}>
       {/* Click pe logo sau pe "Beats.ly" duce mereu la pagina principală. */}
@@ -63,28 +71,34 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
       </Link>
 
       <div className="nav-links">
-        <Link to="/#features">Features</Link>
-        <DesktopNavLink to="/pricing" label="Pricing" />
-        <DesktopNavLink to="/download" label="Download" />
+        <SectionLink section="features">{t('nav_features')}</SectionLink>
+        <DesktopNavLink to="/pricing" label={t('nav_pricing')} />
+        <DesktopNavLink to="/download" label={t('nav_download')} />
       </div>
 
       <div className="nav-actions">
-        {user ? (
+        <LanguageToggle />
+
+        {/* Până se citește sesiunea nu arătăm nimic aici — altfel „Sign In”
+            clipea o clipă la fiecare refresh pentru cine e deja logat. */}
+        {!authReady ? (
+          <div className="nav-auth-placeholder" aria-hidden />
+        ) : user ? (
           <div className="nav-user">
             {/* Link + buton separate ca frați, nu imbricate — un <button>
                 în interiorul unui <a> ar fi HTML invalid și ar da conflicte
                 de click. */}
-            <Link to="/account" className="nav-user-link">
+            <Link to="/profile" className="nav-user-link">
               <UserCircle size={20} />
-              <span>{user.email?.split('@')[0]}</span>
+              <span>{displayName}</span>
             </Link>
-            <button onClick={onSignOut} className="btn-icon" title="Sign Out">
+            <button onClick={onSignOut} className="btn-icon" title={t('nav_sign_out')} aria-label={t('nav_sign_out')}>
               <LogOut size={16} />
             </button>
           </div>
         ) : (
           <button onClick={onRequestAuth} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '14px' }}>
-            Sign In
+            {t('nav_sign_in')}
           </button>
         )}
 
@@ -94,7 +108,7 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
           onClick={() => setMenuOpen((o) => !o)}
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-label={menuOpen ? t('nav_close_menu') : t('nav_open_menu')}
         >
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -110,11 +124,11 @@ export function Navbar({ user, scrolled, onSignOut, onRequestAuth }: NavbarProps
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
           >
-            <Link to="/#features">Features</Link>
-            <NavLink to="/pricing" className={NAV_LINK_CLASS}>Pricing</NavLink>
-            <NavLink to="/download" className={NAV_LINK_CLASS}>Download</NavLink>
+            <SectionLink section="features">{t('nav_features')}</SectionLink>
+            <NavLink to="/pricing" className={NAV_LINK_CLASS}>{t('nav_pricing')}</NavLink>
+            <NavLink to="/download" className={NAV_LINK_CLASS}>{t('nav_download')}</NavLink>
             {user && (
-              <NavLink to="/account" className={NAV_LINK_CLASS}>Account</NavLink>
+              <NavLink to="/profile" className={NAV_LINK_CLASS}>{t('nav_profile')}</NavLink>
             )}
           </motion.div>
         )}

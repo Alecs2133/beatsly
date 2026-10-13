@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
-import { pageTransition } from './lib/animations';
 import type { LayoutContext } from './lib/layoutContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -11,42 +9,40 @@ import { AuthModal } from './components/AuthModal';
 import { CookieBanner } from './components/CookieBanner';
 
 /**
- * Derulează la secțiunea din hash după navigare (ex: link-ul "Features" din
- * navbar duce la /#features, chiar dacă pornești de pe /pricing), sau
- * resetează scroll-ul la vârf când navighezi către o rută fără hash.
+ * Scroll la fiecare navigare: sus de tot, sau la secțiunea cerută prin
+ * `state.section` (link-urile „Features” / „FAQ” — vezi SectionLink).
+ *
+ * Secțiunea vine prin `state`, nu prin `#hash` în URL: un hash rămânea în
+ * bara de adrese, iar la refresh sau la redeschiderea site-ului pagina pornea
+ * derulată în jos, la secțiunea respectivă.
+ *
+ * `useLayoutEffect` + `location.key`: scroll-ul se face înainte ca noua pagină
+ * să fie desenată (fără salt vizibil), și la fiecare click — inclusiv un al
+ * doilea click pe „Features” când ești deja pe Home.
  */
 function ScrollManager() {
   const location = useLocation();
+  const section = (location.state as { section?: string } | null)?.section;
 
-  useEffect(() => {
-    if (!location.hash) {
-      window.scrollTo({ top: 0 });
+  useLayoutEffect(() => {
+    if (!section) {
+      window.scrollTo(0, 0);
       return;
     }
 
-    // Elementul-țintă (ex: #features de pe Home) poate să nu existe încă în
-    // DOM: AnimatePresence rulează întâi ieșirea paginii curente (~250ms)
-    // înainte ca noua pagină să se monteze. Reîncercăm la fiecare cadru, până
-    // apare sau până la ~1s, în loc să presupunem un număr fix de cadre.
-    const id = location.hash.slice(1);
     let raf = 0;
     let attempts = 0;
-
     const tryScroll = () => {
-      const el = document.getElementById(id);
+      const el = document.getElementById(section);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
-      attempts += 1;
-      if (attempts < 60) {
-        raf = requestAnimationFrame(tryScroll);
-      }
+      if (++attempts < 60) raf = requestAnimationFrame(tryScroll);
     };
-
-    raf = requestAnimationFrame(tryScroll);
+    tryScroll();
     return () => cancelAnimationFrame(raf);
-  }, [location.pathname, location.hash]);
+  }, [location.key, section]);
 
   return null;
 }
@@ -54,32 +50,39 @@ function ScrollManager() {
 export function Layout() {
   const [authOpen, setAuthOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  // Până nu știm dacă există o sesiune, nu afișăm nici „Sign In”, nici
+  // userul — altfel butonul clipea la fiecare refresh pentru cine e logat.
+  const [authReady, setAuthReady] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setAuthReady(true);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setAuthReady(true);
     });
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
     setUser(null);
   };
 
   const context: LayoutContext = {
     user,
+    authReady,
     requestAuth: () => setAuthOpen(true),
   };
 
@@ -89,7 +92,13 @@ export function Layout() {
       <div className="ambient-orb orb-1" />
       <div className="ambient-orb orb-2" />
 
-      <Navbar user={user} scrolled={scrolled} onSignOut={handleSignOut} onRequestAuth={() => setAuthOpen(true)} />
+      <Navbar
+        user={user}
+        authReady={authReady}
+        scrolled={scrolled}
+        onSignOut={handleSignOut}
+        onRequestAuth={() => setAuthOpen(true)}
+      />
 
       <AuthModal
         isOpen={authOpen}
@@ -99,17 +108,12 @@ export function Layout() {
 
       <ScrollManager />
 
-      <AnimatePresence mode="wait">
-        <motion.main
-          key={location.pathname}
-          variants={pageTransition}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
-          <Outlet context={context} />
-        </motion.main>
-      </AnimatePresence>
+      {/* Fără animație la nivel de pagină: fiecare pagină își animă deja
+          secțiunile (fadeInUp). Două animații suprapuse, plus una de ieșire
+          de 250ms, făceau ca pagina să pară că se randează de două ori. */}
+      <main key={location.pathname}>
+        <Outlet context={context} />
+      </main>
 
       <Footer />
       <CookieBanner />

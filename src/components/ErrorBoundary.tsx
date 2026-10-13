@@ -1,5 +1,7 @@
 import React from 'react';
 import { reportError } from '../lib/errorReporting';
+import { translate } from '../hooks/useTranslation';
+import { useAppStore } from '../store/useAppStore';
 
 interface Props {
   children: React.ReactNode;
@@ -27,6 +29,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Componentă-clasă, fără hook-uri: citim limba direct din store.
+      const lang = useAppStore.getState().language;
       return (
         <div style={{
           minHeight: '100vh', display: 'flex', flexDirection: 'column',
@@ -34,9 +38,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
           background: '#0a0a0f', color: 'white', padding: 40, textAlign: 'center',
         }}>
           <div style={{ fontSize: 40 }}>😵</div>
-          <h1 style={{ fontSize: 20, fontWeight: 800 }}>Something went wrong</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800 }}>{translate(lang, 'error_title')}</h1>
           <p style={{ color: 'rgba(255,255,255,0.6)', maxWidth: 400 }}>
-            The app hit an unexpected error. It's been reported — reloading should fix it.
+            {translate(lang, 'error_text')}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -46,7 +50,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               fontWeight: 'bold', cursor: 'pointer', marginTop: 8,
             }}
           >
-            Reload
+            {translate(lang, 'error_reload')}
           </button>
         </div>
       );

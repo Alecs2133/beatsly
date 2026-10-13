@@ -31,7 +31,7 @@ const CrewPage = lazy(() => import('./pages/Crew').then(m => ({ default: m.CrewP
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 
 const RouteFallback = () => (
-  <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
+  <div style={{ padding: 40, color: 'var(--text-muted)' }}>…</div>
 );
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -84,7 +84,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/local': 'Local Files – beats.ly',
   '/store': 'Store – beats.ly',
   '/admin': 'Admin – beats.ly',
-  '/account': 'Account – beats.ly',
+  '/account': 'Profile – beats.ly',
   '/options': 'Settings – beats.ly',
   '/packs': 'Sound Packs – beats.ly',
   '/crew': 'Crew – beats.ly',
@@ -116,7 +116,7 @@ const AppContent = () => {
     }
   }, [initialized]);
 
-  const hideLayout = location.pathname === '/options' || location.pathname === '/account';
+  const hideLayout = location.pathname === '/options';
 
   // Dynamic page title
   useEffect(() => {
@@ -139,7 +139,7 @@ const AppContent = () => {
       <div className={hideLayout ? "" : "main-wrapper"} style={hideLayout ? { flex: 1, display: 'flex' } : {}}>
         {!hideLayout && <TopBar />}
         <main className={hideLayout ? "full-page-wrapper" : "main-content"} style={hideLayout ? { flex: 1, display: 'flex' } : {}}>
-          <Suspense fallback={<div style={{ padding: '40px', color: 'var(--text-muted)' }}>Loading...</div>}>
+          <Suspense fallback={<RouteFallback />}>
             <Routes key={location.pathname}>
               <Route path="/" element={<Library />} />
               <Route path="/auth" element={<Auth />} />

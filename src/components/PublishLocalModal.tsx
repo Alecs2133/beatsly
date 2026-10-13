@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
+import { errorMessage } from '../lib/errors';
 
 interface PublishLocalModalProps {
   sound: SoundItem;
@@ -30,13 +31,13 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.username) {
-      showToast('Please set your Username in Account Settings first!', 'error');
+      showToast(t('set_username_first'), 'error');
       return;
     }
     setIsPublishing(true);
     
     try {
-      showToast(t('uploading_cloud') || 'Uploading to cloud...', 'info');
+      showToast(t('uploading_cloud'), 'info');
 
       // 1. Fetch local file
       const response = await fetch(sound.file_url || '');
@@ -67,12 +68,12 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
 
       if (dbError) throw dbError;
 
-      showToast(t('published_success') || 'Published successfully! 🎉', 'success');
+      showToast(t('published_success'), 'success');
       onSuccess(sound.id.toString());
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast(`${t('publish_failed')} ${err.message}`, 'error');
+      showToast(`${t('publish_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setIsPublishing(false);
     }
@@ -90,7 +91,7 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
         maxWidth: '100%', margin: 'auto',
         animation: 'pageFadeIn 0.3s ease-out forwards'
       }}>
-        <h2 style={{ marginBottom: '20px', color: 'var(--accent-secondary)' }}>Publish Local Sound</h2>
+        <h2 style={{ marginBottom: '20px', color: 'var(--accent-secondary)' }}>{t('publish_local_title')}</h2>
         
         <div style={{ 
           background: 'rgba(255, 68, 68, 0.1)', 
@@ -123,7 +124,7 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
               type="text" 
               value={author} 
               disabled
-              title="Author is set to your username"
+              title={t('author_locked')}
               style={{...inputStyle, opacity: 0.7, cursor: 'not-allowed'}} 
             />
           </div>
@@ -136,17 +137,17 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
                 value={bpm} 
                 onChange={e => setBpm(e.target.value)} 
                 style={inputStyle} 
-                placeholder="Ex: 120"
+                placeholder={t('bpm_example')}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>Key</label>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>{t('grid_key')}</label>
               <input 
                 type="text" 
                 value={key} 
                 onChange={e => setKey(e.target.value)} 
                 style={inputStyle} 
-                placeholder="Ex: C min"
+                placeholder={t('key_example')}
               />
             </div>
           </div>
@@ -158,7 +159,7 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
               value={tags}
               onChange={e => setTags(e.target.value)}
               style={inputStyle}
-              placeholder="trap, piano, loop"
+              placeholder={t('tags_placeholder')}
             />
           </div>
 

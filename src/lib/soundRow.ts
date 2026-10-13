@@ -1,4 +1,4 @@
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import type { Tables } from './database.types';
 
 /**

@@ -72,7 +72,7 @@ export const Options: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(t('update_confirm').replace('{version}', update.version))) return;
+    if (!window.confirm(t('update_confirm', { version: update.version }))) return;
 
     showToast(t('update_installing'), 'info');
     try {
@@ -97,7 +97,7 @@ export const Options: React.FC = () => {
     <div className="options-page">
       <div className="options-header">
         <h1>{t('topbar_options')}</h1>
-        <button className="options-close-btn" onClick={() => navigate(-1)} title="Close">
+        <button className="options-close-btn" onClick={() => navigate(-1)} title={t('close')}>
           ✕
         </button>
       </div>

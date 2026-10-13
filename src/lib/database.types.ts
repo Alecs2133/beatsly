@@ -246,7 +246,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
+          bio: string | null
           credits: number
+          display_name: string | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -254,12 +257,16 @@ export type Database = {
           onboarded_at: string | null
           phone_number: string | null
           role: string
+          social_links: Json
           stripe_customer_id: string | null
           tier: string
           username: string | null
         }
         Insert: {
+          avatar_path?: string | null
+          bio?: string | null
           credits?: number
+          display_name?: string | null
           first_name?: string | null
           id: string
           last_name?: string | null
@@ -267,12 +274,16 @@ export type Database = {
           onboarded_at?: string | null
           phone_number?: string | null
           role?: string
+          social_links?: Json
           stripe_customer_id?: string | null
           tier?: string
           username?: string | null
         }
         Update: {
+          avatar_path?: string | null
+          bio?: string | null
           credits?: number
+          display_name?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
@@ -280,6 +291,7 @@ export type Database = {
           onboarded_at?: string | null
           phone_number?: string | null
           role?: string
+          social_links?: Json
           stripe_customer_id?: string | null
           tier?: string
           username?: string | null
@@ -465,6 +477,10 @@ export type Database = {
       }
       current_app_role: { Args: never; Returns: string }
       deduct_credit: { Args: never; Returns: number }
+      end_subscription_by_customer: {
+        Args: { p_customer_id: string; p_event_id: string }
+        Returns: boolean
+      }
       get_crew_members: {
         Args: { p_crew_id: string }
         Returns: {
@@ -477,8 +493,12 @@ export type Database = {
       get_public_profile: {
         Args: { p_user_id: string }
         Returns: {
+          avatar_path: string
+          bio: string
+          display_name: string
           follower_count: number
           following_count: number
+          social_links: Json
           sound_count: number
           user_id: string
           username: string

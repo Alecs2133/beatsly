@@ -1,35 +1,18 @@
+import type { TranslationKey } from '../i18n/en';
+
 export interface Faq {
   id: string;
-  q: string;
-  a: string;
+  q: TranslationKey;
+  a: TranslationKey;
 }
 
+// Textele sunt în dicționare (i18n/en.ts, i18n/ro.ts); aici doar ordinea.
 export const FAQS: Faq[] = [
-  {
-    id: 'free',
-    q: 'Is Beats.ly really free?',
-    a: 'Yes! The Free tier gives you 3 download credits per day and full access to the local library manager. You can use it forever at no cost.',
-  },
-  {
-    id: 'credits',
-    q: 'What is a "credit"?',
-    a: 'Credits are used to download sounds from the cloud. Each sound costs 1 credit. Free users get 3 per day. Ultimate members have unlimited downloads with no credit system.',
-  },
-  {
-    id: 'ai-generator',
-    q: 'How does the AI Generator work?',
-    a: 'You describe the sound you need (e.g. "heavy 808 bass at 140 BPM") and our AI generates a unique, royalty-free audio sample in seconds.',
-  },
-  {
-    id: 'platforms',
-    q: 'What platforms are supported?',
-    a: 'Beats.ly is available for Windows 10/11 (x64) and macOS (Apple Silicon). An Intel Mac build is coming soon.',
-  },
-  {
-    id: 'data-safety',
-    q: 'Is my data safe?',
-    a: 'All your data is stored securely on Supabase with Row Level Security. We never share your data with third parties.',
-  },
+  { id: 'free', q: 'faq_free_q', a: 'faq_free_a' },
+  { id: 'credits', q: 'faq_credits_q', a: 'faq_credits_a' },
+  { id: 'ai-generator', q: 'faq_ai_q', a: 'faq_ai_a' },
+  { id: 'platforms', q: 'faq_platforms_q', a: 'faq_platforms_a' },
+  { id: 'data-safety', q: 'faq_data_q', a: 'faq_data_a' },
 ];
 
 export const findFaq = (id: string): Faq =>

@@ -13,8 +13,10 @@ import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { hasUnlimitedCredits } from '../lib/roles';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 import { SoundGrid } from '../components/SoundGrid';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
+import { errorMessage } from '../lib/errors';
+import { useTranslation } from '../hooks/useTranslation';
 
 const inputStyle: React.CSSProperties = {
   padding: '8px 12px',
@@ -28,6 +30,7 @@ const inputStyle: React.CSSProperties = {
 export const CrewPage: React.FC = () => {
   const { profile, user } = useAuthStore();
   const { showToast } = useAppStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { crews, loading: crewsLoading, refetch: refetchCrews } = useMyCrews();
 
@@ -81,13 +84,13 @@ export const CrewPage: React.FC = () => {
       ]);
       setMembers(membersData);
       setSounds(soundRows.map(mapSoundRow));
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load crew data:', err);
-      showToast('Failed to load crew: ' + err.message, 'error');
+      showToast(`${t('crew_load_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setLoadingSounds(false);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   useEffect(() => {
     if (selectedCrewId) loadCrewData(selectedCrewId);
@@ -99,12 +102,12 @@ export const CrewPage: React.FC = () => {
     setCreatingCrew(true);
     try {
       const crew = await createCrew(newCrewName.trim());
-      showToast(`Crew "${crew.name}" created!`, 'success');
+      showToast(t('crew_created', { name: crew.name }), 'success');
       setNewCrewName('');
       await refetchCrews();
       setSelectedCrewId(crew.id);
-    } catch (err: any) {
-      showToast('Failed to create crew: ' + err.message, 'error');
+    } catch (err) {
+      showToast(`${t('crew_create_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setCreatingCrew(false);
     }
@@ -116,11 +119,11 @@ export const CrewPage: React.FC = () => {
     setAddingMember(true);
     try {
       await addCrewMember(selectedCrewId, newMemberUsername.trim());
-      showToast('Member added!', 'success');
+      showToast(t('crew_member_added'), 'success');
       setNewMemberUsername('');
       setMembers(await fetchCrewMembers(selectedCrewId));
-    } catch (err: any) {
-      showToast('Failed to add member: ' + err.message, 'error');
+    } catch (err) {
+      showToast(`${t('crew_add_member_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setAddingMember(false);
     }
@@ -128,13 +131,13 @@ export const CrewPage: React.FC = () => {
 
   const handleRemoveMember = async (userId: string) => {
     if (!selectedCrewId) return;
-    if (!window.confirm('Remove this member from the crew?')) return;
+    if (!window.confirm(t('crew_remove_confirm'))) return;
     try {
       await removeCrewMember(selectedCrewId, userId);
       setMembers(prev => prev.filter(m => m.user_id !== userId));
-      showToast('Member removed', 'info');
-    } catch (err: any) {
-      showToast('Failed to remove member: ' + err.message, 'error');
+      showToast(t('crew_member_removed'), 'info');
+    } catch (err) {
+      showToast(`${t('crew_remove_failed')} ${errorMessage(err)}`, 'error');
     }
   };
 
@@ -178,7 +181,7 @@ export const CrewPage: React.FC = () => {
       });
       if (error) throw error;
 
-      showToast('Shared with the crew!', 'success');
+      showToast(t('crew_shared'), 'success');
       setUploadPath(null);
       setUploadTitle('');
       setUploadBpm('');
@@ -186,34 +189,34 @@ export const CrewPage: React.FC = () => {
       setUploadTags('');
       setUploadLicense('royalty_free');
       await loadCrewData(selectedCrewId);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Upload failed: ' + err.message, 'error');
+      showToast(`${t('crew_upload_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setUploading(false);
     }
   };
 
   if (crewsLoading) {
-    return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>;
+    return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>{t('common_loading')}</div>;
   }
 
   if (crews.length === 0) {
     return (
       <div className="library-page glass" style={{ padding: '60px 20px', textAlign: 'center', borderRadius: '16px', margin: '40px auto', maxWidth: '600px' }}>
         <div style={{ fontSize: '48px', marginBottom: '20px' }}>👥</div>
-        <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>No crews yet</h2>
+        <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>{t('crew_none_title')}</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>
           {canCreateCrew
-            ? 'Create a private crew to share sounds with your team — never public, never moderated.'
-            : 'Crews are a private way to share sounds with a small team. Ask an Ultimate member to invite you, or upgrade to create your own.'}
+            ? t('crew_none_can_create')
+            : t('crew_none_cannot_create')}
         </p>
         {canCreateCrew ? (
           <form onSubmit={handleCreateCrew} style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <input
               value={newCrewName}
               onChange={e => setNewCrewName(e.target.value)}
-              placeholder="Crew name"
+              placeholder={t('crew_name_placeholder')}
               style={{ ...inputStyle, padding: '12px 16px', fontSize: 14 }}
             />
             <button
@@ -221,7 +224,7 @@ export const CrewPage: React.FC = () => {
               disabled={creatingCrew || !newCrewName.trim()}
               style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
             >
-              {creatingCrew ? 'Creating…' : 'Create Crew'}
+              {creatingCrew ? t('crew_creating') : t('crew_create')}
             </button>
           </form>
         ) : (
@@ -229,7 +232,7 @@ export const CrewPage: React.FC = () => {
             onClick={() => navigate('/store')}
             style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none', padding: '12px 32px', borderRadius: 24, fontWeight: 'bold', cursor: 'pointer' }}
           >
-            Upgrade to Ultimate
+            {t('crew_upgrade')}
           </button>
         )}
       </div>
@@ -240,15 +243,15 @@ export const CrewPage: React.FC = () => {
     <div className="library-page">
       <div className="page-header" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Crews</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Private sound sharing — never public, never moderated.</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>{t('crew_title')}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>{t('crew_subtitle')}</p>
         </div>
         {canCreateCrew && (
           <form onSubmit={handleCreateCrew} style={{ display: 'flex', gap: 8 }}>
             <input
               value={newCrewName}
               onChange={e => setNewCrewName(e.target.value)}
-              placeholder="New crew name"
+              placeholder={t('crew_new_name_placeholder')}
               style={inputStyle}
             />
             <button
@@ -256,7 +259,7 @@ export const CrewPage: React.FC = () => {
               disabled={creatingCrew || !newCrewName.trim()}
               style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <Plus size={14} /> New Crew
+              <Plus size={14} /> {t('crew_new')}
             </button>
           </form>
         )}
@@ -281,18 +284,18 @@ export const CrewPage: React.FC = () => {
           <div className="glass" style={{ padding: 20, borderRadius: 12, marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <Users size={18} color="var(--accent-secondary)" />
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Members ({members.length})</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('crew_members', { count: members.length })}</h3>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: isOwner ? 16 : 0 }}>
               {members.map(m => (
                 <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: 20, fontSize: 13 }}>
                   {m.is_owner && <Crown size={12} color="#ffb703" />}
-                  <span>{m.username || 'Unknown'}</span>
+                  <span>{m.username || t('crew_unknown_member')}</span>
                   {isOwner && !m.is_owner && (
                     <button
                       onClick={() => handleRemoveMember(m.user_id)}
                       style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
-                      title="Remove"
+                      title={t('crew_remove')}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -305,7 +308,7 @@ export const CrewPage: React.FC = () => {
                 <input
                   value={newMemberUsername}
                   onChange={e => setNewMemberUsername(e.target.value)}
-                  placeholder="Add by username"
+                  placeholder={t('crew_add_placeholder')}
                   style={{ ...inputStyle, flex: 1, maxWidth: 240 }}
                 />
                 <button
@@ -313,7 +316,7 @@ export const CrewPage: React.FC = () => {
                   disabled={addingMember || !newMemberUsername.trim()}
                   style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-main)', border: '1px solid var(--border-strong)', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}
                 >
-                  {addingMember ? 'Adding…' : 'Add'}
+                  {addingMember ? t('crew_adding') : t('crew_add')}
                 </button>
               </form>
             )}
@@ -322,7 +325,7 @@ export const CrewPage: React.FC = () => {
           <div className="glass" style={{ padding: 20, borderRadius: 12, marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <UploadCloud size={18} color="var(--accent-primary)" />
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Share a sound with this crew</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('crew_share_title')}</h3>
             </div>
             <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
@@ -330,14 +333,14 @@ export const CrewPage: React.FC = () => {
                 onClick={handleSelectFile}
                 style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.05)', border: '1px dashed var(--border-strong)', color: 'var(--text-main)', padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}
               >
-                {uploadPath ? uploadPath.split(/[\\/]/).pop() : 'Select audio file…'}
+                {uploadPath ? uploadPath.split(/[\\/]/).pop() : t('crew_select_file')}
               </button>
               {uploadPath && (
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder="Title" style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
+                  <input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder={t('title_label')} style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
                   <input value={uploadBpm} onChange={e => setUploadBpm(e.target.value)} placeholder="BPM" type="number" style={{ ...inputStyle, width: 80 }} />
-                  <input value={uploadKey} onChange={e => setUploadKey(e.target.value)} placeholder="Key" style={{ ...inputStyle, width: 80 }} />
-                  <input value={uploadTags} onChange={e => setUploadTags(e.target.value)} placeholder="tags, comma, separated" style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
+                  <input value={uploadKey} onChange={e => setUploadKey(e.target.value)} placeholder={t('grid_key')} style={{ ...inputStyle, width: 80 }} />
+                  <input value={uploadTags} onChange={e => setUploadTags(e.target.value)} placeholder={t('tags_placeholder')} style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
                   <select
                     value={uploadLicense}
                     onChange={e => setUploadLicense(e.target.value as SoundLicense)}
@@ -352,7 +355,7 @@ export const CrewPage: React.FC = () => {
                     disabled={uploading}
                     style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none', padding: '8px 20px', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', fontSize: 13 }}
                   >
-                    {uploading ? 'Sharing…' : 'Share'}
+                    {uploading ? t('crew_sharing') : t('crew_share')}
                   </button>
                 </div>
               )}
@@ -360,9 +363,9 @@ export const CrewPage: React.FC = () => {
           </div>
 
           {loadingSounds ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-secondary)' }}>Loading sounds…</div>
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-secondary)' }}>{t('crew_loading_sounds')}</div>
           ) : sounds.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No sounds shared in this crew yet.</div>
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>{t('crew_no_sounds')}</div>
           ) : (
             <SoundGrid sounds={sounds} />
           )}

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { BatchUpload } from '../components/BatchUpload';
 import { useTranslation } from '../hooks/useTranslation';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { Play, Pause } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
@@ -11,6 +11,7 @@ import { createPreviewMp3, previewObjectName } from '../lib/audioPreview';
 import { mapSoundRow } from '../lib/soundRow';
 import { fetchAllPages } from '../lib/paging';
 import type { Tables } from '../lib/database.types';
+import { errorMessage } from '../lib/errors';
 
 type RoleRequest = Tables<'role_requests'>;
 type ErrorReport = Tables<'client_error_reports'>;
@@ -43,14 +44,14 @@ export const Admin: React.FC = () => {
           .limit(100);
         if (error) throw error;
         setErrorReports(data || []);
-      } catch (err: any) {
+      } catch (err) {
         console.error(err);
-        showToast('Failed to load error reports', 'error');
+        showToast(t('admin_errors_load_failed'), 'error');
       } finally {
         setErrorReportsLoaded(true);
       }
     })();
-  }, [activeTab, errorReportsLoaded, showToast]);
+  }, [activeTab, errorReportsLoaded, showToast, t]);
 
   const fetchRequests = async () => {
     try {
@@ -62,9 +63,9 @@ export const Admin: React.FC = () => {
 
       if (error) throw error;
       setRequests(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Failed to load requests', 'error');
+      showToast(t('admin_requests_load_failed'), 'error');
     }
   };
 
@@ -83,9 +84,9 @@ export const Admin: React.FC = () => {
 
       if (error) throw error;
       setPendingSounds((data || []).map(mapSoundRow));
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Failed to load pending sounds', 'error');
+      showToast(t('admin_pending_load_failed'), 'error');
     }
   };
 
@@ -117,9 +118,9 @@ export const Admin: React.FC = () => {
       
       showToast(t('approved_success'), 'success');
       setRequests(requests.filter(r => r.id !== req.id));
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Approval failed: ' + err.message, 'error');
+      showToast(`${t('admin_approval_failed')} ${errorMessage(err)}`, 'error');
     }
   };
 
@@ -144,15 +145,15 @@ export const Admin: React.FC = () => {
       
       showToast(t('rejected_success'), 'info');
       setRequests(requests.filter(r => r.id !== req.id));
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Rejection failed.', 'error');
+      showToast(t('admin_rejection_failed'), 'error');
     }
   };
 
   const handleApproveSound = async (soundId: string) => {
     try {
-      showToast('Approving sound...', 'info');
+      showToast(t('admin_approving_sound'), 'info');
       const { error } = await supabase
         .from('sounds')
         .update({ status: 'approved' })
@@ -160,17 +161,17 @@ export const Admin: React.FC = () => {
 
       if (error) throw error;
       
-      showToast('Sound approved and published!', 'success');
+      showToast(t('admin_sound_approved'), 'success');
       setPendingSounds(pendingSounds.filter(s => s.id !== soundId));
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Approval failed.', 'error');
+      showToast(t('admin_approval_failed'), 'error');
     }
   };
 
   const handleRejectSound = async (sound: SoundItem) => {
     try {
-      showToast('Rejecting and deleting sound...', 'info');
+      showToast(t('admin_rejecting_sound'), 'info');
       
       // `storage_path` este cheia reală a obiectului. Parsarea URL-ului
       // public nu mai funcționează odată ce bucket-ul devine privat, iar
@@ -201,11 +202,11 @@ export const Admin: React.FC = () => {
 
       if (dbError) throw dbError;
       
-      showToast('Sound deleted permanently.', 'info');
+      showToast(t('grid_deleted'), 'info');
       setPendingSounds(pendingSounds.filter(s => s.id !== sound.id));
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Rejection failed.', 'error');
+      showToast(t('admin_rejection_failed'), 'error');
     }
   };
 
@@ -247,7 +248,7 @@ export const Admin: React.FC = () => {
       setBackfillProgress({ done: 0, total: pending.length, failed: 0 });
 
       if (pending.length === 0) {
-        showToast('Toate sunetele au deja preview.', 'success');
+        showToast(t('admin_previews_all_done'), 'success');
         return;
       }
 
@@ -302,14 +303,14 @@ export const Admin: React.FC = () => {
 
       showToast(
         failed === 0
-          ? `${done} preview-uri generate.`
-          : `${done} generate, ${failed} eșuate — vezi consola.`,
+          ? t('admin_previews_generated', { done })
+          : t('admin_previews_partial', { done, failed }),
         failed === 0 ? 'success' : 'error'
       );
       await countMissingPreviews();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast('Backfill eșuat: ' + err.message, 'error');
+      showToast(`${t('admin_backfill_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setBackfilling(false);
     }
@@ -339,13 +340,13 @@ export const Admin: React.FC = () => {
           onClick={() => setActiveTab('moderation')}
           style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: activeTab === 'moderation' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)', color: activeTab === 'moderation' ? 'black' : 'white', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
         >
-          Sound Moderation ({pendingSounds.length})
+          {t('admin_tab_moderation', { count: pendingSounds.length })}
         </button>
         <button
           onClick={() => setActiveTab('errors')}
           style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: activeTab === 'errors' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)', color: activeTab === 'errors' ? 'black' : 'white', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
         >
-          Error Reports
+          {t('admin_tab_errors')}
         </button>
       </div>
 
@@ -369,7 +370,7 @@ export const Admin: React.FC = () => {
                       {req.social_links}
                     </a>
                     <p style={{ fontSize: '13px', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '5px' }}>
-                      Role: {req.requested_role || 'PRODUCER'}
+                      {t('admin_role', { role: req.requested_role || 'PRODUCER' })}
                     </p>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
                       {t('requested_on')} {req.created_at ? new Date(req.created_at).toLocaleDateString() : '—'}
@@ -386,7 +387,7 @@ export const Admin: React.FC = () => {
                       onClick={() => handleApprove(req)}
                       style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--accent-primary)', color: 'black', fontWeight: 'bold', cursor: 'pointer' }}
                     >
-                      Approve as {req.requested_role || 'PRODUCER'}
+                      {t('admin_approve_as', { role: req.requested_role || 'PRODUCER' })}
                     </button>
                   </div>
                 </div>
@@ -402,18 +403,18 @@ export const Admin: React.FC = () => {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px'
           }}>
             <div>
-              <p style={{ fontWeight: 'bold', marginBottom: '6px' }}>Preview-uri audio</p>
+              <p style={{ fontWeight: 'bold', marginBottom: '6px' }}>{t('admin_previews_title')}</p>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '620px', lineHeight: 1.5 }}>
                 {missingPreviews === null
-                  ? 'Se verifică…'
+                  ? t('admin_previews_checking')
                   : missingPreviews === 0
-                    ? 'Toate sunetele au preview. Bucket-ul principal poate fi trecut la privat.'
-                    : `${missingPreviews} sunete nu au preview. Generează-le înainte de a aplica migrarea care face bucket-ul privat, altfel nu vor putea fi ascultate.`}
+                    ? t('admin_previews_none_missing')
+                    : t('admin_previews_missing', { count: missingPreviews })}
               </p>
               {backfilling && backfillProgress.total > 0 && (
                 <p style={{ fontSize: '13px', color: 'var(--accent-secondary)', marginTop: '8px' }}>
                   {backfillProgress.done} / {backfillProgress.total}
-                  {backfillProgress.failed > 0 && ` · ${backfillProgress.failed} eșuate`}
+                  {backfillProgress.failed > 0 && ` · ${t('admin_previews_failed_count', { count: backfillProgress.failed })}`}
                 </p>
               )}
             </div>
@@ -430,15 +431,15 @@ export const Admin: React.FC = () => {
                 whiteSpace: 'nowrap'
               }}
             >
-              {backfilling ? 'Se generează…' : 'Generate missing previews'}
+              {backfilling ? t('admin_previews_generating') : t('admin_previews_generate')}
             </button>
           </div>
 
           {loading ? (
-            <p>Loading pending sounds...</p>
+            <p>{t('admin_pending_loading')}</p>
           ) : pendingSounds.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-panel)', borderRadius: '12px' }}>
-              <p style={{ color: 'var(--text-muted)' }}>No sounds pending approval.</p>
+              <p style={{ color: 'var(--text-muted)' }}>{t('admin_pending_empty')}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -465,7 +466,7 @@ export const Admin: React.FC = () => {
                       </button>
                       <div>
                         <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>{sound.title}</p>
-                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>by {sound.author} • {sound.type.toUpperCase()}</p>
+                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{sound.author} • {sound.type.toUpperCase()}</p>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
@@ -473,13 +474,13 @@ export const Admin: React.FC = () => {
                         onClick={() => handleRejectSound(sound)}
                         style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'rgba(255,68,68,0.1)', color: '#ff4444', cursor: 'pointer', fontWeight: 'bold' }}
                       >
-                        Reject & Delete
+                        {t('admin_reject_delete')}
                       </button>
                       <button 
                         onClick={() => handleApproveSound(sound.id)}
                         style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--accent-primary)', color: 'black', fontWeight: 'bold', cursor: 'pointer' }}
                       >
-                        Approve
+                        {t('admin_approve')}
                       </button>
                     </div>
                   </div>
@@ -491,10 +492,10 @@ export const Admin: React.FC = () => {
       ) : activeTab === 'errors' ? (
         <>
           {!errorReportsLoaded ? (
-            <p>Loading…</p>
+            <p>{t('common_loading')}</p>
           ) : errorReports.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-panel)', borderRadius: '12px' }}>
-              <p style={{ color: 'var(--text-muted)' }}>No errors reported. 🎉</p>
+              <p style={{ color: 'var(--text-muted)' }}>{t('admin_errors_empty')}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -522,7 +523,7 @@ export const Admin: React.FC = () => {
                   {expandedErrorId === report.id && (
                     <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-light)' }}>
                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                        User: {report.user_id || 'anonymous'}
+                        {t('admin_report_user', { user: report.user_id || t('admin_anonymous') })}
                       </p>
                       {report.stack && (
                         <pre style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', maxHeight: '240px', overflowY: 'auto' }}>

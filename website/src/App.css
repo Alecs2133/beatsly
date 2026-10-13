@@ -162,6 +162,45 @@
   color: #ff6b6b;
 }
 
+/* Rezervă locul butonului de cont cât timp sesiunea se citește, ca navbar-ul
+   să nu-și schimbe lățimea când apare „Sign In” sau userul. */
+.nav-auth-placeholder {
+  width: 96px;
+  height: 36px;
+}
+
+/* Comutator EN / RO */
+.lang-toggle {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-strong);
+}
+
+.lang-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.lang-toggle button:hover {
+  color: var(--text-main);
+}
+
+.lang-toggle button.active {
+  background: rgba(157, 78, 221, 0.25);
+  color: var(--text-main);
+}
+
 /* Hamburger — ascuns pe desktop, apare doar sub breakpoint-ul mobil. */
 .nav-hamburger {
   display: none;
@@ -1239,6 +1278,28 @@
 }
 
 .footer-links a:hover {
+  color: var(--text-main);
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  max-width: 1200px;
+  margin: 0 auto 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-light);
+}
+
+.footer-legal a {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer-legal a:hover {
   color: var(--text-main);
 }
 

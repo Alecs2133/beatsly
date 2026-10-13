@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from '../hooks/useTranslation';
 import { open } from '@tauri-apps/plugin-shell';
 import { Coins } from 'lucide-react';
+import { errorMessage } from '../lib/errors';
 import './Pricing.css';
 
 export const Pricing: React.FC = () => {
@@ -14,6 +15,9 @@ export const Pricing: React.FC = () => {
   const [isApplying, setIsApplying] = useState(false);
   const [socialLinks, setSocialLinks] = useState('');
   const [requestedRole, setRequestedRole] = useState('PRODUCER');
+  // Acordul pentru livrarea imediată a creditelor (și pierderea dreptului de
+  // retragere — OUG 34/2014, art. 16 lit. m). Fără el nu pornim plata.
+  const [purchaseConsent, setPurchaseConsent] = useState(false);
 
   if (!profile || !user) {
     return (
@@ -25,8 +29,12 @@ export const Pricing: React.FC = () => {
   }
 
   const handleBuyCredits = async (amount: number) => {
+    if (!purchaseConsent) {
+      showToast(t('purchase_consent_required'), 'error');
+      return;
+    }
     try {
-      showToast(`${t('processing_payment')}...`, 'info');
+      showToast(`${t('processing_payment')}…`, 'info');
 
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         // user_id se derivă din JWT în edge function, nu se trimite din client.
@@ -40,13 +48,17 @@ export const Pricing: React.FC = () => {
       } else {
         throw new Error('No checkout URL returned');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast(`Error: ${err.message || JSON.stringify(err)}`, 'error');
+      showToast(`${t('error_prefix')} ${errorMessage(err)}`, 'error');
     }
   };
 
 
+
+  const openLegal = (doc: 'terms' | 'payments') => {
+    open(`https://beatsly.vercel.app/legal/${doc}`).catch(err => console.error('Failed to open legal page:', err));
+  };
 
   const handleApplyProducer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,9 +79,9 @@ export const Pricing: React.FC = () => {
 
       showToast(t('application_sent'), 'success');
       setSocialLinks('');
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast(t('application_failed') + ': ' + err.message, 'error');
+      showToast(`${t('application_failed')}: ${errorMessage(err)}`, 'error');
     } finally {
       setIsApplying(false);
     }
@@ -100,7 +112,7 @@ export const Pricing: React.FC = () => {
       <div className="plans-grid">
         <div className="plan-card">
           <h2>{t('free')}</h2>
-          <div className="plan-price">$0<span>/month</span></div>
+          <div className="plan-price">$0<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>3 {t('credits_day')}</li>
             <li className="unavailable">{t('ai_generator')}</li>
@@ -111,7 +123,7 @@ export const Pricing: React.FC = () => {
 
         <div className="plan-card">
           <h2>{t('producer_pack')}</h2>
-          <div className="plan-price">$14.99<span>/month</span></div>
+          <div className="plan-price">$14.99<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>30 {t('credits_day')}</li>
             <li className="unavailable">{t('ai_generator')}</li>
@@ -128,7 +140,7 @@ export const Pricing: React.FC = () => {
 
         <div className="plan-card ultimate">
           <h2 style={{ color: 'var(--accent-primary)' }}>{t('ultimate_pack')}</h2>
-          <div className="plan-price">$29.99<span>/month</span></div>
+          <div className="plan-price">$29.99<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>{t('unlimited_downloads')}</li>
             <li>{t('ai_generator_included')}</li>
@@ -157,10 +169,10 @@ export const Pricing: React.FC = () => {
                 onChange={e => setRequestedRole(e.target.value)}
                 className="role-select"
               >
-                <option value="PRODUCER">Producer</option>
-                <option value="EDITOR">Editor</option>
-                <option value="SOUND ENGINEER">Sound Engineer</option>
-                <option value="ARTIST">Artist</option>
+                <option value="PRODUCER">{t('role_producer')}</option>
+                <option value="EDITOR">{t('role_editor')}</option>
+                <option value="SOUND ENGINEER">{t('role_sound_engineer')}</option>
+                <option value="ARTIST">{t('role_artist')}</option>
               </select>
               <input
                 type="text"
@@ -185,7 +197,20 @@ export const Pricing: React.FC = () => {
       {profile.tier !== 'ultimate' && (
         <div className="credits-section">
           <h2>{t('buy_download_credits')}</h2>
-          <div className="credits-grid">
+          <label className="purchase-consent">
+            <input
+              type="checkbox"
+              checked={purchaseConsent}
+              onChange={e => setPurchaseConsent(e.target.checked)}
+            />
+            <span>
+              {t('purchase_consent')}{' '}
+              <button type="button" className="legal-link" onClick={() => openLegal('terms')}>{t('legal_terms')}</button>
+              {' · '}
+              <button type="button" className="legal-link" onClick={() => openLegal('payments')}>{t('legal_payments')}</button>
+            </span>
+          </label>
+          <div className={`credits-grid${purchaseConsent ? '' : ' consent-pending'}`}>
             {[
               { credits: 10, price: 2.99 },
               { credits: 25, price: 5.99 },

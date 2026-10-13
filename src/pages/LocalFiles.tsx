@@ -4,10 +4,11 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { SoundGrid } from '../components/SoundGrid';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { useLocalFilesStore } from '../store/useLocalFilesStore';
 import { DropModal } from '../components/DropModal';
 import { useTranslation } from '../hooks/useTranslation';
+import { errorMessage } from '../lib/errors';
 
 interface LocalSample {
   id: string;
@@ -46,16 +47,16 @@ export const LocalFiles: React.FC = () => {
       const selected = await open({
         directory: true,
         multiple: false,
-        title: 'Select Sample Folder'
+        title: t('local_select_folder_title')
       });
 
       if (selected && typeof selected === 'string') {
         setSelectedFolder(selected);
         scanFolder(selected);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError('Eroare la deschiderea dialogului: ' + err.message);
+      setError(`${t('local_dialog_failed')} ${errorMessage(err)}`);
     }
   };
 
@@ -83,9 +84,9 @@ export const LocalFiles: React.FC = () => {
       }));
 
       setSounds(mappedSounds);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError('Eroare la scanarea folderului: ' + err.toString());
+      setError(`${t('local_scan_failed')} ${errorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export const LocalFiles: React.FC = () => {
     <div className="local-files-page" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div className="page-header" style={{ marginBottom: '40px', textAlign: 'center' }}>
         <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '12px' }}>
-          Local <span style={{color: 'var(--accent-secondary)'}}>{t('local_explorer')}</span>
+          {t('local_title_1')} <span style={{color: 'var(--accent-secondary)'}}>{t('local_title_2')}</span>
         </h1>
         <p style={{ color: 'var(--text-muted)' }}>{t('local_explorer_subtitle')}</p>
         
@@ -131,7 +132,7 @@ export const LocalFiles: React.FC = () => {
 
       {error && (
         <div style={{ color: '#ff4d4d', padding: '16px', background: 'rgba(255, 77, 77, 0.1)', borderRadius: '8px', marginBottom: '24px' }}>
-          <strong>Error:</strong> {error}
+          <strong>{t('error_prefix')}</strong> {error}
         </div>
       )}
 

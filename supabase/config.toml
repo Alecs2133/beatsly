@@ -455,3 +455,6 @@ verify_jwt = false
 
 [functions.exchange-auth-code]
 verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = false

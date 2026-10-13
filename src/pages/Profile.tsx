@@ -1,20 +1,26 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserRound, UserPlus, UserMinus, Loader2 } from 'lucide-react';
+import { UserPlus, UserMinus, Loader2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllPages } from '../lib/paging';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
-import { getPublicProfile, isFollowing, followUser, unfollowUser, PublicProfile } from '../lib/social';
+import { getPublicProfile, isFollowing, followUser, unfollowUser, profileName, PublicProfile } from '../lib/social';
 import { SoundGrid } from '../components/SoundGrid';
-import { SoundItem } from '../data/mockData';
+import { Avatar } from '../components/Avatar';
+import { SocialLinkList } from '../components/SocialLinkList';
+import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
+import { errorMessage } from '../lib/errors';
+import { useTranslation } from '../hooks/useTranslation';
+import './Account.css';
 
 export const Profile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { showToast } = useAppStore();
+  const { t } = useTranslation();
 
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [sounds, setSounds] = useState<SoundItem[]>([]);
@@ -47,13 +53,13 @@ export const Profile: React.FC = () => {
       setProfile(publicProfile);
       setFollowing(followState);
       setSounds(soundRows.map(mapSoundRow));
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load profile:', err);
-      showToast('Failed to load profile: ' + err.message, 'error');
+      showToast(`${t('profile_load_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setLoading(false);
     }
-  }, [userId, user, showToast]);
+  }, [userId, user, showToast, t]);
 
   useEffect(() => {
     load();
@@ -61,7 +67,7 @@ export const Profile: React.FC = () => {
 
   const handleToggleFollow = async () => {
     if (!user) {
-      showToast('Sign in to follow producers.', 'error');
+      showToast(t('profile_follow_sign_in'), 'error');
       return;
     }
     if (!userId) return;
@@ -76,68 +82,76 @@ export const Profile: React.FC = () => {
         setFollowing(true);
         setProfile(p => p ? { ...p, follower_count: p.follower_count + 1 } : p);
       }
-    } catch (err: any) {
-      showToast('Action failed: ' + err.message, 'error');
+    } catch (err) {
+      showToast(errorMessage(err), 'error');
     } finally {
       setFollowBusy(false);
     }
   };
 
   if (loading) {
-    return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>;
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+        <Loader2 size={24} className="spin" />
+      </div>
+    );
   }
 
   if (!profile) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>
-        <p>This producer doesn't exist.</p>
-        <button
-          onClick={() => navigate('/')}
-          style={{ marginTop: 16, background: 'var(--gradient-primary)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 20, fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          Back to Discover
+        <p>{t('profile_not_found')}</p>
+        <button className="btn-primary-pill" style={{ marginTop: 16 }} onClick={() => navigate('/')}>
+          {t('profile_back_discover')}
         </button>
       </div>
     );
   }
 
+  const name = profileName(profile) || t('profile_unknown');
+
   return (
-    <div className="library-page">
-      <div className="glass" style={{ padding: 24, borderRadius: 16, marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UserRound size={28} color="white" />
-          </div>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800 }}>{profile.username || 'Unknown producer'}</h1>
-            <div style={{ display: 'flex', gap: 16, color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
-              <span>{profile.sound_count} sounds</span>
-              <span>{profile.follower_count} followers</span>
-              <span>{profile.following_count} following</span>
-            </div>
+    <div className="account-page">
+      <header className="profile-hero">
+        <Avatar path={profile.avatar_path} name={name} size={176} className="profile-hero-static" />
+        <div className="profile-hero-info">
+          <span className="profile-hero-label">{t('profile_label')}</span>
+          <h1 className="profile-hero-name" title={name}>{name}</h1>
+          <div className="profile-hero-meta">
+            {profile.username && profile.display_name && <span>@{profile.username}</span>}
+            <span>{t('profile_sounds', { count: profile.sound_count })}</span>
+            <span>{t('profile_followers', { count: profile.follower_count })}</span>
+            <span>{t('profile_following', { count: profile.following_count })}</span>
           </div>
         </div>
+      </header>
 
-        {!isOwnProfile && (
+      <div className="profile-actions">
+        {isOwnProfile ? (
+          <button className="btn-ghost-pill" onClick={() => navigate('/account')}>
+            <Pencil size={16} /> {t('profile_edit')}
+          </button>
+        ) : (
           <button
+            className={following ? 'btn-ghost-pill' : 'btn-primary-pill'}
             onClick={handleToggleFollow}
             disabled={followBusy}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: following ? 'rgba(255,255,255,0.08)' : 'var(--gradient-primary)',
-              color: following ? 'var(--text-main)' : 'white',
-              border: following ? '1px solid var(--border-strong)' : 'none',
-              padding: '10px 20px', borderRadius: 20, fontWeight: 'bold', cursor: 'pointer',
-            }}
           >
             {followBusy ? <Loader2 size={16} className="spin" /> : following ? <UserMinus size={16} /> : <UserPlus size={16} />}
-            {following ? 'Following' : 'Follow'}
+            {following ? t('profile_following_btn') : t('profile_follow')}
           </button>
         )}
       </div>
 
+      {(profile.bio || Object.keys(profile.social_links).length > 0) && (
+        <section className="profile-about">
+          {profile.bio && <p className="profile-bio">{profile.bio}</p>}
+          <SocialLinkList links={profile.social_links} />
+        </section>
+      )}
+
       {sounds.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No public sounds yet.</div>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>{t('profile_no_sounds')}</div>
       ) : (
         <SoundGrid sounds={sounds} />
       )}

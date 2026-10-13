@@ -1,0 +1,287 @@
+/* Pagina /profile — antet cu poză (ca în aplicație) + carduri de setări.
+   Cardurile refolosesc .account-* din App.css. */
+
+.profile-page-hero {
+  padding: 140px 24px 36px;
+  background: linear-gradient(180deg, rgba(157, 78, 221, 0.28) 0%, rgba(0, 187, 249, 0.08) 65%, transparent 100%);
+}
+
+.profile-page-hero-inner {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.profile-page-avatar {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--gradient-primary);
+  color: white;
+  font-size: 60px;
+  font-weight: 800;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.profile-page-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-page-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.profile-page-avatar:hover .profile-page-avatar-overlay,
+.profile-page-avatar:disabled .profile-page-avatar-overlay {
+  opacity: 1;
+}
+
+.profile-page-hero-text {
+  min-width: 0;
+}
+
+.profile-page-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.profile-page-hero-text h1 {
+  font-size: clamp(34px, 6vw, 64px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin: 6px 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-page-hero-text p {
+  color: var(--text-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.profile-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 24px 120px;
+}
+
+.profile-page-body .account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  scroll-margin-top: 96px;
+}
+
+.profile-page-body .account-card-header {
+  margin-bottom: 0;
+}
+
+.profile-icon-purple {
+  color: var(--accent-primary);
+  background: rgba(157, 78, 221, 0.1);
+  border-color: rgba(157, 78, 221, 0.3);
+}
+
+.profile-icon-cyan {
+  color: var(--accent-secondary);
+  background: rgba(0, 187, 249, 0.1);
+  border-color: rgba(0, 187, 249, 0.3);
+}
+
+.profile-icon-red {
+  color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.1);
+  border-color: rgba(255, 80, 80, 0.3);
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-field > span {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.profile-field small {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.profile-counter {
+  align-self: flex-end;
+}
+
+.profile-field input,
+.profile-field textarea,
+.profile-links input,
+.profile-danger-row input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-field textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+
+.profile-field input:focus,
+.profile-field textarea:focus,
+.profile-links input:focus,
+.profile-danger-row input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 14px rgba(157, 78, 221, 0.25);
+}
+
+.profile-field input:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.profile-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.profile-links label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-text-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.profile-text-btn:hover:not(:disabled) {
+  color: #ff6b6b;
+}
+
+.profile-subform {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.profile-subform + .profile-subform {
+  padding-top: 20px;
+  border-top: 1px solid var(--border-strong);
+}
+
+.profile-subform h3 {
+  font-size: 16px;
+}
+
+.profile-subform > .btn,
+.profile-page-body form.account-card > .btn {
+  align-self: flex-start;
+}
+
+.profile-recovery {
+  font-size: 13px;
+  color: var(--accent-secondary);
+}
+
+.profile-danger {
+  border: 1px solid rgba(255, 80, 80, 0.2);
+}
+
+.profile-danger-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-danger-row input {
+  flex: 1;
+  min-width: 200px;
+  width: auto;
+}
+
+.profile-btn-danger {
+  color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.08);
+  border: 1px solid rgba(255, 80, 80, 0.45);
+}
+
+.profile-btn-danger:hover:not(:disabled) {
+  background: rgba(255, 80, 80, 0.18);
+}
+
+.profile-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .profile-page-hero {
+    padding-top: 110px;
+  }
+  .profile-page-hero-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .profile-page-avatar {
+    width: 120px;
+    height: 120px;
+    font-size: 48px;
+  }
+  .profile-links {
+    grid-template-columns: 1fr;
+  }
+  .profile-page-body {
+    padding: 0 16px 80px;
+  }
+}

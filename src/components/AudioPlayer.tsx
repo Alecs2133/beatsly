@@ -93,7 +93,7 @@ export const AudioPlayer: React.FC = () => {
       <div className="track-info">
         <div className={`track-artwork ${isPlaying ? 'playing' : ''}`} style={{ background: currentTrack ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.05)' }}></div>
         <div className="track-details">
-          <p className="track-title">{currentTrack ? currentTrack.title : 'Select a sound'}</p>
+          <p className="track-title">{currentTrack ? currentTrack.title : t('player_select_sound')}</p>
           <p className="track-author">{currentTrack ? currentTrack.author : '-'}</p>
         </div>
       </div>
@@ -103,7 +103,7 @@ export const AudioPlayer: React.FC = () => {
           className={`action-btn queue-btn ${shuffle ? 'active' : ''}`}
           onClick={toggleShuffle}
           disabled={!hasQueue}
-          title="Shuffle"
+          title={t('player_shuffle')}
         >
           <Shuffle size={16} />
         </button>
@@ -111,7 +111,7 @@ export const AudioPlayer: React.FC = () => {
           className="action-btn queue-btn"
           onClick={prev}
           disabled={!currentTrack}
-          title="Previous"
+          title={t('player_previous')}
         >
           <SkipBack size={18} fill="currentColor" />
         </button>
@@ -126,7 +126,7 @@ export const AudioPlayer: React.FC = () => {
           className="action-btn queue-btn"
           onClick={next}
           disabled={!hasQueue}
-          title="Next"
+          title={t('player_next')}
         >
           <SkipForward size={18} fill="currentColor" />
         </button>
@@ -134,12 +134,12 @@ export const AudioPlayer: React.FC = () => {
           className={`action-btn queue-btn ${repeat !== 'off' ? 'active' : ''}`}
           onClick={cycleRepeat}
           disabled={!currentTrack}
-          title={`Repeat: ${repeat}`}
+          title={t(repeat === 'one' ? 'player_repeat_one' : repeat === 'all' ? 'player_repeat_all' : 'player_repeat_off')}
         >
           {repeat === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
         </button>
         {hasQueue && (
-          <span className="queue-position" title="Position in queue">
+          <span className="queue-position" title={t('player_queue_position')}>
             {queueIndex + 1}/{queue.length}
           </span>
         )}

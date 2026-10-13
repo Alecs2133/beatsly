@@ -3,11 +3,15 @@ import { supabase } from '../lib/supabase';
 import { fetchAllPages } from '../lib/paging';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { errorMessage } from '../lib/errors';
+import { buildTagPacks, TagPack } from '../lib/packs';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const Packs: React.FC = () => {
   const { session } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [dynamicPacks, setDynamicPacks] = useState<any[]>([]);
+  const [dynamicPacks, setDynamicPacks] = useState<TagPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,38 +30,10 @@ export const Packs: React.FC = () => {
             .range(from, to)
         );
 
-        const allTags = (data || []).flatMap((s: any) => s.tags || []);
-        const tagCounts = allTags.reduce((acc: any, tag: string) => {
-           if (tag && tag.trim().length > 0) {
-             acc[tag] = (acc[tag] || 0) + 1;
-           }
-           return acc;
-        }, {});
-
-        const uniqueTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
-
-        const colors = [
-          'linear-gradient(135deg, #ff007f, #7928ca)',
-          'linear-gradient(135deg, #00c6ff, #0072ff)',
-          'linear-gradient(135deg, #fceabb, #f8b500)',
-          'linear-gradient(135deg, #11998e, #38ef7d)',
-          'linear-gradient(135deg, #ff416c, #ff4b2b)',
-          'linear-gradient(135deg, #9d4edd, #ff007f)',
-        ];
-
-        const generatedPacks = uniqueTags.map((tag, index) => ({
-          id: tag,
-          title: `${tag.charAt(0).toUpperCase() + tag.slice(1)} Pack`,
-          author: 'Community',
-          count: tagCounts[tag],
-          color: colors[index % colors.length],
-          tag: tag
-        }));
-
-        setDynamicPacks(generatedPacks);
-      } catch (err: any) {
+        setDynamicPacks(buildTagPacks(data.map(s => s.tags)));
+      } catch (err) {
         console.error("Error fetching packs:", err);
-        setError(err.message);
+        setError(errorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -75,18 +51,18 @@ export const Packs: React.FC = () => {
           &larr;
         </button>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>All Packs</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Explore all sound categories created by our community.</p>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>{t('packs_title')}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>{t('packs_subtitle')}</p>
         </div>
       </div>
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-          <p style={{ color: 'var(--accent-secondary)' }}>Loading packs...</p>
+          <p style={{ color: 'var(--accent-secondary)' }}>{t('packs_loading')}</p>
         </div>
       ) : error ? (
         <div style={{ color: 'var(--accent-tertiary)', padding: '20px', background: 'rgba(255,0,127,0.1)', borderRadius: '8px' }}>
-          <strong>Error loading packs:</strong> {error}
+          <strong>{t('packs_load_failed')}</strong> {error}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
@@ -117,7 +93,7 @@ export const Packs: React.FC = () => {
             >
               <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)', marginBottom: '4px' }}>{pack.title}</h3>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontWeight: '600' }}>
-                {pack.count} {pack.count === 1 ? 'sound' : 'sounds'}
+                {t(pack.count === 1 ? 'pack_sounds_one' : 'pack_sounds', { count: pack.count })}
               </p>
             </div>
           ))}

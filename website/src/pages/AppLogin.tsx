@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2, XCircle, LogIn } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { useLayoutContext } from '../lib/layoutContext';
 import { PENDING_APP_CODE_KEY, SessionExpiredError, submitPendingAppAuthCode } from '../lib/appHandoff';
+import { useT } from '../i18n/context';
 
 const ERROR_STYLE = {
   color: '#ff6b6b',
@@ -12,14 +13,17 @@ const ERROR_STYLE = {
   borderColor: 'rgba(255, 107, 107, 0.25)',
 };
 
-type Status = 'no-code' | 'need-login' | 'submitting' | 'done' | 'error';
+type Status = 'no-code' | 'checking' | 'need-login' | 'submitting' | 'done' | 'error';
 
 export function AppLogin() {
-  const { user, requestAuth } = useLayoutContext();
+  const { t } = useT();
+  const { user, authReady, requestAuth } = useLayoutContext();
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code');
   const submittedRef = useRef(false);
-  const [status, setStatus] = useState<Status>(code ? 'need-login' : 'no-code');
+  // `checking` până se citește sesiunea — altfel cine e deja logat vedea o
+  // clipă ecranul „Sign in” înainte ca handoff-ul să pornească.
+  const [status, setStatus] = useState<Status>(code ? 'checking' : 'no-code');
 
   // Ținem codul și dacă userul trebuie să-și confirme emailul întâi —
   // /email-confirmed termină handoff-ul mai târziu, citind aceeași cheie.
@@ -28,14 +32,16 @@ export function AppLogin() {
   }, [code]);
 
   useEffect(() => {
-    if (!code) return;
+    if (!code || !authReady) return;
     if (!user) {
       setStatus('need-login');
       return;
     }
     if (submittedRef.current) return;
     submit();
-  }, [user, code]);
+    // `submit` e recreat la fiecare randare, dar citește doar ref-uri și setteri stabili.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, code, authReady]);
 
   const submit = () => {
     submittedRef.current = true;
@@ -56,20 +62,18 @@ export function AppLogin() {
       });
   };
 
-  const retry = submit;
-
   if (!code) {
     return (
       <header className="page-intro">
         <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
           <motion.h1 className="page-title" variants={fadeInUp}>
-            Nothing to <span className="glow-text">connect</span>
+            {t('applogin_nothing_title_1')} <span className="glow-text">{t('applogin_nothing_title_2')}</span>
           </motion.h1>
           <motion.p className="page-subtitle" variants={fadeInUp}>
-            This page is meant to be opened from the Beats.ly app's sign-in screen.
+            {t('applogin_nothing_text')}
           </motion.p>
           <motion.div variants={fadeInUp} style={{ marginTop: 28 }}>
-            <Link to="/" className="btn btn-secondary glass-btn">Back to Home</Link>
+            <Link to="/" className="btn btn-secondary glass-btn">{t('common_back_home')}</Link>
           </motion.div>
         </motion.div>
       </header>
@@ -77,6 +81,7 @@ export function AppLogin() {
   }
 
   const failed = status === 'error';
+  const busy = status === 'checking' || status === 'submitting';
 
   return (
     <header className="page-intro">
@@ -91,31 +96,31 @@ export function AppLogin() {
 
         <motion.h1 className="page-title" variants={fadeInUp}>
           {status === 'done' ? (
-            <>App <span className="glow-text">connected</span></>
+            <>{t('applogin_connected_title_1')} <span className="glow-text">{t('applogin_connected_title_2')}</span></>
           ) : failed ? (
-            <>Connection <span className="glow-text">failed</span></>
+            <>{t('applogin_failed_title_1')} <span className="glow-text">{t('applogin_failed_title_2')}</span></>
           ) : (
-            <>Sign in to <span className="glow-text">Beats.ly</span></>
+            <>{t('applogin_sign_in_title_1')} <span className="glow-text">Beats.ly</span></>
           )}
         </motion.h1>
 
         <motion.p className="page-subtitle" variants={fadeInUp}>
-          {status === 'done' && "You're all set — go back to the Beats.ly app, it should sign you in automatically."}
-          {status === 'submitting' && 'Connecting your account…'}
-          {status === 'need-login' && 'Sign in below to connect your desktop app. This tab will finish automatically.'}
-          {failed && "Couldn't connect the app to this account. Go back to the app and try again."}
+          {status === 'done' && t('applogin_done_text')}
+          {busy && t('applogin_submitting_text')}
+          {status === 'need-login' && t('applogin_need_login_text')}
+          {failed && t('applogin_failed_text')}
         </motion.p>
 
         <motion.div variants={fadeInUp} style={{ marginTop: 28, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           {status === 'need-login' && (
-            <button onClick={requestAuth} className="btn btn-primary">Sign In</button>
+            <button onClick={requestAuth} className="btn btn-primary">{t('common_sign_in')}</button>
           )}
-          {status === 'submitting' && <Loader2 size={24} className="spin" />}
+          {busy && <Loader2 size={24} className="spin" />}
           {failed && (
-            <button onClick={retry} className="btn btn-primary">Try Again</button>
+            <button onClick={submit} className="btn btn-primary">{t('common_try_again')}</button>
           )}
           {(status === 'done' || failed) && (
-            <Link to="/" className="btn btn-secondary glass-btn">Back to Home</Link>
+            <Link to="/" className="btn btn-secondary glass-btn">{t('common_back_home')}</Link>
           )}
         </motion.div>
       </motion.div>

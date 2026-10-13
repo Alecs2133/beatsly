@@ -3,6 +3,8 @@ import { User, Session, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from './useAppStore';
 import { AppRole } from '../lib/roles';
+import type { SocialLinks } from '../lib/socialLinks';
+import { translate } from '../hooks/useTranslation';
 
 let realtimeChannel: RealtimeChannel | null = null;
 let authSubscription: { unsubscribe: () => void } | null = null;
@@ -23,6 +25,11 @@ export interface UserProfile {
   phone_number?: string;
   /** null = n-a văzut încă turul de bun venit. */
   onboarded_at?: string | null;
+  /** Profil public — vezi migrarea 20261013100100_public_profile_details. */
+  display_name?: string | null;
+  bio?: string | null;
+  avatar_path?: string | null;
+  social_links?: SocialLinks;
 }
 
 interface AuthState {
@@ -167,17 +174,15 @@ function subscribeToProfile(
 
         if (!currentProfile) return;
 
+        const { showToast, language } = useAppStore.getState();
         if (newProfile.credits > currentProfile.credits) {
           const diff = newProfile.credits - currentProfile.credits;
-          useAppStore.getState().showToast(`+${diff} Credits received! 🎉`, 'success');
+          showToast(translate(language, 'toast_credits_received', { count: diff }), 'success');
         } else if (newProfile.tier !== currentProfile.tier) {
-          useAppStore
-            .getState()
-            .showToast(`Tier upgraded to ${newProfile.tier.toUpperCase()}! 🎉`, 'success');
+          // Neutru: tier-ul poate și scădea acum (abonament încheiat).
+          showToast(translate(language, 'toast_plan_changed', { plan: newProfile.tier.toUpperCase() }), 'info');
         } else if (newProfile.role !== currentProfile.role) {
-          useAppStore
-            .getState()
-            .showToast(`Role updated to ${newProfile.role}! 🎉`, 'success');
+          showToast(translate(language, 'toast_role_changed', { role: newProfile.role }), 'success');
         }
       }
     )

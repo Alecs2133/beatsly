@@ -4,6 +4,7 @@
   "ignorePatterns": ["src/lib/database.types.ts", "website/**", "dist/**", "src-tauri/**"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "typescript/no-explicit-any": "error"
   }
 }

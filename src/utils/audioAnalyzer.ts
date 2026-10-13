@@ -17,7 +17,7 @@ export async function extractRealPeaks(url: string, numberOfBars: number = 32): 
     const arrayBuffer = await response.arrayBuffer();
     
     if (!globalAudioContext) {
-      globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      globalAudioContext = new (window.AudioContext ?? window.webkitAudioContext)();
     }
     
     const audioBuffer = await globalAudioContext.decodeAudioData(arrayBuffer);

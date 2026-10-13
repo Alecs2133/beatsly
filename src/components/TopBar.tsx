@@ -6,6 +6,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { hasUnlimitedCredits } from '../lib/roles';
 import { Search, Settings, X, Plus, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { profileName } from '../lib/social';
+import { Avatar } from './Avatar';
 import type { Tables } from '../lib/database.types';
 import './TopBar.css';
 
@@ -129,7 +131,7 @@ export const TopBar: React.FC = () => {
             <button 
               className="search-clear-btn" 
               onClick={() => setSearchQuery('')}
-              title="Clear search"
+              title={t('search_clear')}
             >
               <X size={14} />
             </button>
@@ -140,7 +142,7 @@ export const TopBar: React.FC = () => {
       )}
       <div className="user-profile">
         {profile && (
-          <div className="credits" onClick={() => navigate('/store')} style={{ cursor: 'pointer' }} title="Get more credits">
+          <div className="credits" onClick={() => navigate('/store')} style={{ cursor: 'pointer' }} title={t('credits_get_more')}>
             <span className="credits-amount">
               {hasUnlimitedCredits(profile.role, profile.tier) ? '∞' : profile.credits}
             </span>
@@ -169,15 +171,15 @@ export const TopBar: React.FC = () => {
             {notificationsOpen && (
               <div className="notifications-dropdown">
                 <div className="notifications-header">
-                  <h3>Notifications</h3>
+                  <h3>{t('notifications_title')}</h3>
                   {notifications.some(n => !n.is_read) && (
-                    <button className="mark-read-btn" onClick={markAllAsRead}>Mark all read</button>
+                    <button className="mark-read-btn" onClick={markAllAsRead}>{t('notifications_mark_read')}</button>
                   )}
                 </div>
                 <div className="notifications-list">
                   {notifications.length === 0 ? (
                     <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                      No notifications yet
+                      {t('notifications_empty')}
                     </div>
                   ) : (
                     notifications.map(notif => (
@@ -207,31 +209,21 @@ export const TopBar: React.FC = () => {
           <button 
             className="settings-btn" 
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            title="Settings"
+            title={t('topbar_settings')}
           >
             <Settings size={20} />
           </button>
           
           {dropdownOpen && (
             <div className="settings-dropdown glass">
-              <div 
-                className="dropdown-section hoverable" 
-                onClick={() => {
-                  if (user) {
-                    navigate('/account');
-                    setDropdownOpen(false);
-                  }
-                }}
-              >
-                <span className="dropdown-label">{t('topbar_account')}</span>
-                {user ? (
-                  <span className="dropdown-value">{profile?.username || user.email}</span>
-                ) : (
+              {!user && (
+                <div className="dropdown-section">
+                  <span className="dropdown-label">{t('topbar_account')}</span>
                   <span className="dropdown-value text-muted">{t('topbar_guest')}</span>
-                )}
-              </div>
-              
-              <div 
+                </div>
+              )}
+
+              <div
                 className="dropdown-section hoverable"
                 onClick={() => {
                   navigate('/options');
@@ -239,7 +231,7 @@ export const TopBar: React.FC = () => {
                 }}
               >
                 <span className="dropdown-label">{t('topbar_options')}</span>
-                <span className="dropdown-value">Preferences</span>
+                <span className="dropdown-value">{t('preferences')}</span>
               </div>
               
               <div className="dropdown-divider"></div>
@@ -279,6 +271,18 @@ export const TopBar: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Profilul are acum pagina lui (ca pe Spotify) — poza din colț duce acolo. */}
+        {user && profile && (
+          <button
+            className={`profile-btn${location.pathname === '/account' ? ' active' : ''}`}
+            onClick={() => navigate('/account')}
+            title={t('topbar_profile')}
+            aria-label={t('topbar_profile')}
+          >
+            <Avatar path={profile.avatar_path} name={profileName(profile) || user.email} size={34} />
+          </button>
+        )}
       </div>
     </header>
   );

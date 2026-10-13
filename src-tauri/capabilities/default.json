@@ -21,7 +21,9 @@
             "allow": [
                 { "url": "https://*.stripe.com/*" },
                 { "url": "https://stripe.com/*" },
-                { "url": "https://beatsly.vercel.app/*" }
+                { "url": "https://beatsly.vercel.app/*" },
+                { "url": "https://*/*" },
+                { "url": "http://*/*" }
             ]
         }
     ]

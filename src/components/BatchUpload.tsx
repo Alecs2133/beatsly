@@ -7,6 +7,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { useAuthStore } from '../store/useAuthStore';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
+import type { TranslationKeys } from '../i18n/en';
 
 interface StagedFile {
   id: string;
@@ -52,7 +53,7 @@ export const BatchUpload: React.FC = () => {
 
   const handleSelectFiles = async () => {
     if (!profile?.username) {
-      showToast('Please set your Username in Account Settings first!', 'error');
+      showToast(t('set_username_first'), 'error');
       return;
     }
     try {
@@ -93,7 +94,7 @@ export const BatchUpload: React.FC = () => {
       }
 
       setFiles(prev => [...prev, ...newFiles]);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       showToast(t('error_selecting_files'), 'error');
     } finally {
@@ -101,7 +102,7 @@ export const BatchUpload: React.FC = () => {
     }
   };
 
-  const updateFile = (id: string, field: keyof StagedFile, value: any) => {
+  const updateFile = <K extends keyof StagedFile>(id: string, field: K, value: StagedFile[K]) => {
     setFiles(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f));
   };
 
@@ -121,7 +122,7 @@ export const BatchUpload: React.FC = () => {
     // nu avem ce trimite, deci ne oprim aici cu un mesaj clar în loc să lăsăm
     // fiecare fișier să eșueze pe rând.
     if (!profile?.id) {
-      showToast('Profilul nu e încărcat încă. Încearcă din nou în câteva secunde.', 'error');
+      showToast(t('profile_not_loaded'), 'error');
       return;
     }
 
@@ -174,14 +175,14 @@ export const BatchUpload: React.FC = () => {
   return (
     <div style={{ marginTop: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>{t('batch_upload_studio') || 'Batch Upload'}</h2>
+        <h2>{t('batch_upload_studio')}</h2>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
             onClick={handleSelectFiles}
             disabled={isLoading || isPublishing}
             style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid var(--accent-primary)', background: 'transparent', color: 'var(--accent-primary)', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            {isLoading ? t('loading_samples') || 'Loading...' : t('btn_select_files') || 'Select Local Files'}
+            {isLoading ? t('loading_samples') : t('btn_select_files')}
           </button>
           
           <button 
@@ -189,7 +190,7 @@ export const BatchUpload: React.FC = () => {
             disabled={isPublishing || files.filter(f => f.selected).length === 0}
             style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--gradient-primary)', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            {isPublishing ? t('btn_publishing') || 'Publishing...' : t('btn_publish_selected') || 'Publish Selected'}
+            {isPublishing ? t('btn_publishing') : t('btn_publish_selected')}
           </button>
         </div>
       </div>
@@ -222,7 +223,7 @@ export const BatchUpload: React.FC = () => {
                 <th style={{ padding: '15px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>{t('file_status')}</th>
                 <th style={{ padding: '15px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>{t('details')}</th>
                 <th style={{ padding: '15px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>{t('music_info')}</th>
-                <th style={{ padding: '15px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>{t('tags_label').replace(' (comma separated)', '')}</th>
+                <th style={{ padding: '15px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>{t('grid_tags')}</th>
               </tr>
             </thead>
             <tbody>
@@ -235,22 +236,22 @@ export const BatchUpload: React.FC = () => {
                     <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 'bold' }} title={f.name}>{f.name}</div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{t('duration_label')} {f.duration}</div>
                     <div style={{ fontSize: '12px', marginTop: '4px', color: f.status === 'success' ? 'var(--accent-primary)' : f.status === 'error' ? '#ff4444' : f.status === 'uploading' ? 'var(--accent-secondary)' : 'var(--text-muted)' }}>
-                      {t('status_label')} {f.status.toUpperCase()}
+                      {t('status_label')} {t(STATUS_LABELS[f.status])}
                     </div>
                   </td>
                   <td style={{ padding: '15px' }}>
-                    <input type="text" value={f.title} onChange={e => updateFile(f.id, 'title', e.target.value)} placeholder="Title" style={inputStyle} />
-                    <input type="text" value={f.author} disabled title="Author is set to your username" style={{...inputStyle, marginTop: '8px', opacity: 0.7, cursor: 'not-allowed'}} />
+                    <input type="text" value={f.title} onChange={e => updateFile(f.id, 'title', e.target.value)} placeholder={t('title_label')} style={inputStyle} />
+                    <input type="text" value={f.author} disabled title={t('author_locked')} style={{...inputStyle, marginTop: '8px', opacity: 0.7, cursor: 'not-allowed'}} />
                   </td>
                   <td style={{ padding: '15px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <select value={f.type} onChange={e => updateFile(f.id, 'type', e.target.value)} style={{...inputStyle, flex: 1}}>
+                      <select value={f.type} onChange={e => updateFile(f.id, 'type', e.target.value as StagedFile['type'])} style={{...inputStyle, flex: 1}}>
                         <option value="loop">Loop</option>
                         <option value="one-shot">One-Shot</option>
                         <option value="fx">FX</option>
                       </select>
                       <input type="number" value={f.bpm} onChange={e => updateFile(f.id, 'bpm', e.target.value)} placeholder="BPM" style={{...inputStyle, width: '70px'}} />
-                      <input type="text" value={f.key} onChange={e => updateFile(f.id, 'key', e.target.value)} placeholder="Key" style={{...inputStyle, width: '60px'}} />
+                      <input type="text" value={f.key} onChange={e => updateFile(f.id, 'key', e.target.value)} placeholder={t('grid_key')} style={{...inputStyle, width: '60px'}} />
                     </div>
                     <select
                       value={f.license}
@@ -263,7 +264,7 @@ export const BatchUpload: React.FC = () => {
                     </select>
                   </td>
                   <td style={{ padding: '15px' }}>
-                    <input type="text" value={f.tags} onChange={e => updateFile(f.id, 'tags', e.target.value)} placeholder="Tags (comma sep)" style={inputStyle} />
+                    <input type="text" value={f.tags} onChange={e => updateFile(f.id, 'tags', e.target.value)} placeholder={t('tags_placeholder')} style={inputStyle} />
                   </td>
                 </tr>
               ))}
@@ -273,6 +274,13 @@ export const BatchUpload: React.FC = () => {
       )}
     </div>
   );
+};
+
+const STATUS_LABELS: Record<StagedFile['status'], TranslationKeys> = {
+  pending: 'status_pending',
+  uploading: 'status_uploading',
+  success: 'status_success',
+  error: 'status_error',
 };
 
 const inputStyle = { padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--border-light)', borderRadius: '6px', color: 'white', fontSize: '12px', width: '100%', boxSizing: 'border-box' as const };

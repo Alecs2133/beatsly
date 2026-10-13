@@ -4,6 +4,8 @@ import { fadeInUp, staggerContainer } from '../lib/animations';
 import { AppleIcon, WindowsIcon } from '../components/PlatformIcons';
 import { useLayoutContext } from '../lib/layoutContext';
 import { useLatestRelease } from '../lib/useLatestRelease';
+import { useT } from '../i18n/context';
+import type { TranslationKey } from '../i18n/en';
 
 // Fallback derivat din package.json, folosit doar cât timp cererea către
 // GitHub nu s-a terminat încă (de obicei sub o secundă) sau dacă eșuează.
@@ -14,13 +16,14 @@ const RELEASES_BASE = 'https://github.com/Alecs2133/beatsly/releases/download';
 const FALLBACK_WIN_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_x64-setup.exe`;
 const FALLBACK_MAC_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_aarch64.dmg`;
 
-const STEPS = [
-  { icon: FolderDown, title: 'Download', text: 'Grab the installer for your platform below.' },
-  { icon: PlayCircle, title: 'Install & open', text: 'Run the installer and launch Beats.ly.' },
-  { icon: LogIn, title: 'Sign in', text: 'Create a free account to sync your library to the cloud.' },
+const STEPS: { icon: typeof FolderDown; title: TranslationKey; text: TranslationKey }[] = [
+  { icon: FolderDown, title: 'download_step1_title', text: 'download_step1_text' },
+  { icon: PlayCircle, title: 'download_step2_title', text: 'download_step2_text' },
+  { icon: LogIn, title: 'download_step3_title', text: 'download_step3_text' },
 ];
 
 export function DownloadPage() {
+  const { t } = useT();
   const { user, requestAuth } = useLayoutContext();
   const latest = useLatestRelease();
 
@@ -42,13 +45,13 @@ export function DownloadPage() {
       <header className="page-intro">
         <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
           <motion.h1 className="page-title" variants={fadeInUp}>
-            Download <span className="glow-text">Beats.ly</span>
+            {t('download_title_1')} <span className="glow-text">Beats.ly</span>
           </motion.h1>
           <motion.p className="page-subtitle" variants={fadeInUp}>
-            Available for Windows and macOS. Free to install, sign in to sync your library.
+            {t('download_subtitle')}
           </motion.p>
           <motion.p className="version-badge" variants={fadeInUp}>
-            Latest version: {displayVersion}
+            {t('download_latest', { version: displayVersion })}
           </motion.p>
         </motion.div>
       </header>
@@ -66,8 +69,8 @@ export function DownloadPage() {
           <motion.div variants={fadeInUp} className="download-icon-wrapper">
             <DownloadIcon size={40} color="var(--accent-secondary)" />
           </motion.div>
-          <motion.h2 variants={fadeInUp}>Ready to elevate your production?</motion.h2>
-          <motion.p variants={fadeInUp}>Grab the build for your operating system and start syncing in minutes.</motion.p>
+          <motion.h2 variants={fadeInUp}>{t('download_ready_title')}</motion.h2>
+          <motion.p variants={fadeInUp}>{t('download_ready_text')}</motion.p>
           <motion.div variants={fadeInUp} style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -76,7 +79,7 @@ export function DownloadPage() {
               className="btn btn-primary btn-large"
             >
               <WindowsIcon />
-              Download for Windows
+              {t('download_windows')}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -85,10 +88,10 @@ export function DownloadPage() {
               className="btn btn-secondary btn-large glass-btn"
             >
               <AppleIcon />
-              Download for Mac
+              {t('download_mac')}
             </motion.button>
           </motion.div>
-          <motion.p variants={fadeInUp} className="download-note">Available for Windows (x64) and Mac (Apple Silicon)</motion.p>
+          <motion.p variants={fadeInUp} className="download-note">{t('download_note')}</motion.p>
         </motion.div>
       </section>
 
@@ -100,7 +103,7 @@ export function DownloadPage() {
           viewport={{ once: true, margin: '-80px' }}
           variants={fadeInUp}
         >
-          <h2 className="section-title">Up and running <span className="glow-text">in a minute</span></h2>
+          <h2 className="section-title">{t('download_steps_title_1')} <span className="glow-text">{t('download_steps_title_2')}</span></h2>
         </motion.div>
 
         <motion.div
@@ -114,8 +117,8 @@ export function DownloadPage() {
             <motion.div key={step.title} className="step-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
               <div className="step-number">{i + 1}</div>
               <div className="step-icon"><step.icon size={28} /></div>
-              <h3>{step.title}</h3>
-              <p>{step.text}</p>
+              <h3>{t(step.title)}</h3>
+              <p>{t(step.text)}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -129,7 +132,7 @@ export function DownloadPage() {
           viewport={{ once: true, margin: '-80px' }}
           variants={fadeInUp}
         >
-          <h2 className="section-title">System <span className="glow-text">Requirements</span></h2>
+          <h2 className="section-title">{t('download_req_title_1')} <span className="glow-text">{t('download_req_title_2')}</span></h2>
         </motion.div>
 
         <motion.div
@@ -143,8 +146,8 @@ export function DownloadPage() {
             <div className="requirement-icon"><WindowsIcon /></div>
             <h3>Windows</h3>
             <ul>
-              <li><MonitorCheck size={14} /> Windows 10 or 11</li>
-              <li><MonitorCheck size={14} /> 64-bit (x64)</li>
+              <li><MonitorCheck size={14} /> {t('download_req_win_os')}</li>
+              <li><MonitorCheck size={14} /> {t('download_req_win_arch')}</li>
             </ul>
           </motion.div>
 
@@ -152,8 +155,8 @@ export function DownloadPage() {
             <div className="requirement-icon"><AppleIcon /></div>
             <h3>macOS</h3>
             <ul>
-              <li><MonitorCheck size={14} /> Apple Silicon (M-series)</li>
-              <li><MonitorCheck size={14} /> Intel Mac build coming soon</li>
+              <li><MonitorCheck size={14} /> {t('download_req_mac_arch')}</li>
+              <li><MonitorCheck size={14} /> {t('download_req_mac_intel')}</li>
             </ul>
           </motion.div>
         </motion.div>

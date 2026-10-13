@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 
 interface LocalFilesState {
   sounds: SoundItem[];

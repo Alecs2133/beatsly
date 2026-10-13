@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Loader2, Music } from 'lucide-react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../lib/supabase';
+import { useT } from '../i18n/context';
+import { richText } from '../i18n/rich';
+import { LEGAL_VERSION } from '../legal/version';
 import './AuthModal.css';
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string | undefined;
+
+type Mode = 'login' | 'signup' | 'reset';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,10 +20,12 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const { t } = useT();
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -25,16 +33,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const captchaRef = useRef<HCaptcha>(null);
 
   const reset = () => {
-    setEmail('');
     setPassword('');
     setUsername('');
+    setAcceptedTerms(false);
     setError('');
     setSuccessMsg('');
     setCaptchaToken('');
     captchaRef.current?.resetCaptcha();
   };
 
-  const switchMode = (m: 'login' | 'signup') => {
+  // Emailul rămâne la schimbarea tab-ului — cine trece de la „Sign In” la
+  // „Forgot password” nu trebuie să-l scrie din nou.
+  const switchMode = (m: Mode) => {
     setMode(m);
     reset();
   };
@@ -42,14 +52,22 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   // Resetăm widget-ul la închiderea modalului — un token hCaptcha e de unică
   // folosință, deci unul rămas din încercarea trecută n-ar mai fi valid oricum.
   useEffect(() => {
-    if (!isOpen) reset();
+    if (!isOpen) {
+      setMode('login');
+      setEmail('');
+      reset();
+    }
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (mode === 'signup' && !acceptedTerms) {
+      setError(t('auth_must_accept'));
+      return;
+    }
     if (HCAPTCHA_SITE_KEY && !captchaToken) {
-      setError('Please complete the captcha.');
+      setError(t('auth_captcha_required'));
       return;
     }
 
@@ -69,24 +87,32 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
           onSuccess({ email: data.user.email!, id: data.user.id });
           onClose();
         }
-      } else {
+      } else if (mode === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { username },
+            // Dovada acordului: când și ce versiune a documentelor a acceptat.
+            data: { username, terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION },
             emailRedirectTo: `${window.location.origin}/email-confirmed`,
             captchaToken,
           }
         });
         if (error) throw error;
         if (data.user) {
-          setSuccessMsg('Account created! Please check your email to verify your account.');
+          setSuccessMsg(t('auth_check_email'));
         }
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/profile?section=security`,
+          captchaToken,
+        });
+        if (error) throw error;
+        // Același mesaj indiferent dacă emailul există — nu confirmăm cine are cont.
+        setSuccessMsg(t('auth_reset_sent'));
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'An error occurred';
-      setError(msg);
+      setError(err instanceof Error && err.message ? err.message : t('auth_generic_error'));
     } finally {
       setLoading(false);
       // Token-ul e consumat indiferent de rezultat — Supabase îl invalidează
@@ -95,6 +121,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       captchaRef.current?.resetCaptcha();
     }
   };
+
+  const submitLabel =
+    mode === 'login' ? t('auth_sign_in') : mode === 'signup' ? t('auth_create_account') : t('auth_reset_send');
 
   return (
     <AnimatePresence>
@@ -108,22 +137,26 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         >
           <motion.div
             className="auth-modal glass"
+            role="dialog"
+            aria-modal="true"
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
             transition={{ type: 'spring', bounce: 0.3, duration: 0.5 }}
           >
-            <button className="auth-close" onClick={onClose}><X size={20} /></button>
+            <button className="auth-close" onClick={onClose} aria-label={t('common_cancel')}><X size={20} /></button>
 
             <div className="auth-logo">
               <div className="auth-logo-icon"><Music size={28} /></div>
               <span>Beats.ly</span>
             </div>
 
-            <div className="auth-tabs">
-              <button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>Sign In</button>
-              <button className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')}>Sign Up</button>
-            </div>
+            {mode !== 'reset' && (
+              <div className="auth-tabs">
+                <button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>{t('auth_sign_in')}</button>
+                <button className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')}>{t('auth_sign_up')}</button>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="auth-form">
               {mode === 'signup' && (
@@ -131,9 +164,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   <User size={16} />
                   <input
                     type="text"
-                    placeholder="Username"
+                    placeholder={t('auth_username')}
                     value={username}
                     onChange={e => setUsername(e.target.value)}
+                    autoComplete="username"
                     required
                   />
                 </div>
@@ -142,22 +176,49 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <Mail size={16} />
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t('auth_email')}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
+                  autoComplete="email"
                   required
                 />
               </div>
-              <div className="auth-field">
-                <Lock size={16} />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+              {mode !== 'reset' && (
+                <div className="auth-field">
+                  <Lock size={16} />
+                  <input
+                    type="password"
+                    placeholder={t('auth_password')}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                    minLength={mode === 'signup' ? 8 : undefined}
+                    required
+                  />
+                </div>
+              )}
+
+              {mode === 'login' && (
+                <button type="button" className="auth-link-btn" onClick={() => switchMode('reset')}>
+                  {t('auth_forgot_password')}
+                </button>
+              )}
+
+              {mode === 'signup' && (
+                <label className="auth-consent">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={e => setAcceptedTerms(e.target.checked)}
+                  />
+                  <span>
+                    {richText(t('auth_accept_terms'), {
+                      terms: <Link to="/legal/terms" target="_blank">{t('footer_terms')}</Link>,
+                      privacy: <Link to="/legal/privacy" target="_blank">{t('footer_privacy')}</Link>,
+                    })}
+                  </span>
+                </label>
+              )}
 
               {HCAPTCHA_SITE_KEY && (
                 <div className="auth-captcha">
@@ -174,15 +235,21 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               {successMsg && <div className="auth-success">{successMsg}</div>}
 
               <button type="submit" className="auth-submit btn btn-primary" disabled={loading}>
-                {loading ? <Loader2 size={18} className="spin" /> : (mode === 'login' ? 'Sign In' : 'Create Account')}
+                {loading ? <Loader2 size={18} className="spin" /> : submitLabel}
               </button>
             </form>
 
             <p className="auth-footer-text">
-              {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
-                {mode === 'login' ? 'Sign Up' : 'Sign In'}
-              </button>
+              {mode === 'reset' ? (
+                <button onClick={() => switchMode('login')}>{t('auth_back_to_sign_in')}</button>
+              ) : (
+                <>
+                  {mode === 'login' ? t('auth_no_account') : t('auth_have_account')}{' '}
+                  <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
+                    {mode === 'login' ? t('auth_sign_up') : t('auth_sign_in')}
+                  </button>
+                </>
+              )}
             </p>
           </motion.div>
         </motion.div>

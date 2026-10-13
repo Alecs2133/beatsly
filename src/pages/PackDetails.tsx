@@ -3,13 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { fetchAllPages } from '../lib/paging';
 import { SoundGrid } from '../components/SoundGrid';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
 import { useAuthStore } from '../store/useAuthStore';
+import { errorMessage } from '../lib/errors';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const PackDetails: React.FC = () => {
   const { tag } = useParams<{ tag: string }>();
   const { session } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [sounds, setSounds] = useState<SoundItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,9 +42,9 @@ export const PackDetails: React.FC = () => {
         }));
 
         setSounds(mappedData);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching pack sounds:", err);
-        setError(err.message);
+        setError(errorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -60,23 +63,23 @@ export const PackDetails: React.FC = () => {
         </button>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', textTransform: 'capitalize' }}>
-            {tag} Pack
+            {t('pack_title', { tag: tag ?? '' })}
           </h1>
-          <p style={{ color: 'var(--text-muted)' }}>{sounds.length} {sounds.length === 1 ? 'sound' : 'sounds'} in this collection.</p>
+          <p style={{ color: 'var(--text-muted)' }}>{t(sounds.length === 1 ? 'pack_count_one' : 'pack_count', { count: sounds.length })}</p>
         </div>
       </div>
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-          <p style={{ color: 'var(--accent-secondary)' }}>Loading sounds...</p>
+          <p style={{ color: 'var(--accent-secondary)' }}>{t('crew_loading_sounds')}</p>
         </div>
       ) : error ? (
         <div style={{ color: 'var(--accent-tertiary)', padding: '20px', background: 'rgba(255,0,127,0.1)', borderRadius: '8px' }}>
-          <strong>Error loading pack:</strong> {error}
+          <strong>{t('pack_load_failed')}</strong> {error}
         </div>
       ) : sounds.length === 0 ? (
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <p>No sounds found in this pack.</p>
+          <p>{t('pack_empty')}</p>
         </div>
       ) : (
         <SoundGrid sounds={sounds} />

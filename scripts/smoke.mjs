@@ -98,7 +98,7 @@ const fn = (name) => `${SUPABASE_URL}/functions/v1/${name}`;
 // Fără Authorization, funcțiile noastre răspund singure cu `{ error }` 401.
 // Dacă răspunde gateway-ul (`verify_jwt` reactivat la deploy), corpul are
 // altă formă — exact problema care a stricat login-ul prin browser.
-for (const name of ['get-download-url', 'submit-auth-code', 'create-checkout', 'create-portal-session']) {
+for (const name of ['get-download-url', 'submit-auth-code', 'create-checkout', 'create-portal-session', 'delete-account']) {
   await check(`function ${name} deployed, verify_jwt off`, async () => {
     const res = await fetch(fn(name), { method: 'POST', headers: { apikey: ANON_KEY } });
     const body = await readBody(res);

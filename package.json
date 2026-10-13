@@ -17,14 +17,12 @@
     "dependencies": {
         "@breezystack/lamejs": "^1.2.7",
         "@crabnebula/tauri-plugin-drag": "^2.1.0",
-        "@gradio/client": "^2.4.0",
         "@supabase/supabase-js": "^2.110.2",
         "@tauri-apps/api": "^2.11.0",
         "@tauri-apps/plugin-autostart": "^2.5.1",
         "@tauri-apps/plugin-dialog": "^2.7.1",
         "@tauri-apps/plugin-fs": "^2.5.1",
         "@tauri-apps/plugin-http": "^2.5.9",
-        "@tauri-apps/plugin-opener": "^2",
         "@tauri-apps/plugin-process": "~2.3.1",
         "@tauri-apps/plugin-shell": "^2.3.5",
         "@tauri-apps/plugin-updater": "^2.10.1",
@@ -36,7 +34,6 @@
         "zustand": "^5.0.14"
     },
     "devDependencies": {
-        "@resvg/resvg-js": "^2.6.2",
         "@tauri-apps/cli": "^2.11.2",
         "@types/react": "^18.3.1",
         "@types/react-dom": "^18.3.1",

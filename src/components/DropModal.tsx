@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
+import { errorMessage } from '../lib/errors';
 
 interface DropModalProps {
   filePath: string;
@@ -65,7 +66,7 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.username) {
-      showToast('Please set your Username in Account Settings first!', 'error');
+      showToast(t('set_username_first'), 'error');
       return;
     }
     setIsPublishing(true);
@@ -105,9 +106,9 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
 
       showToast(t('published_success'), 'success');
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast(`${t('publish_failed')} ${err.message}`, 'error');
+      showToast(`${t('publish_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setIsPublishing(false);
     }
@@ -161,7 +162,7 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
               type="text" 
               value={author} 
               disabled
-              title="Author is set to your username"
+              title={t('author_locked')}
               style={{...inputStyle, opacity: 0.7, cursor: 'not-allowed'}} 
             />
           </div>
@@ -174,17 +175,17 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
                 value={bpm} 
                 onChange={e => setBpm(e.target.value)} 
                 style={inputStyle} 
-                placeholder="Ex: 120"
+                placeholder={t('bpm_example')}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>Key</label>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>{t('grid_key')}</label>
               <input 
                 type="text" 
                 value={key} 
                 onChange={e => setKey(e.target.value)} 
                 style={inputStyle} 
-                placeholder="Ex: C min"
+                placeholder={t('key_example')}
               />
             </div>
           </div>
@@ -196,7 +197,7 @@ export const DropModal: React.FC<DropModalProps> = ({ filePath, onClose }) => {
               value={tags} 
               onChange={e => setTags(e.target.value)} 
               style={inputStyle} 
-              placeholder="trap, piano, loop"
+              placeholder={t('tags_placeholder')}
             />
           </div>
 

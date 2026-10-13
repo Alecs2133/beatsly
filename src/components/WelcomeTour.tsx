@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Compass, Library, Sparkles, Music2, ArrowRight, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationKeys } from '../i18n/en';
 
 interface WelcomeTourProps {
   userId: string;
@@ -10,34 +12,35 @@ interface WelcomeTourProps {
 
 interface Step {
   icon: React.ReactNode;
-  title: string;
-  body: string;
+  title: TranslationKeys;
+  body: TranslationKeys;
 }
 
 const STEPS: Step[] = [
   {
     icon: <Compass size={32} />,
-    title: 'Welcome to Beats.ly',
-    body: 'Discover is your home base — browse loops, one-shots and FX from producers around the world, filtered by BPM, key, or harmonic compatibility.',
+    title: 'tour_1_title',
+    body: 'tour_1_body',
   },
   {
     icon: <Library size={32} />,
-    title: 'My Sounds & Collections',
-    body: 'Save anything you like with the heart icon, then organize your saves into named Collections — a folder next to any sound, so hundreds of downloads stay easy to navigate.',
+    title: 'tour_2_title',
+    body: 'tour_2_body',
   },
   {
     icon: <Sparkles size={32} />,
-    title: 'As you grow',
-    body: 'Producers can publish local files straight to the cloud from Local Files. Private Crews for sharing sounds with a team, and an AI sound generator, are on the way.',
+    title: 'tour_3_title',
+    body: 'tour_3_body',
   },
   {
     icon: <Music2 size={32} />,
-    title: 'Built for production',
-    body: 'Drag any local sound straight into your DAW, queue up a whole page with shuffle/repeat, or click anywhere on the waveform to seek. Let\'s make something.',
+    title: 'tour_4_title',
+    body: 'tour_4_body',
   },
 ];
 
 export const WelcomeTour: React.FC<WelcomeTourProps> = ({ userId, onDone }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const isLast = step === STEPS.length - 1;
 
@@ -66,7 +69,7 @@ export const WelcomeTour: React.FC<WelcomeTourProps> = ({ userId, onDone }) => {
         <button
           onClick={finish}
           style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-          title="Skip"
+          title={t('tour_skip')}
         >
           <X size={20} />
         </button>
@@ -79,8 +82,8 @@ export const WelcomeTour: React.FC<WelcomeTourProps> = ({ userId, onDone }) => {
           {current.icon}
         </div>
 
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>{current.title}</h2>
-        <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 28 }}>{current.body}</p>
+        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>{t(current.title)}</h2>
+        <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 28 }}>{t(current.body)}</p>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 24 }}>
           {STEPS.map((_, i) => (
@@ -103,7 +106,7 @@ export const WelcomeTour: React.FC<WelcomeTourProps> = ({ userId, onDone }) => {
             padding: '12px 28px', borderRadius: 24, fontWeight: 'bold', cursor: 'pointer',
           }}
         >
-          {isLast ? "Let's go" : 'Next'} <ArrowRight size={16} />
+          {isLast ? t('tour_done') : t('tour_next')} <ArrowRight size={16} />
         </button>
       </div>
     </div>

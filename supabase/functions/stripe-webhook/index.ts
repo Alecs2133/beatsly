@@ -36,6 +36,14 @@ serve(async (req) => {
     return new Response(`Webhook Error: ${(err as Error).message}`, { status: 400 })
   }
 
+  // Sfârșitul unui abonament (anulat de user, sau plăți eșuate până la capăt).
+  // Anularea „la finalul perioadei” din portal trimite întâi un `updated` cu
+  // statusul încă `active`, iar `deleted` abia când perioada plătită s-a
+  // terminat — deci retrogradăm exact la momentul corect.
+  if (event.type === 'customer.subscription.deleted') {
+    return await handleSubscriptionEnded(event)
+  }
+
   if (event.type !== 'checkout.session.completed') {
     return new Response(JSON.stringify({ received: true }), {
       headers: { 'Content-Type': 'application/json' },
@@ -113,3 +121,48 @@ serve(async (req) => {
     headers: { 'Content-Type': 'application/json' },
   })
 })
+
+async function handleSubscriptionEnded(event: Stripe.Event): Promise<Response> {
+  const subscription = event.data.object as Stripe.Subscription
+  const customerId =
+    typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
+
+  try {
+    // Cine a trecut de la Producer la Ultimate are un al doilea abonament
+    // (fiecare checkout creează unul nou). Dacă se încheie cel vechi, cel nou
+    // e încă activ — nu retrogradăm.
+    const remaining = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 10 })
+    const stillActive = remaining.data.some(
+      (s) => s.id !== subscription.id && ['active', 'trialing', 'past_due'].includes(s.status)
+    )
+    if (stillActive) {
+      console.log(`Event ${event.id}: customer ${customerId} still has an active subscription, keeping tier`)
+      return new Response(JSON.stringify({ received: true, skipped: 'other active subscription' }), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { data: applied, error } = await supabase.rpc('end_subscription_by_customer', {
+      p_event_id: event.id,
+      p_customer_id: customerId,
+    })
+    if (error) throw error
+
+    console.log(
+      applied
+        ? `Subscription ended for customer ${customerId}, downgraded to free`
+        : `Event ${event.id}: already processed or unknown customer ${customerId}`
+    )
+  } catch (err) {
+    console.error(`Failed to process event ${event.id}:`, err)
+    // 500 => Stripe reîncearcă; sigur, funcția e idempotentă pe event.id.
+    return new Response(JSON.stringify({ error: 'Processing failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
+    headers: { 'Content-Type': 'application/json' },
+  })
+}

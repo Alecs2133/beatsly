@@ -5,6 +5,8 @@ import type { User } from '@supabase/supabase-js';
 // strică fast refresh-ul în dev.
 export interface LayoutContext {
   user: User | null;
+  /** `false` cât timp sesiunea încă se citește — `user === null` nu înseamnă încă „nelogat”. */
+  authReady: boolean;
   requestAuth: () => void;
 }
 

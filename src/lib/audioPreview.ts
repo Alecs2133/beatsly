@@ -26,8 +26,7 @@ let decodeContext: AudioContext | null = null;
 
 function getDecodeContext(): AudioContext {
   if (!decodeContext) {
-    decodeContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
+    decodeContext = new (window.AudioContext ?? window.webkitAudioContext)();
   }
   return decodeContext;
 }

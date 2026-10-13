@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
+import { errorMessage } from '../lib/errors';
 
 interface EditSoundModalProps {
   sound: SoundItem;
@@ -51,9 +52,9 @@ export const EditSoundModal: React.FC<EditSoundModalProps> = ({ sound, onClose, 
       showToast(t('sound_updated'), 'success');
       onSuccess({ title, author, type, bpm: numBpm || undefined, key: keySignature, tags: updatedTags, license });
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      showToast(`${t('failed_update')} ${err.message}`, 'error');
+      showToast(`${t('failed_update')} ${errorMessage(err)}`, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -101,7 +102,7 @@ export const EditSoundModal: React.FC<EditSoundModalProps> = ({ sound, onClose, 
               <input type="number" style={inputStyle} value={bpm} onChange={e => setBpm(e.target.value)} />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Key</label>
+              <label style={labelStyle}>{t('grid_key')}</label>
               <input type="text" style={inputStyle} value={keySignature} onChange={e => setKeySignature(e.target.value)} />
             </div>
           </div>

@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from './useAuthStore';
 import { useAppStore } from './useAppStore';
 import { mapSoundRow } from '../lib/soundRow';
 import { fetchAllPages, fetchByIdChunks } from '../lib/paging';
+import { translate } from '../hooks/useTranslation';
+import { errorMessage } from '../lib/errors';
 
 interface LibraryState {
   savedSounds: SoundItem[];
@@ -46,32 +48,40 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   toggleSaveSound: async (sound) => {
+    const { showToast, language } = useAppStore.getState();
     const user = useAuthStore.getState().user;
     if (!user) {
-      useAppStore.getState().showToast('Trebuie să fii logat pentru a salva piese.', 'error');
+      showToast(translate(language, 'logged_in_save'), 'error');
       return;
     }
-    
+
     const exists = get().savedSounds.some(s => s.id === sound.id);
-    
+
+    // Starea locală se schimbă doar după ce baza de date confirmă — altfel
+    // (sesiune expirată, rețea) inima arăta „salvat”, dar după repornire
+    // sunetul nu mai era în My Sounds.
+    const { error } = exists
+      ? await supabase
+          .from('user_libraries')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('sound_id', sound.id)
+      : await supabase
+          .from('user_libraries')
+          .insert({ user_id: user.id, sound_id: sound.id });
+
+    if (error) {
+      console.error('toggleSaveSound failed:', error);
+      showToast(`${translate(language, 'save_failed')} ${errorMessage(error)}`, 'error');
+      return;
+    }
+
     if (exists) {
-      // Remove from DB
-      await supabase
-        .from('user_libraries')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('sound_id', sound.id);
-        
       set((state) => ({ savedSounds: state.savedSounds.filter(s => s.id !== sound.id) }));
-      useAppStore.getState().showToast('Removed from My Sounds', 'info');
+      showToast(translate(language, 'removed_from_sounds'), 'info');
     } else {
-      // Add to DB
-      await supabase
-        .from('user_libraries')
-        .insert({ user_id: user.id, sound_id: sound.id });
-        
       set((state) => ({ savedSounds: [...state.savedSounds, sound] }));
-      useAppStore.getState().showToast('Saved to My Sounds', 'success');
+      showToast(translate(language, 'saved_to_sounds'), 'success');
     }
   },
 

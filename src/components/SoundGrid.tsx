@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SoundItem } from '../data/mockData';
+import { SoundItem } from '../types/sound';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAppStore } from '../store/useAppStore';
@@ -17,23 +17,53 @@ import { previewObjectName } from '../lib/audioPreview';
 import { isAdminRole, isPublisherRole } from '../lib/roles';
 import { licenseShortLabel, licenseLabel } from '../lib/licenses';
 import { useCollections } from '../hooks/useCollections';
-import { createCollection, addSoundToCollection } from '../lib/collections';
+import { createCollection, addSoundToCollection, Collection } from '../lib/collections';
+import type { TranslationKeys } from '../i18n/en';
 import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2, Wand2, Loader2, FolderPlus, Check } from 'lucide-react';
 import { startDrag } from '@crabnebula/tauri-plugin-drag';
 import { invoke } from '@tauri-apps/api/core';
+import { errorMessage } from '../lib/errors';
 import './SoundGrid.css';
+
+interface SoundRowProps {
+  sound: SoundItem;
+  isCurrentTrack: boolean;
+  isPlaying: boolean;
+  isSaved: boolean;
+  canPublish: boolean;
+  canModerate: boolean;
+  isAnalyzing: boolean;
+  isLoggedIn: boolean;
+  t: (key: TranslationKeys) => string;
+  collectionMenuOpen: boolean;
+  collections: Collection[];
+  onPlay: (sound: SoundItem) => void;
+  onLike: (sound: SoundItem) => void;
+  onDownload: (sound: SoundItem) => void;
+  onShare: (sound: SoundItem) => void;
+  onPublish: (sound: SoundItem) => void;
+  onEdit: (sound: SoundItem) => void;
+  onDelete: (sound: SoundItem) => void;
+  onAnalyze: (sound: SoundItem) => void;
+  onNavigateToProfile: (ownerId: string) => void;
+  onToggleCollectionMenu: (soundId: string | number) => void;
+  onAddToCollection: (sound: SoundItem, collectionId: string) => void;
+  onCreateCollection: (sound: SoundItem, name: string) => void;
+}
 
 const SoundRow = React.memo(({
   sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, isLoggedIn, t,
   collectionMenuOpen, collections,
   onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete, onAnalyze,
   onNavigateToProfile, onToggleCollectionMenu, onAddToCollection, onCreateCollection
-}: any) => {
+}: SoundRowProps) => {
   // Drag nativ către alte aplicații (un DAW) e posibil doar pentru fișiere
   // deja pe disc — sunetele din cloud nu au o cale locală de oferit
   // sistemului de operare. `startDrag` are nevoie de calea brută, nu de
   // `file_url` (care pentru fișierele locale e deja convertit în asset://).
-  const isDraggable = sound.id.toString().startsWith('local-') && !!sound.local_path;
+  const localPath = sound.local_path;
+  const ownerId = sound.owner_id;
+  const isDraggable = sound.id.toString().startsWith('local-') && !!localPath;
   const isLocal = sound.id.toString().startsWith('local-');
   const [newCollectionName, setNewCollectionName] = React.useState('');
 
@@ -42,11 +72,11 @@ const SoundRow = React.memo(({
       className={`grid-row${isDraggable ? ' draggable-row' : ''}`}
       draggable={isDraggable}
       onDragStart={(e) => {
-        if (!isDraggable) return;
+        if (!isDraggable || !localPath) return;
         // Interceptăm drag-ul HTML5 și pornim unul nativ prin Tauri, ca
         // fișierul să poată fi plasat direct într-un DAW extern.
         e.preventDefault();
-        startDrag({ item: [sound.local_path], icon: 'icon.png' });
+        startDrag({ item: [localPath], icon: 'icon.png' });
       }}
       title={isDraggable ? 'Drag into your DAW' : undefined}
     >
@@ -68,8 +98,8 @@ const SoundRow = React.memo(({
             <span className="license-badge" title={licenseLabel(sound.license)}>{licenseShortLabel(sound.license)}</span>
           )}
         </div>
-        {sound.owner_id ? (
-          <button className="sound-author sound-author-link" onClick={() => onNavigateToProfile(sound.owner_id)}>
+        {ownerId ? (
+          <button className="sound-author sound-author-link" onClick={() => onNavigateToProfile(ownerId)}>
             {sound.author}
           </button>
         ) : (
@@ -94,22 +124,22 @@ const SoundRow = React.memo(({
           <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} color={isSaved ? 'var(--accent-tertiary)' : 'currentColor'} />
         </button>
         <button className="row-action-btn download" onClick={() => onDownload(sound)} title={t('download')}><Download size={18} /></button>
-        <button className="row-action-btn" onClick={() => onShare(sound)} title="Share"><Share2 size={18} /></button>
+        <button className="row-action-btn" onClick={() => onShare(sound)} title={t('grid_share')}><Share2 size={18} /></button>
         {isLoggedIn && !isLocal && (
           <div className="collection-menu-anchor">
             <button
               className="row-action-btn"
               onClick={() => onToggleCollectionMenu(sound.id)}
-              title="Add to collection"
+              title={t('grid_add_to_collection')}
             >
               <FolderPlus size={18} />
             </button>
             {collectionMenuOpen && (
               <div className="collection-menu">
                 {collections.length === 0 && (
-                  <div className="collection-menu-empty">No collections yet</div>
+                  <div className="collection-menu-empty">{t('grid_no_collections')}</div>
                 )}
-                {collections.map((c: any) => (
+                {collections.map(c => (
                   <button key={c.id} className="collection-menu-item" onClick={() => onAddToCollection(sound, c.id)}>
                     {c.name}
                   </button>
@@ -126,10 +156,10 @@ const SoundRow = React.memo(({
                   <input
                     value={newCollectionName}
                     onChange={e => setNewCollectionName(e.target.value)}
-                    placeholder="New collection…"
+                    placeholder={t('collections_new_placeholder')}
                     onClick={e => e.stopPropagation()}
                   />
-                  <button type="submit" title="Create"><Check size={14} /></button>
+                  <button type="submit" title={t('grid_create')}><Check size={14} /></button>
                 </form>
               </div>
             )}
@@ -140,18 +170,18 @@ const SoundRow = React.memo(({
             className="row-action-btn"
             onClick={() => onAnalyze(sound)}
             disabled={isAnalyzing}
-            title="Detect real BPM & key from the audio"
+            title={t('grid_analyze')}
           >
             {isAnalyzing ? <Loader2 size={18} className="spin" /> : <Wand2 size={18} />}
           </button>
         )}
         {isLocal && canPublish && (
-          <button className="row-action-btn" onClick={() => onPublish(sound)} title="Publish to Cloud"><CloudUpload size={18} /></button>
+          <button className="row-action-btn" onClick={() => onPublish(sound)} title={t('grid_publish')}><CloudUpload size={18} /></button>
         )}
         {!isLocal && canModerate && (
           <>
-            <button className="row-action-btn" onClick={() => onEdit(sound)} title="Edit Sound"><Pencil size={18} /></button>
-            <button className="row-action-btn" onClick={() => onDelete(sound)} title="Delete Sound" style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
+            <button className="row-action-btn" onClick={() => onEdit(sound)} title={t('grid_edit')}><Pencil size={18} /></button>
+            <button className="row-action-btn" onClick={() => onDelete(sound)} title={t('grid_delete')} style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
           </>
         )}
       </div>
@@ -299,9 +329,9 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
   );
 
   const handleDelete = useCallback(async (sound: SoundItem) => {
-    if (!window.confirm('Are you sure you want to delete this sound forever?')) return;
+    if (!window.confirm(t('grid_delete_confirm'))) return;
     try {
-      showToast('Deleting...', 'info');
+      showToast(t('grid_deleting'), 'info');
 
       // Fișierele se șterg ÎNAINTEA rândului. Anterior se ștergea doar rândul,
       // iar fișierul rămânea în storage la nesfârșit — invizibil în aplicație,
@@ -328,12 +358,12 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
       if (error) throw error;
 
       setSounds(prev => prev.filter(s => s.id !== sound.id));
-      showToast('Sound deleted permanently.', 'success');
-    } catch (err: any) {
+      showToast(t('grid_deleted'), 'success');
+    } catch (err) {
       console.error(err);
-      showToast('Delete failed: ' + err.message, 'error');
+      showToast(`${t('grid_delete_failed')} ${errorMessage(err)}`, 'error');
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   const handleEditSuccess = useCallback((soundId: string | number, updated: Partial<SoundItem>) => {
     setSounds(prev => prev.map(s => s.id === soundId ? { ...s, ...updated } as SoundItem : s));
@@ -356,17 +386,17 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
       // tonalitate clară: percuție pură, zgomot, FX). Un rezultat afișat
       // fără această avertizare ar părea la fel de sigur ca unul cert.
       if (result.key_confidence < 0.3) {
-        showToast(`Detected ${bpm} BPM. Key confidence is low (${result.key} may be inaccurate) — verify manually.`, 'info');
+        showToast(t('grid_analyze_low_key', { bpm, key: result.key }), 'info');
       } else {
-        showToast(`Detected ${bpm} BPM, key ${result.key}`, 'success');
+        showToast(t('grid_analyze_done', { bpm, key: result.key }), 'success');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('analyze_sample_audio failed:', err);
-      showToast('Analysis failed: ' + (err?.message ?? String(err)), 'error');
+      showToast(`${t('grid_analyze_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setAnalyzingId(null);
     }
-  }, [showToast, onSoundUpdated]);
+  }, [showToast, onSoundUpdated, t]);
 
   const handleLike = useCallback((sound: SoundItem) => {
     toggleSaveSound(sound);
@@ -422,8 +452,8 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
 
   const handleShare = useCallback((sound: SoundItem) => {
     navigator.clipboard.writeText(`${sound.title} by ${sound.author}`);
-    showToast('Copied to clipboard!', 'success');
-  }, [showToast]);
+    showToast(t('grid_copied'), 'success');
+  }, [showToast, t]);
 
   const handlePublishClick = useCallback((sound: SoundItem) => {
     setPublishingSound(sound);
@@ -440,35 +470,35 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
   const handleAddToCollection = useCallback(async (sound: SoundItem, collectionId: string) => {
     try {
       await addSoundToCollection(collectionId, sound.id);
-      showToast(`Added to collection`, 'success');
-    } catch (err: any) {
-      showToast('Failed to add to collection: ' + err.message, 'error');
+      showToast(t('grid_added_to_collection'), 'success');
+    } catch (err) {
+      showToast(`${t('grid_add_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setCollectionMenuId(null);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   const handleCreateCollection = useCallback(async (sound: SoundItem, name: string) => {
     try {
       const collection = await createCollection(name);
       await addSoundToCollection(collection.id, sound.id);
       await refetchCollections();
-      showToast(`Created "${collection.name}" and added the sound`, 'success');
-    } catch (err: any) {
-      showToast('Failed to create collection: ' + err.message, 'error');
+      showToast(t('grid_collection_created', { name: collection.name }), 'success');
+    } catch (err) {
+      showToast(`${t('grid_create_failed')} ${errorMessage(err)}`, 'error');
     } finally {
       setCollectionMenuId(null);
     }
-  }, [showToast, refetchCollections]);
+  }, [showToast, refetchCollections, t]);
 
   return (
     <div className="sound-grid">
       <div className="grid-header">
         <div className="col col-play"></div>
-        <div className="col col-title">Title</div>
+        <div className="col col-title">{t('title_label')}</div>
         <div className="col col-bpm">BPM</div>
-        <div className="col col-key">Key</div>
-        <div className="col col-tags">Tags</div>
+        <div className="col col-key">{t('grid_key')}</div>
+        <div className="col col-tags">{t('grid_tags')}</div>
         <div className="col col-actions"></div>
       </div>
       

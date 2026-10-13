@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Cloud, Sparkles, ShoppingBag, Music, Code, Zap, Shield, ArrowRight, Download, Tag } from 'lucide-react';
+import { Cloud, Sparkles, Library, Music, Users, Zap, Shield, ArrowRight, Download, Tag } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { FaqItem } from '../components/FaqItem';
 import { FAQS } from '../data/faqs';
+import { useT } from '../i18n/context';
 
 export function Home() {
+  const { t } = useT();
+
   return (
     <>
       {/* Hero Section */}
@@ -17,23 +20,23 @@ export function Home() {
           variants={staggerContainer}
         >
           <motion.h1 className="hero-title" variants={fadeInUp}>
-            The Ultimate Hub for <br />
-            <span className="glow-text">Music Producers</span>
+            {t('hero_title_1')} <br />
+            <span className="glow-text">{t('hero_title_2')}</span>
           </motion.h1>
           <motion.p className="hero-subtitle" variants={fadeInUp}>
-            Manage your sounds, detect BPM and key automatically, and sync your entire library to the cloud. All in one beautiful, lightning-fast Windows application.
+            {t('hero_subtitle')}
           </motion.p>
           <motion.div className="hero-cta" variants={fadeInUp}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/download" className="btn btn-primary">
                 <Download size={18} />
-                Download Beats.ly
+                {t('hero_cta_download')}
               </Link>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/pricing" className="btn btn-secondary glass-btn">
                 <Tag size={18} />
-                View Pricing
+                {t('hero_cta_pricing')}
               </Link>
             </motion.div>
           </motion.div>
@@ -49,7 +52,7 @@ export function Home() {
           <div className="mockup-glow"></div>
           <img
             src="/hero-app.png"
-            alt="Beats.ly Interface"
+            alt={t('hero_mockup_alt')}
             className="mockup-image"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -59,9 +62,7 @@ export function Home() {
           />
           <div className="mockup-placeholder glass">
             <div className="placeholder-content">
-              <Music size={48} style={{ opacity: 0.5, marginBottom: '20px' }} />
-              <h3>App Screenshot Goes Here</h3>
-              <p>Save your screenshot as <code style={{ color: 'var(--accent-secondary)' }}>public/hero-app.png</code></p>
+              <Music size={48} style={{ opacity: 0.5 }} />
             </div>
           </div>
         </motion.div>
@@ -75,7 +76,7 @@ export function Home() {
           viewport={{ once: true, margin: '-100px' }}
           variants={fadeInUp}
         >
-          <h2 className="section-title">Everything you need. <span className="glow-text">Nothing you don't.</span></h2>
+          <h2 className="section-title">{t('features_title_1')} <span className="glow-text">{t('features_title_2')}</span></h2>
         </motion.div>
 
         <motion.div
@@ -87,38 +88,38 @@ export function Home() {
         >
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
             <div className="feature-icon" style={{ color: 'var(--accent-secondary)' }}><Cloud size={32} /></div>
-            <h3>Cloud Sync</h3>
-            <p>Your library is safe. Upload your samples to the cloud and access them from any PC in the world.</p>
+            <h3>{t('feature_cloud_title')}</h3>
+            <p>{t('feature_cloud_text')}</p>
           </motion.div>
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
             <div className="feature-icon" style={{ color: 'var(--accent-tertiary)' }}><Sparkles size={32} /></div>
-            <h3>AI Generator <span className="version-badge" style={{ marginTop: 0, marginLeft: 8, fontSize: 11, padding: '3px 10px', verticalAlign: 'middle' }}>Coming soon</span></h3>
-            <p>Stuck on an idea? Generate unique royalty-free samples with AI — landing in an upcoming update.</p>
+            <h3>{t('feature_ai_title')} <span className="version-badge" style={{ marginTop: 0, marginLeft: 8, fontSize: 11, padding: '3px 10px', verticalAlign: 'middle' }}>{t('common_coming_soon')}</span></h3>
+            <p>{t('feature_ai_text')}</p>
           </motion.div>
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: 'var(--accent-primary)' }}><ShoppingBag size={32} /></div>
-            <h3>Built-in Store</h3>
-            <p>Buy, sell, and discover thousands of high-quality sample packs created by the community.</p>
+            <div className="feature-icon" style={{ color: 'var(--accent-primary)' }}><Library size={32} /></div>
+            <h3>{t('feature_library_title')}</h3>
+            <p>{t('feature_library_text')}</p>
           </motion.div>
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
             <div className="feature-icon" style={{ color: '#fff' }}><Zap size={32} /></div>
-            <h3>Lightning Fast</h3>
-            <p>Built with Rust & React, Beats.ly uses minimal RAM while analyzing thousands of audio files instantly.</p>
+            <h3>{t('feature_fast_title')}</h3>
+            <p>{t('feature_fast_text')}</p>
           </motion.div>
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
             <div className="feature-icon" style={{ color: '#ffb703' }}><Shield size={32} /></div>
-            <h3>Secure Verification</h3>
-            <p>Our premium Publisher roles are verified manually to ensure only the highest quality packs hit the store.</p>
+            <h3>{t('feature_verified_title')}</h3>
+            <p>{t('feature_verified_text')}</p>
           </motion.div>
 
           <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: '#06d6a0' }}><Code size={32} /></div>
-            <h3>Developer Friendly</h3>
-            <p>Open source and easily extensible. Built by producers, for producers.</p>
+            <div className="feature-icon" style={{ color: '#06d6a0' }}><Users size={32} /></div>
+            <h3>{t('feature_crews_title')}</h3>
+            <p>{t('feature_crews_text')}</p>
           </motion.div>
         </motion.div>
       </section>
@@ -136,8 +137,8 @@ export function Home() {
             <Link to="/pricing" className="quick-link-card glass">
               <div className="quick-link-icon" style={{ color: 'var(--accent-primary)' }}><Tag size={28} /></div>
               <div className="quick-link-text">
-                <h3>Simple Pricing</h3>
-                <p>Free to start, upgrade whenever you outgrow it.</p>
+                <h3>{t('quick_pricing_title')}</h3>
+                <p>{t('quick_pricing_text')}</p>
               </div>
               <ArrowRight className="quick-link-arrow" size={20} />
             </Link>
@@ -146,8 +147,8 @@ export function Home() {
             <Link to="/download" className="quick-link-card glass">
               <div className="quick-link-icon" style={{ color: 'var(--accent-secondary)' }}><Download size={28} /></div>
               <div className="quick-link-text">
-                <h3>Get the App</h3>
-                <p>Windows and macOS builds, system requirements, and setup.</p>
+                <h3>{t('quick_download_title')}</h3>
+                <p>{t('quick_download_text')}</p>
               </div>
               <ArrowRight className="quick-link-arrow" size={20} />
             </Link>
@@ -163,8 +164,8 @@ export function Home() {
           viewport={{ once: true, margin: '-80px' }}
           variants={fadeInUp}
         >
-          <h2 className="section-title">Frequently Asked <span className="glow-text">Questions</span></h2>
-          <p className="faq-subtitle">Everything you need to know before you get started.</p>
+          <h2 className="section-title">{t('faq_title_1')} <span className="glow-text">{t('faq_title_2')}</span></h2>
+          <p className="faq-subtitle">{t('faq_subtitle')}</p>
         </motion.div>
         <motion.div
           className="faq-list"
@@ -175,7 +176,7 @@ export function Home() {
         >
           {FAQS.map((item) => (
             <motion.div key={item.id} variants={fadeInUp}>
-              <FaqItem q={item.q} a={item.a} />
+              <FaqItem id={item.id} q={t(item.q)} a={t(item.a)} />
             </motion.div>
           ))}
         </motion.div>
