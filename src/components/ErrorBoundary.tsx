@@ -1,6 +1,7 @@
 import React from 'react';
 import { reportError } from '../lib/errorReporting';
 import { translate } from '../hooks/useTranslation';
+import { Icon } from './Icon';
 import { useAppStore } from '../store/useAppStore';
 
 interface Props {
@@ -37,7 +38,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           alignItems: 'center', justifyContent: 'center', gap: 16,
           background: '#0a0a0f', color: 'white', padding: 40, textAlign: 'center',
         }}>
-          <div style={{ fontSize: 40 }}>😵</div>
+          <div className="empty-icon"><Icon name="alert" size={26} play={1} /></div>
           <h1 style={{ fontSize: 20, fontWeight: 800 }}>{translate(lang, 'error_title')}</h1>
           <p style={{ color: 'rgba(255,255,255,0.6)', maxWidth: 400 }}>
             {translate(lang, 'error_text')}
@@ -45,7 +46,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <button
             onClick={() => window.location.reload()}
             style={{
-              background: 'var(--gradient-primary, linear-gradient(135deg, #b026ff, #00bbf9))',
+              background: 'var(--gradient-primary, linear-gradient(135deg, #8466ff, #7354f5))',
               color: 'white', border: 'none', padding: '12px 28px', borderRadius: 24,
               fontWeight: 'bold', cursor: 'pointer', marginTop: 8,
             }}

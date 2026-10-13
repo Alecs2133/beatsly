@@ -1,34 +1,39 @@
+@import './styles/tokens.css';
+
+/* Numele vechi, păstrate ca restul CSS-ului să preia direct noua paletă.
+   Cod nou: folosește direct tokenii din styles/tokens.css. */
 :root {
-  /* Midnight Dark Theme Variables */
-  --bg-dark: #050508;
-  --bg-panel: rgba(20, 20, 30, 0.4);
-  --bg-panel-hover: rgba(30, 30, 45, 0.6);
-  
-  --accent-primary: #9d4edd; /* Softer Purple */
-  --accent-secondary: #00bbf9; /* Softer Cyan */
-  --accent-tertiary: #f15bb5; /* Softer Pink */
-  --accent-hover: #b05bff;
-  
-  /* Smooth Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  --gradient-glow: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary), var(--accent-primary));
-  
-  --text-main: #f8f8ff;
-  --text-muted: #a0a0b5;
-  
-  --border-light: rgba(255, 255, 255, 0.03);
-  --border-strong: rgba(255, 255, 255, 0.08);
-  
-  --shadow-glow: 0 0 20px rgba(157, 78, 221, 0.3);
-  --shadow-glow-strong: 0 0 35px rgba(157, 78, 221, 0.5);
-  --transition-speed: 0.35s;
-  --spring-easing: cubic-bezier(0.2, 0.8, 0.2, 1); /* Smoother, less bouncy spring */
-  --smooth-easing: cubic-bezier(0.4, 0, 0.2, 1); /* Standard material smooth easing */
-  
-  /* Layout constraints */
-  --sidebar-width: 260px;
-  --player-height: 90px;
-  --topbar-height: 70px;
+  --bg-dark: var(--bg);
+  --bg-panel: var(--surface);
+  --bg-panel-hover: var(--raised);
+
+  --accent-primary: var(--accent);
+  --accent-secondary: var(--signal);
+  --accent-tertiary: var(--bad);
+  /* hover-ul accentului — nu-l redefinim, are deja aceeași valoare în tokeni */
+
+  /* Fost gradient mov→cyan peste tot. Acum aproape plin: accentul e unul. */
+  --gradient-primary: linear-gradient(135deg, #8466ff, #7354f5);
+  --gradient-glow: var(--gradient-primary);
+
+  --text-main: var(--fg);
+  --text-muted: var(--muted);
+
+  --border-light: var(--line-soft);
+  --border-strong: var(--line);
+
+  --shadow-glow: var(--shadow-accent);
+  --shadow-glow-strong: 0 12px 32px -10px rgba(124, 92, 255, 0.75);
+  --transition-speed: var(--dur);
+  --spring-easing: var(--ease-spring);
+  --smooth-easing: var(--ease-out);
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --player-height: 84px;
+  --topbar-height: 68px;
+
+  color-scheme: dark;
 }
 
 * {
@@ -38,37 +43,42 @@
 }
 
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01', 'cv11';
   overflow: auto; /* Allow scrollbars on smaller screens */
   display: flex;
   justify-content: center;
   position: relative;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  top: -20%;
-  left: -10%;
-  width: 50vw;
-  height: 50vw;
-  background: radial-gradient(circle, rgba(176, 38, 255, 0.08) 0%, rgba(5, 5, 8, 0) 70%);
-  pointer-events: none;
-  z-index: -1;
+h1, h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -20%;
-  right: -10%;
-  width: 50vw;
-  height: 50vw;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.06) 0%, rgba(5, 5, 8, 0) 70%);
-  pointer-events: none;
-  z-index: -1;
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* Cifre aliniate pe coloană (BPM, durate, credite) */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 #root {
@@ -77,12 +87,19 @@ body::after {
   justify-content: center;
 }
 
-/* Glassmorphism Utilities */
+/* Suprafață opacă. Blur-ul se folosește doar pe ce plutește (meniuri,
+   modale, player) — vezi .glass-float. */
 .glass {
-  background: rgba(20, 20, 30, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-light);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+}
+
+.glass-float {
+  background: var(--overlay);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
 }
 
 /* Global App Layout */
@@ -94,120 +111,368 @@ body::after {
   min-width: 1024px; /* Add slider if window is smaller than 1024px */
   min-height: 700px; /* Add slider if window is smaller than 700px */
   flex-direction: row;
-  box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Nice shadow when constrained */
 }
 
 .main-wrapper {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
   height: calc(100vh - var(--player-height));
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 24px 28px;
   padding-bottom: 100px; /* space for scrolling above player */
 }
 
-/* Page Transition Animations */
-@keyframes pageSlideUpFade {
-  0% { opacity: 0; transform: translateY(30px) scale(0.97); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+/* Intrarea paginii: vine de jos, din blur — scurt, fără scale. */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
 }
 
 .main-content > *, .full-page-wrapper > * {
-  animation: pageSlideUpFade 0.6s var(--spring-easing) forwards;
-  will-change: transform, opacity;
+  animation: pageIn var(--dur-slow) var(--ease-out) both;
+}
+
+/* Elemente de listă care intră decalat: style={{ '--i': index }} */
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.stagger-in {
+  animation: rowIn 0.5s var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 40ms);
+}
+
+/* Schelet de încărcare */
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.skeleton {
+  border-radius: var(--radius-s);
+  background: linear-gradient(90deg, var(--surface) 0%, var(--raised) 40%, var(--surface) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-panel-hover);
-  border-radius: 4px;
+  background: var(--line);
+  border-radius: 10px;
+  border: 3px solid var(--bg);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--line-strong);
 }
 
-/* Filter Buttons */
+/* Filtre: un singur rând de „segmente”; cel activ e plin, fără glow */
 .filter-container {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   margin-bottom: 24px;
 }
 
 .filter-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-light);
-  color: var(--text-muted);
-  padding: 8px 16px;
-  border-radius: 20px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-speed) var(--smooth-easing);
+  transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .filter-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.filter-btn:active {
+  transform: scale(0.96);
 }
 
 .filter-btn.active {
-  background: var(--gradient-primary);
-  color: white;
-  border-color: transparent;
-  box-shadow: var(--shadow-glow);
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
 }
 
-/* Toast Notifications */
+/* Toast-uri: urcă elastic din colț, cu o bară care arată cât mai stau */
 .toast-container {
   position: fixed;
-  bottom: calc(var(--player-height) + 24px);
+  bottom: calc(var(--player-height) + 20px);
   right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  z-index: 50;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 3000;
   pointer-events: none;
 }
 
 .toast {
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+  max-width: 380px;
+  padding: 11px 16px 13px 12px;
+  border-radius: var(--radius-m);
+  font-size: 13.5px;
   font-weight: 500;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  animation: toastSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: var(--fg);
+  background: var(--overlay);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  pointer-events: auto;
+  animation: toastIn 0.5s var(--ease-spring) both;
 }
 
-.toast-success {
-  border-left: 4px solid var(--accent-secondary);
-}
-.toast-error {
-  border-left: 4px solid var(--accent-tertiary);
-}
-.toast-info {
-  border-left: 4px solid var(--accent-primary);
+.toast.leaving {
+  animation: toastOut 0.25s var(--ease-out) both;
 }
 
-@keyframes toastSlideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+.toast-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  flex-shrink: 0;
 }
 
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 10px rgba(176,38,255,0.4); }
-  50% { box-shadow: 0 0 25px rgba(0,240,255,0.6); }
-  100% { box-shadow: 0 0 10px rgba(176,38,255,0.4); }
+.toast-success .toast-icon { color: var(--good); background: rgba(52, 211, 153, 0.12); }
+.toast-error .toast-icon { color: var(--bad); background: rgba(248, 113, 113, 0.12); }
+.toast-info .toast-icon { color: var(--accent); background: var(--accent-soft); }
+
+.toast-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  transform-origin: left;
+  animation: toastBar 3s linear both;
+}
+
+.toast-success .toast-bar { background: var(--good); }
+.toast-error .toast-bar { background: var(--bad); }
+.toast-info .toast-bar { background: var(--accent); }
+
+@keyframes toastIn {
+  from { transform: translateY(18px) scale(0.96); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes toastOut {
+  to { transform: translateX(24px); opacity: 0; }
+}
+
+@keyframes toastBar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+/* Iconița din stările goale / de eroare (în locul emoji-urilor) */
+.empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(124, 92, 255, 0.25);
+}
+
+/* Codul limbii în Opțiuni (steagurile emoji nu apar pe Windows) */
+.lang-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--fg);
+  background: var(--raised);
+  border: 1px solid var(--line);
+}
+
+/* Text + iconiță aliniate (butoane, avertismente) */
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Titlu de secțiune cu iconiță (ex. „Pack-uri recomandate”) */
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.section-heading .bi {
+  color: var(--accent);
+}
+
+/* Segmente cu pastilă care alunecă (Segmented.tsx) */
+.segmented {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.segmented-pill {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 999px;
+  background: var(--fg);
+  transition: transform 0.45s var(--ease-spring), width 0.45s var(--ease-spring);
+}
+
+.segmented-option {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease-out);
+}
+
+.segmented-option:hover {
+  color: var(--fg);
+}
+
+.segmented-option[aria-pressed='true'] {
+  color: var(--bg);
+}
+
+/* Rândurile schelet apar decalat, ca rândurile reale */
+.skeleton-row {
+  animation: rowIn 0.5s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.skeleton-row .skeleton {
+  display: block;
+}
+
+/* Butonul „Filtre” + panoul cu filtre avansate */
+.filters-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.filters-toggle .chevron {
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+
+.filters-toggle .chevron.open {
+  transform: rotate(180deg);
+}
+
+.filters-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-end;
+  padding: 18px 20px;
+  margin: -10px 0 24px;
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  transform-origin: top;
+  animation: panelIn 0.4s var(--ease-spring) both;
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-6px) scaleY(0.96); }
+}
+
+/* Câmpuri de formular comune */
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font: 500 11px var(--font-mono);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.field {
+  padding: 8px 10px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13px;
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 8px 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  color: var(--accent-hover);
 }

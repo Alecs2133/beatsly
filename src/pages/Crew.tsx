@@ -17,6 +17,8 @@ import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
 import { errorMessage } from '../lib/errors';
 import { useTranslation } from '../hooks/useTranslation';
+import { Icon } from '../components/Icon';
+import { SoundGridSkeleton } from '../components/SoundGridSkeleton';
 
 const inputStyle: React.CSSProperties = {
   padding: '8px 12px',
@@ -204,7 +206,7 @@ export const CrewPage: React.FC = () => {
   if (crews.length === 0) {
     return (
       <div className="library-page glass" style={{ padding: '60px 20px', textAlign: 'center', borderRadius: '16px', margin: '40px auto', maxWidth: '600px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '20px' }}>👥</div>
+        <div className="empty-icon"><Icon name="crew" size={26} play={1} /></div>
         <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>{t('crew_none_title')}</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>
           {canCreateCrew
@@ -363,7 +365,7 @@ export const CrewPage: React.FC = () => {
           </div>
 
           {loadingSounds ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-secondary)' }}>{t('crew_loading_sounds')}</div>
+            <SoundGridSkeleton rows={4} />
           ) : sounds.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>{t('crew_no_sounds')}</div>
           ) : (

@@ -1,28 +1,56 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Cloud, Sparkles, Library, Music, Users, Zap, Shield, ArrowRight, Download, Tag } from 'lucide-react';
+import { Music, ArrowRight, Download, Tag } from 'lucide-react';
+import { Icon, type IconName } from '../components/Icon';
+import { HeroSignal } from '../components/HeroSignal';
+import type { TranslationKey } from '../i18n/en';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { FaqItem } from '../components/FaqItem';
 import { FAQS } from '../data/faqs';
 import { useT } from '../i18n/context';
 
+const FEATURES: { icon: IconName; title: TranslationKey; text: TranslationKey; soon?: boolean }[] = [
+  { icon: 'upload', title: 'feature_cloud_title', text: 'feature_cloud_text' },
+  { icon: 'sparkle', title: 'feature_ai_title', text: 'feature_ai_text', soon: true },
+  { icon: 'headphones', title: 'feature_library_title', text: 'feature_library_text' },
+  { icon: 'signal', title: 'feature_fast_title', text: 'feature_fast_text' },
+  { icon: 'check', title: 'feature_verified_title', text: 'feature_verified_text' },
+  { icon: 'crew', title: 'feature_crews_title', text: 'feature_crews_text' },
+];
+
+/** Titlul apare cuvânt cu cuvânt, din blur. */
+function Words({ text, offset = 0 }: { text: string; offset?: number }) {
+  return (
+    <>
+      {text.split(' ').map((word, i) => (
+        <span key={`${word}-${i}`} className="hero-word" style={{ '--i': i + offset } as React.CSSProperties}>
+          {word}{' '}
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function Home() {
   const { t } = useT();
+  const firstLineWords = t('hero_title_1').split(' ').length;
 
   return (
     <>
       {/* Hero Section */}
       <header className="hero">
+        <HeroSignal />
         <motion.div
           className="hero-content"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
         >
-          <motion.h1 className="hero-title" variants={fadeInUp}>
-            {t('hero_title_1')} <br />
-            <span className="glow-text">{t('hero_title_2')}</span>
-          </motion.h1>
+          <h1 className="hero-title">
+            <Words text={t('hero_title_1')} />
+            <br />
+            <span className="glow-text"><Words text={t('hero_title_2')} offset={firstLineWords} /></span>
+          </h1>
           <motion.p className="hero-subtitle" variants={fadeInUp}>
             {t('hero_subtitle')}
           </motion.p>
@@ -86,41 +114,16 @@ export function Home() {
           viewport={{ once: true, margin: '-50px' }}
           variants={staggerContainer}
         >
-          <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: 'var(--accent-secondary)' }}><Cloud size={32} /></div>
-            <h3>{t('feature_cloud_title')}</h3>
-            <p>{t('feature_cloud_text')}</p>
-          </motion.div>
-
-          <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: 'var(--accent-tertiary)' }}><Sparkles size={32} /></div>
-            <h3>{t('feature_ai_title')} <span className="version-badge" style={{ marginTop: 0, marginLeft: 8, fontSize: 11, padding: '3px 10px', verticalAlign: 'middle' }}>{t('common_coming_soon')}</span></h3>
-            <p>{t('feature_ai_text')}</p>
-          </motion.div>
-
-          <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: 'var(--accent-primary)' }}><Library size={32} /></div>
-            <h3>{t('feature_library_title')}</h3>
-            <p>{t('feature_library_text')}</p>
-          </motion.div>
-
-          <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: '#fff' }}><Zap size={32} /></div>
-            <h3>{t('feature_fast_title')}</h3>
-            <p>{t('feature_fast_text')}</p>
-          </motion.div>
-
-          <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: '#ffb703' }}><Shield size={32} /></div>
-            <h3>{t('feature_verified_title')}</h3>
-            <p>{t('feature_verified_text')}</p>
-          </motion.div>
-
-          <motion.div className="feature-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-            <div className="feature-icon" style={{ color: '#06d6a0' }}><Users size={32} /></div>
-            <h3>{t('feature_crews_title')}</h3>
-            <p>{t('feature_crews_text')}</p>
-          </motion.div>
+          {FEATURES.map((f) => (
+            <motion.div key={f.title} className="feature-card glass bi-trigger" variants={fadeInUp}>
+              <div className="feature-icon"><Icon name={f.icon} size={24} /></div>
+              <h3>
+                {t(f.title)}
+                {f.soon && <span className="soon-badge">{t('common_coming_soon')}</span>}
+              </h3>
+              <p>{t(f.text)}</p>
+            </motion.div>
+          ))}
         </motion.div>
       </section>
 

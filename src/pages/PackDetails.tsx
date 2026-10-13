@@ -8,6 +8,7 @@ import { mapSoundRow } from '../lib/soundRow';
 import { useAuthStore } from '../store/useAuthStore';
 import { errorMessage } from '../lib/errors';
 import { useTranslation } from '../hooks/useTranslation';
+import { SoundGridSkeleton } from '../components/SoundGridSkeleton';
 
 export const PackDetails: React.FC = () => {
   const { tag } = useParams<{ tag: string }>();
@@ -70,11 +71,9 @@ export const PackDetails: React.FC = () => {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-          <p style={{ color: 'var(--accent-secondary)' }}>{t('crew_loading_sounds')}</p>
-        </div>
+        <SoundGridSkeleton />
       ) : error ? (
-        <div style={{ color: 'var(--accent-tertiary)', padding: '20px', background: 'rgba(255,0,127,0.1)', borderRadius: '8px' }}>
+        <div style={{ color: 'var(--accent-tertiary)', padding: '20px', background: 'rgba(248, 113, 113,0.1)', borderRadius: '8px' }}>
           <strong>{t('pack_load_failed')}</strong> {error}
         </div>
       ) : sounds.length === 0 ? (

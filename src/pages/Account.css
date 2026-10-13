@@ -17,7 +17,7 @@
   padding: 48px 32px 28px;
   margin: -24px -24px 0;
   background:
-    linear-gradient(180deg, rgba(157, 78, 221, 0.45) 0%, rgba(0, 187, 249, 0.12) 70%, transparent 100%);
+    linear-gradient(180deg, rgba(124, 92, 255, 0.3) 0%, rgba(124, 92, 255, 0.06) 70%, transparent 100%);
   border-radius: 0 0 24px 24px;
 }
 
@@ -137,7 +137,7 @@
 
 .social-link:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(157, 78, 221, 0.5);
+  border-color: rgba(124, 92, 255, 0.5);
 }
 
 /* Butoane */
@@ -338,7 +338,7 @@ textarea.form-input {
 .form-input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 15px rgba(176, 38, 255, 0.2);
+  box-shadow: 0 0 15px rgba(124, 92, 255, 0.2);
 }
 
 .form-input:disabled {

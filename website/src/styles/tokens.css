@@ -1,0 +1,81 @@
+/* ===========================================================================
+   Beats.ly — design tokens (direcția „Studio”)
+   ===========================================================================
+   Sursa unică pentru culori, fonturi, curbe de mișcare, spațiere și colțuri.
+   O copie identică stă în website/src/styles/tokens.css — păstrează-le la fel.
+
+   Reguli:
+   - un singur accent (--accent), folosit doar pe acțiunea principală și pe
+     starea activă;
+   - --signal e rezervat audio-ului: waveform, progres, ce cântă;
+   - mișcare: --ease-spring pentru lucruri care se mută, --ease-out pentru
+     apariții; niciodată liniar.
+   =========================================================================== */
+
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+@import '@fontsource-variable/bricolage-grotesque';
+
+:root {
+  /* Suprafețe: grafit cu o nuanță foarte ușoară de violet */
+  --bg: #0c0c11;
+  --surface: #14141b;
+  --raised: #1b1b24;
+  --overlay: rgba(14, 14, 20, 0.86);
+  --line: #262632;
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --line-strong: #34343f;
+
+  /* Text */
+  --fg: #ecebf3;
+  --muted: #8f8ea3;
+  --faint: #5d5c6e;
+
+  /* Accent + semnal */
+  --accent: #7c5cff;
+  --accent-hover: #8f74ff;
+  --accent-soft: rgba(124, 92, 255, 0.14);
+  --accent-fg: #ffffff;
+  --signal: #2dd4ee;
+  --signal-soft: rgba(45, 212, 238, 0.14);
+
+  /* Semantice (nu sunt accent) */
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+
+  /* Fonturi — incluse local, arată la fel pe orice PC */
+  --font-display: 'Bricolage Grotesque Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Geist Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  /* Mișcare */
+  --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 450ms;
+
+  /* Spațiere și colțuri */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+
+  --shadow-pop: 0 18px 40px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--line);
+  --shadow-accent: 0 8px 24px -10px rgba(124, 92, 255, 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

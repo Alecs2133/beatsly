@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { hasUnlimitedCredits } from '../lib/roles';
 import { useTranslation } from '../hooks/useTranslation';
+import { Icon } from '../components/Icon';
 import { errorMessage } from '../lib/errors';
 export const Analyzer: React.FC = () => {
   const { t } = useTranslation();
@@ -137,7 +138,7 @@ export const Analyzer: React.FC = () => {
 
         {error && (
           errorRetryable ? (
-            <div style={{ color: 'var(--accent-secondary)', padding: '16px', background: 'rgba(0, 187, 249, 0.1)', borderRadius: '8px', border: '1px solid rgba(0, 187, 249, 0.3)' }}>
+            <div style={{ color: 'var(--accent-secondary)', padding: '16px', background: 'rgba(45, 212, 238, 0.1)', borderRadius: '8px', border: '1px solid rgba(45, 212, 238, 0.3)' }}>
               {error}
             </div>
           ) : (
@@ -163,7 +164,7 @@ export const Analyzer: React.FC = () => {
             opacity: (!prompt.trim() && !isGenerating) ? 0.5 : 1
           }}
         >
-          {isGenerating ? t('btn_generating') : t('btn_generate')}
+          <span className="btn-with-icon">{isGenerating ? <Icon name="signal" size={18} play /> : <Icon name="sparkle" size={18} />}{isGenerating ? t('btn_generating') : t('btn_generate')}</span>
         </button>
 
         {audioUrl && (
@@ -201,7 +202,7 @@ export const Analyzer: React.FC = () => {
                  gap: '8px'
                }}
              >
-               {currentGeneratedId && isSaved(currentGeneratedId) ? t('btn_saved') : t('btn_save_my_sounds')}
+               <span className="btn-with-icon"><Icon name="heart" size={17} filled={!!currentGeneratedId && isSaved(currentGeneratedId)} />{currentGeneratedId && isSaved(currentGeneratedId) ? t('btn_saved') : t('btn_save_my_sounds')}</span>
              </button>
           </div>
         )}

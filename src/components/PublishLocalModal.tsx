@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { Icon } from './Icon';
 import { SoundItem } from '../types/sound';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
@@ -103,7 +104,7 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
           marginBottom: '20px',
           lineHeight: '1.4'
         }}>
-          {t('publish_warning')}
+          <span className="btn-with-icon"><Icon name="alert" size={16} />{t('publish_warning')}</span>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -194,7 +195,7 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
                 cursor: isPublishing ? 'not-allowed' : 'pointer'
               }}
             >
-              {isPublishing ? t('btn_publishing') : t('btn_publish')}
+              <span className="btn-with-icon"><Icon name="upload" size={16} play={isPublishing} />{isPublishing ? t('btn_publishing') : t('btn_publish')}</span>
             </button>
           </div>
         </form>

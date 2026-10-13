@@ -8,6 +8,7 @@ import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { useAuthStore } from '../store/useAuthStore';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 import type { TranslationKeys } from '../i18n/en';
+import { Icon } from './Icon';
 
 interface StagedFile {
   id: string;
@@ -190,7 +191,7 @@ export const BatchUpload: React.FC = () => {
             disabled={isPublishing || files.filter(f => f.selected).length === 0}
             style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--gradient-primary)', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            {isPublishing ? t('btn_publishing') : t('btn_publish_selected')}
+            <span className="btn-with-icon"><Icon name="upload" size={16} play={isPublishing} />{isPublishing ? t('btn_publishing') : t('btn_publish_selected')}</span>
           </button>
         </div>
       </div>
@@ -205,7 +206,7 @@ export const BatchUpload: React.FC = () => {
         marginBottom: '20px',
         lineHeight: '1.4'
       }}>
-        {t('publish_warning')}
+        <span className="btn-with-icon"><Icon name="alert" size={16} />{t('publish_warning')}</span>
       </div>
 
       {files.length === 0 ? (

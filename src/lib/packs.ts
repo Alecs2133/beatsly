@@ -12,13 +12,15 @@ export interface TagPack {
   color: string;
 }
 
+// Tonuri închise din paleta Studio (violet, semnal, verde, ambră, roz, grafit) —
+// subtile, ca titlul să rămână citibil fără umbră de text.
 const PACK_GRADIENTS = [
-  'linear-gradient(135deg, #ff007f, #7928ca)',
-  'linear-gradient(135deg, #00c6ff, #0072ff)',
-  'linear-gradient(135deg, #fceabb, #f8b500)',
-  'linear-gradient(135deg, #11998e, #38ef7d)',
-  'linear-gradient(135deg, #ff416c, #ff4b2b)',
-  'linear-gradient(135deg, #9d4edd, #ff007f)',
+  'linear-gradient(140deg, #2b2360 0%, #16141f 70%)',
+  'linear-gradient(140deg, #113a46 0%, #12151c 70%)',
+  'linear-gradient(140deg, #1c3b30 0%, #121614 70%)',
+  'linear-gradient(140deg, #46321a 0%, #17130f 70%)',
+  'linear-gradient(140deg, #3e1f30 0%, #161216 70%)',
+  'linear-gradient(140deg, #2a2a38 0%, #131319 70%)',
 ];
 
 /**

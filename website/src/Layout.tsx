@@ -88,9 +88,6 @@ export function Layout() {
 
   return (
     <div className="landing-container">
-      {/* Floating background orbs */}
-      <div className="ambient-orb orb-1" />
-      <div className="ambient-orb orb-2" />
 
       <Navbar
         user={user}

@@ -8,6 +8,7 @@ import { SoundItem } from '../types/sound';
 import { useLocalFilesStore } from '../store/useLocalFilesStore';
 import { DropModal } from '../components/DropModal';
 import { useTranslation } from '../hooks/useTranslation';
+import { Icon } from '../components/Icon';
 import { errorMessage } from '../lib/errors';
 
 interface LocalSample {
@@ -115,7 +116,7 @@ export const LocalFiles: React.FC = () => {
             transition: 'all 0.3s'
           }}
         >
-          {t('btn_select_folder')}
+          <span className="btn-with-icon"><Icon name="folder" size={18} />{t('btn_select_folder')}</span>
         </button>
         {selectedFolder && (
           <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text-muted)' }}>
@@ -126,7 +127,7 @@ export const LocalFiles: React.FC = () => {
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--accent-secondary)' }}>
-          <p>{t('scanning_folder')}</p>
+          <p className="btn-with-icon" style={{ justifyContent: 'center' }}><Icon name="signal" size={18} play />{t('scanning_folder')}</p>
         </div>
       )}
 

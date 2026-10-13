@@ -58,7 +58,7 @@ export const en = {
   // Discover / Library Page
   discover_title: 'Discover Sounds',
   discover_subtitle: 'Explore high-quality loops, samples, and FX.',
-  featured_packs: 'Featured Packs 🔥',
+  featured_packs: 'Featured Packs',
   filter_all: 'All',
   loading_sounds: 'Loading sounds from Supabase...',
   error_loading: 'Error loading sounds:',
@@ -187,9 +187,9 @@ export const en = {
 
   logged_in_save: 'Sign in to save sounds.',
   save_failed: "Couldn't update My Sounds:",
-  toast_credits_received: '+{count} credits received! 🎉',
+  toast_credits_received: '+{count} credits received!',
   toast_plan_changed: 'Your plan is now {plan}.',
-  toast_role_changed: 'Your role was updated to {role}! 🎉',
+  toast_role_changed: 'Your role was updated to {role}!',
 
   // Store / Pricing
   per_month: '/month',
@@ -231,13 +231,13 @@ export const en = {
   sending: 'Sending...',
   buy_download_credits: 'Buy Download Credits',
   processing_payment: 'Processing payment of',
-  purchase_success: 'Successfully purchased credits! 🎉',
+  purchase_success: 'Successfully purchased credits!',
   payment_failed: 'Payment failed.',
   coming_soon: 'Coming Soon',
   coming_soon_desc: "We're still polishing this one — it'll be available in an upcoming update.",
   coming_soon_short: 'SOON',
   processing_subscription: 'Processing subscription for',
-  subscription_success: 'Welcome to the pack! 🚀',
+  subscription_success: 'Welcome to the pack!',
   subscription_failed: 'Subscription failed.',
   application_sent: 'Application sent! An admin will review it soon.',
   application_failed: 'Failed to send application',
@@ -366,11 +366,11 @@ export const en = {
   prompt_placeholder: 'e.g. A heavy dubstep bass drop at 140 bpm with retro synth elements...',
   bpm_label: 'BPM (Optional)',
   key_label: 'Key (Optional)',
-  btn_generate: '✨ Generate Sound',
-  btn_generating: '🤖 Generating (this may take a minute)...',
+  btn_generate: 'Generate Sound',
+  btn_generating: 'Generating (this may take a minute)...',
   generated_result: 'Generated Result:',
-  btn_saved: '❤️ Saved',
-  btn_save_my_sounds: '🤍 Save to My Sounds',
+  btn_saved: 'Saved',
+  btn_save_my_sounds: 'Save to My Sounds',
   removed_from_sounds: 'Removed from My Sounds',
   saved_to_sounds: 'Saved to My Sounds',
   out_of_credits: 'You ran out of credits!',
@@ -378,9 +378,9 @@ export const en = {
   // Local Files
   local_explorer: 'Explorer',
   local_explorer_subtitle: 'Scan your local drives for samples and loops.',
-  btn_select_folder: '📂 Select Folder to Scan',
+  btn_select_folder: 'Select Folder to Scan',
   current_folder: 'Current folder:',
-  scanning_folder: 'Scanning directory at lightning speed... ⚡',
+  scanning_folder: 'Scanning directory at lightning speed...',
   no_audio_files: 'No audio files (.wav, .mp3) found in this folder.',
 
   // Loading Screen
@@ -432,7 +432,7 @@ export const en = {
   admin_previews_generate: 'Generate missing previews',
   admin_pending_loading: 'Loading pending sounds…',
   admin_pending_empty: 'No sounds pending approval.',
-  admin_errors_empty: 'No errors reported. 🎉',
+  admin_errors_empty: 'No errors reported.',
   admin_reject_delete: 'Reject & Delete',
   admin_approve: 'Approve',
   admin_report_user: 'User: {user}',
@@ -463,27 +463,27 @@ export const en = {
   status_error: 'Failed',
 
   // DropModal & BatchUpload
-  uploading_cloud: 'Uploading to cloud... ☁️',
-  published_success: 'Published successfully to cloud! 🎉',
+  uploading_cloud: 'Uploading to cloud...',
+  published_success: 'Published successfully to cloud!',
   publish_failed: 'Publish failed:',
   add_dropped_file: 'Add Dropped File',
   author_composers: 'Author (Composers)',
   auto_detected_duration: 'Auto-detected Duration:',
-  btn_publish: 'Publish to Cloud ☁️',
+  btn_publish: 'Publish to Cloud',
   btn_publishing: 'Publishing...',
   error_selecting_files: 'Error selecting files',
   no_files_selected_publish: 'No files selected for publishing',
   batch_upload_completed: 'Batch upload process completed!',
   btn_select_files: 'Select Files',
   loading_samples: 'Loading samples...',
-  btn_publish_selected: 'Publish Selected ☁️',
+  btn_publish_selected: 'Publish Selected',
   no_files_selected: 'No files selected. Click "Select Files" to start uploading in bulk.',
   file_status: 'File / Status',
   details: 'Details',
   music_info: 'Music Info',
   status_label: 'Status:',
   duration_label: 'Duration:',
-  publish_warning: '⚠️ Please read the sample/sound information very carefully before uploading and ensure you enter the correct details. Any sound or audio that does not comply with the publishing conditions or rules will not be published, and repeated offenses will result in sanctions.'
+  publish_warning: 'Please read the sample/sound information very carefully before uploading and ensure you enter the correct details. Any sound or audio that does not comply with the publishing conditions or rules will not be published, and repeated offenses will result in sanctions.'
 };
 
 export type TranslationKeys = keyof typeof en;

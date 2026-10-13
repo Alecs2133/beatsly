@@ -157,7 +157,7 @@ export const Pricing: React.FC = () => {
       </div>
 
       {profile.tier === 'ultimate' && (
-        <div style={{ background: 'rgba(0, 255, 204, 0.05)', padding: '30px', borderRadius: '16px', marginBottom: '60px', border: '1px solid var(--accent-primary)' }}>
+        <div style={{ background: 'rgba(45, 212, 238, 0.05)', padding: '30px', borderRadius: '16px', marginBottom: '60px', border: '1px solid var(--accent-primary)' }}>
           <h2 style={{ color: 'var(--accent-primary)', marginBottom: '15px' }}>{t('apply_producer_title')}</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
             {t('apply_producer_desc')}

@@ -8,6 +8,7 @@ import { reportError } from '../lib/errorReporting';
 import { open } from '@tauri-apps/plugin-shell';
 import { getVersion } from '@tauri-apps/api/app';
 import { FEATURES } from '../lib/features';
+import { X } from 'lucide-react';
 import './Options.css';
 
 export const Options: React.FC = () => {
@@ -98,7 +99,7 @@ export const Options: React.FC = () => {
       <div className="options-header">
         <h1>{t('topbar_options')}</h1>
         <button className="options-close-btn" onClick={() => navigate(-1)} title={t('close')}>
-          ✕
+          <X size={18} />
         </button>
       </div>
 
@@ -114,13 +115,13 @@ export const Options: React.FC = () => {
                 className={`lang-option ${selectedLang === 'en' ? 'active' : ''}`}
                 onClick={() => setSelectedLang('en')}
               >
-                <span style={{ fontSize: '18px' }}>🇬🇧</span> English
+                <span className="lang-code">EN</span> English
               </div>
               <div 
                 className={`lang-option ${selectedLang === 'ro' ? 'active' : ''}`}
                 onClick={() => setSelectedLang('ro')}
               >
-                <span style={{ fontSize: '18px' }}>🇷🇴</span> Română
+                <span className="lang-code">RO</span> Română
               </div>
             </div>
           </div>

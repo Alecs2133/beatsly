@@ -19,7 +19,8 @@ import { licenseShortLabel, licenseLabel } from '../lib/licenses';
 import { useCollections } from '../hooks/useCollections';
 import { createCollection, addSoundToCollection, Collection } from '../lib/collections';
 import type { TranslationKeys } from '../i18n/en';
-import { Play, Pause, Heart, Download, Share2, CloudUpload, Pencil, Trash2, Wand2, Loader2, FolderPlus, Check } from 'lucide-react';
+import { Share2, Pencil, Trash2, Wand2, FolderPlus, Check } from 'lucide-react';
+import { Icon } from './Icon';
 import { startDrag } from '@crabnebula/tauri-plugin-drag';
 import { invoke } from '@tauri-apps/api/core';
 import { errorMessage } from '../lib/errors';
@@ -27,6 +28,8 @@ import './SoundGrid.css';
 
 interface SoundRowProps {
   sound: SoundItem;
+  /** Poziția în listă — pentru intrarea decalată a rândurilor. */
+  index: number;
   isCurrentTrack: boolean;
   isPlaying: boolean;
   isSaved: boolean;
@@ -52,7 +55,7 @@ interface SoundRowProps {
 }
 
 const SoundRow = React.memo(({
-  sound, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, isLoggedIn, t,
+  sound, index, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, isLoggedIn, t,
   collectionMenuOpen, collections,
   onPlay, onLike, onDownload, onShare, onPublish, onEdit, onDelete, onAnalyze,
   onNavigateToProfile, onToggleCollectionMenu, onAddToCollection, onCreateCollection
@@ -66,10 +69,19 @@ const SoundRow = React.memo(({
   const isDraggable = sound.id.toString().startsWith('local-') && !!localPath;
   const isLocal = sound.id.toString().startsWith('local-');
   const [newCollectionName, setNewCollectionName] = React.useState('');
+  // Contor pentru animația inimii — crește doar la salvare, nu la ștergere.
+  const [likeTick, setLikeTick] = React.useState(0);
 
   return (
     <div
-      className={`grid-row${isDraggable ? ' draggable-row' : ''}`}
+      className={`grid-row stagger-in${isDraggable ? ' draggable-row' : ''}${isCurrentTrack ? ' current' : ''}${isPlaying ? ' playing' : ''}`}
+      style={{ '--i': index } as React.CSSProperties}
+      onPointerMove={(e) => {
+        // Lumina de sub cursor (::before în SoundGrid.css)
+        const r = e.currentTarget.getBoundingClientRect();
+        e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+      }}
       draggable={isDraggable}
       onDragStart={(e) => {
         if (!isDraggable || !localPath) return;
@@ -84,11 +96,11 @@ const SoundRow = React.memo(({
         <button
           className="row-play-btn"
           onClick={() => onPlay(sound)}
-          style={{
-            color: isCurrentTrack ? 'var(--accent-primary)' : 'inherit'
-          }}
+          aria-label={sound.title}
         >
-          {isCurrentTrack && isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+          {/* Triunghiul se strânge și apare egalizatorul cât cântă sunetul */}
+          <svg className="play-tri" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden><path d="M7 4.5v15l13-7.5z" /></svg>
+          <span className="row-eq" aria-hidden><span /><span /><span /></span>
         </button>
       </div>
       <div className="col col-title">
@@ -106,8 +118,8 @@ const SoundRow = React.memo(({
           <div className="sound-author">{sound.author}</div>
         )}
       </div>
-      <div className="col col-bpm">{sound.bpm || '-'}</div>
-      <div className="col col-key">{sound.key || '-'}</div>
+      <div className="col col-bpm num">{sound.bpm || '–'}</div>
+      <div className="col col-key">{sound.key ? <span className="key-chip">{sound.key}</span> : <span className="muted">–</span>}</div>
       <div className="col col-tags">
         {sound.tags.map((tag: string) => (
           <span key={tag} className="tag">{tag}</span>
@@ -115,15 +127,17 @@ const SoundRow = React.memo(({
       </div>
       <div className="col col-actions">
         <button
-          className="row-action-btn"
-          onClick={() => onLike(sound)}
-          style={{
-            color: isSaved ? 'var(--accent-tertiary)' : 'inherit'
+          className={`row-action-btn bi-trigger${isSaved ? ' saved' : ''}`}
+          onClick={() => {
+            if (!isSaved) setLikeTick(n => n + 1);
+            onLike(sound);
           }}
+          title={t('save_to_my_sounds')}
+          aria-pressed={isSaved}
         >
-          <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} color={isSaved ? 'var(--accent-tertiary)' : 'currentColor'} />
+          <Icon name="heart" size={18} filled={isSaved} play={likeTick} />
         </button>
-        <button className="row-action-btn download" onClick={() => onDownload(sound)} title={t('download')}><Download size={18} /></button>
+        <button className="row-action-btn bi-trigger" onClick={() => onDownload(sound)} title={t('download')}><Icon name="download" size={18} /></button>
         <button className="row-action-btn" onClick={() => onShare(sound)} title={t('grid_share')}><Share2 size={18} /></button>
         {isLoggedIn && !isLocal && (
           <div className="collection-menu-anchor">
@@ -172,16 +186,16 @@ const SoundRow = React.memo(({
             disabled={isAnalyzing}
             title={t('grid_analyze')}
           >
-            {isAnalyzing ? <Loader2 size={18} className="spin" /> : <Wand2 size={18} />}
+            {isAnalyzing ? <Icon name="signal" size={18} play /> : <Wand2 size={18} />}
           </button>
         )}
         {isLocal && canPublish && (
-          <button className="row-action-btn" onClick={() => onPublish(sound)} title={t('grid_publish')}><CloudUpload size={18} /></button>
+          <button className="row-action-btn bi-trigger" onClick={() => onPublish(sound)} title={t('grid_publish')}><Icon name="upload" size={18} /></button>
         )}
         {!isLocal && canModerate && (
           <>
             <button className="row-action-btn" onClick={() => onEdit(sound)} title={t('grid_edit')}><Pencil size={18} /></button>
-            <button className="row-action-btn" onClick={() => onDelete(sound)} title={t('grid_delete')} style={{ color: '#ff4444' }}><Trash2 size={18} /></button>
+            <button className="row-action-btn danger" onClick={() => onDelete(sound)} title={t('grid_delete')}><Trash2 size={18} /></button>
           </>
         )}
       </div>
@@ -503,12 +517,13 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
       </div>
       
       <div className="grid-body">
-        {sounds.slice(0, renderCount).map(sound => {
+        {sounds.slice(0, renderCount).map((sound, index) => {
           const isCurrentTrack = currentTrack?.id === sound.id;
           return (
             <SoundRow
               key={sound.id}
               sound={sound}
+              index={index}
               isCurrentTrack={isCurrentTrack}
               // Doar rândul activ primește starea reală — altfel fiecare
               // play/pauză re-randa toate rândurile (memo-ul nu mai ajuta).

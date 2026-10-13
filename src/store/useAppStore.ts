@@ -6,7 +6,14 @@ interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
+  /** Ultimele 250ms: rulează animația de ieșire înainte de a dispărea. */
+  leaving?: boolean;
 }
+
+const TOAST_MS = 3000;
+const TOAST_EXIT_MS = 250;
+// Același mesaj de două ori la rând (dublu-click) nu mai stivuiește toast-uri.
+let toastSeq = 0;
 
 interface AppState {
   // NOTĂ: creditele NU stau aici. Sursa unică de adevăr este
@@ -36,11 +43,16 @@ export const useAppStore = create<AppState>((set) => ({
 
   toasts: [],
   showToast: (message, type = 'info') => {
-    const id = Date.now();
-    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+    const id = Date.now() * 1000 + (toastSeq++ % 1000);
+    set((state) => ({
+      toasts: [...state.toasts.filter(t => t.message !== message), { id, message, type }].slice(-4),
+    }));
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.map(t => (t.id === id ? { ...t, leaving: true } : t)) }));
+    }, TOAST_MS - TOAST_EXIT_MS);
     setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }));
-    }, 3000);
+    }, TOAST_MS);
   },
   removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }))
 }));

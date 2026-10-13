@@ -11,6 +11,8 @@ import { supabase } from '../lib/supabase';
 import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
 import { fetchByIdChunks } from '../lib/paging';
+import { Icon } from '../components/Icon';
+import { SoundGridSkeleton } from '../components/SoundGridSkeleton';
 import { errorMessage } from '../lib/errors';
 
 export const MySounds: React.FC = () => {
@@ -146,10 +148,10 @@ export const MySounds: React.FC = () => {
       </div>
 
       {loadingCollection ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-secondary)' }}>{t('common_loading')}</div>
+        <SoundGridSkeleton rows={5} />
       ) : filteredSounds.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎧</div>
+          <div className="empty-icon"><Icon name="heart" size={26} play={1} /></div>
           <h2 style={{ color: 'white', marginBottom: '12px' }}>{t('no_saved_sounds')}</h2>
           <button 
             onClick={() => navigate('/')}

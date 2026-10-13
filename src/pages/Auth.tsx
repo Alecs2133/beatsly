@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { open } from '@tauri-apps/plugin-shell';
 import { Loader2, LogIn, Copy, Check } from 'lucide-react';
+import { Icon } from '../components/Icon';
 import './Auth.css';
 
 const WEBSITE_URL = 'https://beatsly.vercel.app';
@@ -115,7 +116,7 @@ export const Auth: React.FC = () => {
   return (
     <div className="auth-page">
       <div className="auth-container glass">
-        <div className="auth-logo">🎹</div>
+        <div className="auth-logo"><Icon name="logo" size={52} play={1} /></div>
         <h2>{t('auth_heading')}</h2>
 
         {status === 'idle' && (

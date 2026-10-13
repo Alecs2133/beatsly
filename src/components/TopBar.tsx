@@ -4,7 +4,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { hasUnlimitedCredits } from '../lib/roles';
-import { Search, Settings, X, Plus, Bell } from 'lucide-react';
+import { Search, Settings, X, Plus } from 'lucide-react';
+import { Icon } from './Icon';
 import { supabase } from '../lib/supabase';
 import { profileName } from '../lib/social';
 import { Avatar } from './Avatar';
@@ -22,6 +23,8 @@ export const TopBar: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Crește la fiecare notificare nouă → clopoțelul se leagănă.
+  const [bellTick, setBellTick] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +46,7 @@ export const TopBar: React.FC = () => {
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
         (payload) => {
           setNotifications(prev => [payload.new as Notification, ...prev].slice(0, 20));
+          setBellTick(n => n + 1);
         }
       )
       .subscribe();
@@ -143,24 +147,24 @@ export const TopBar: React.FC = () => {
       <div className="user-profile">
         {profile && (
           <div className="credits" onClick={() => navigate('/store')} style={{ cursor: 'pointer' }} title={t('credits_get_more')}>
-            <span className="credits-amount">
+            <span className="credits-amount roll" key={hasUnlimitedCredits(profile.role, profile.tier) ? 'inf' : profile.credits}>
               {hasUnlimitedCredits(profile.role, profile.tier) ? '∞' : profile.credits}
             </span>
             <span className="credits-label">{t('topbar_credits')}</span>
-            <button className="add-credits-btn"><Plus size={16} strokeWidth={3} /></button>
+            <button className="add-credits-btn" aria-label={t('credits_get_more')}><Plus size={14} strokeWidth={2.6} /></button>
           </div>
         )}
         
         {user && (
           <div className="notifications-container" ref={notificationsRef}>
             <button 
-              className="notifications-btn"
+              className="notifications-btn bi-trigger"
               onClick={() => {
                 setNotificationsOpen(!notificationsOpen);
                 setDropdownOpen(false);
               }}
             >
-              <Bell size={20} />
+              <Icon name="bell" size={18} play={bellTick} />
               {notifications.filter(n => !n.is_read).length > 0 && (
                 <span className="notification-badge">
                   {notifications.filter(n => !n.is_read).length}
@@ -211,11 +215,11 @@ export const TopBar: React.FC = () => {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             title={t('topbar_settings')}
           >
-            <Settings size={20} />
+            <Settings size={18} strokeWidth={1.8} />
           </button>
           
           {dropdownOpen && (
-            <div className="settings-dropdown glass">
+            <div className="settings-dropdown">
               {!user && (
                 <div className="dropdown-section">
                   <span className="dropdown-label">{t('topbar_account')}</span>

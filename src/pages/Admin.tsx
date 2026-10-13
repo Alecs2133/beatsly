@@ -508,7 +508,7 @@ export const Admin: React.FC = () => {
                     <div>
                       <span style={{
                         fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', marginRight: '10px',
-                        background: report.platform === 'desktop' ? 'rgba(176,38,255,0.15)' : 'rgba(0,187,249,0.15)',
+                        background: report.platform === 'desktop' ? 'rgba(124, 92, 255,0.15)' : 'rgba(45, 212, 238,0.15)',
                         color: report.platform === 'desktop' ? 'var(--accent-primary)' : 'var(--accent-secondary)',
                       }}>
                         {report.platform.toUpperCase()}

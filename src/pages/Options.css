@@ -128,7 +128,7 @@
   background: var(--gradient-primary);
   border-radius: 12px;
   transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 4px 20px rgba(176, 38, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(124, 92, 255, 0.4);
   will-change: transform;
 }
 
@@ -167,7 +167,6 @@
 
 .lang-option.active {
   color: white;
-  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
 }
 
 .options-apply-btn {
@@ -181,12 +180,12 @@
   cursor: pointer;
   transition: all 0.3s;
   width: 100%;
-  box-shadow: 0 10px 20px rgba(176, 38, 255, 0.2);
+  box-shadow: 0 10px 20px rgba(124, 92, 255, 0.2);
 }
 
 .options-apply-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(176, 38, 255, 0.4);
+  box-shadow: 0 15px 30px rgba(124, 92, 255, 0.4);
 }
 
 .options-list {

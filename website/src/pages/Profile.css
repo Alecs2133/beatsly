@@ -3,7 +3,7 @@
 
 .profile-page-hero {
   padding: 140px 24px 36px;
-  background: linear-gradient(180deg, rgba(157, 78, 221, 0.28) 0%, rgba(0, 187, 249, 0.08) 65%, transparent 100%);
+  background: linear-gradient(180deg, rgba(124, 92, 255, 0.28) 0%, rgba(45, 212, 238, 0.08) 65%, transparent 100%);
 }
 
 .profile-page-hero-inner {
@@ -104,14 +104,14 @@
 
 .profile-icon-purple {
   color: var(--accent-primary);
-  background: rgba(157, 78, 221, 0.1);
-  border-color: rgba(157, 78, 221, 0.3);
+  background: rgba(124, 92, 255, 0.1);
+  border-color: rgba(124, 92, 255, 0.3);
 }
 
 .profile-icon-cyan {
   color: var(--accent-secondary);
-  background: rgba(0, 187, 249, 0.1);
-  border-color: rgba(0, 187, 249, 0.3);
+  background: rgba(45, 212, 238, 0.1);
+  border-color: rgba(45, 212, 238, 0.3);
 }
 
 .profile-icon-red {
@@ -170,7 +170,7 @@
 .profile-danger-row input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 14px rgba(157, 78, 221, 0.25);
+  box-shadow: 0 0 14px rgba(124, 92, 255, 0.25);
 }
 
 .profile-field input:disabled {

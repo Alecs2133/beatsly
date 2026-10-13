@@ -12,6 +12,10 @@ import { ALL_KEYS, isHarmonicallyCompatible, parseKey } from '../lib/musicKey';
 import { SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { errorMessage } from '../lib/errors';
 import { buildTagPacks, TagPack } from '../lib/packs';
+import { Icon } from '../components/Icon';
+import { PackCard } from '../components/PackCard';
+import { Segmented } from '../components/Segmented';
+import { SoundGridSkeleton } from '../components/SoundGridSkeleton';
 
 export const Library: React.FC = () => {
   const { searchQuery } = useAppStore();
@@ -90,7 +94,7 @@ export const Library: React.FC = () => {
   if (!session) {
     return (
       <div className="library-page glass" style={{ padding: '60px 20px', textAlign: 'center', borderRadius: '16px', margin: '40px auto', maxWidth: '600px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔒</div>
+        <div className="empty-icon"><Icon name="lock" size={26} play={1} /></div>
         <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>{t('auth_required')}</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '32px', margin: '0 auto 32px' }}>
           {t('auth_required_desc')}
@@ -126,47 +130,14 @@ export const Library: React.FC = () => {
       {currentPage === 1 && (
         <div style={{ marginBottom: '30px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>{t('featured_packs')}</h2>
-            <button 
-              onClick={() => navigate('/packs')}
-            style={{ 
-              background: 'transparent', border: 'none', color: 'var(--accent-secondary)', 
-              fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' 
-            }}
-          >
+            <h2 className="section-heading bi-trigger"><Icon name="trend" size={20} play={1} />{t('featured_packs')}</h2>
+            <button className="link-btn" onClick={() => navigate('/packs')}>
             {t('show_all')}
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', margin: '0 -10px', padding: '0 10px 16px 10px' }}>
-          {dynamicPacks.length > 0 ? dynamicPacks.map(pack => (
-            <div 
-              key={pack.id} 
-              style={{ 
-                minWidth: '220px', 
-                height: '140px', 
-                borderRadius: '16px', 
-                background: pack.color, 
-                padding: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-end',
-                cursor: 'pointer',
-                boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 15px 25px rgba(0,0,0,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
-              }}
-              onClick={() => navigate(`/pack/${pack.tag}`)}
-            >
-              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)', marginBottom: '4px' }}>{pack.title}</h3>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontWeight: '600' }}>{t('pack_by_community')}</p>
-            </div>
+        <div className="pack-row">
+          {dynamicPacks.length > 0 ? dynamicPacks.map((pack, i) => (
+            <PackCard key={pack.id} pack={pack} index={i} compact onOpen={(tag) => navigate(`/pack/${tag}`)} />
           )) : (
             <p style={{ color: 'var(--text-muted)' }}>{t('no_sounds_found')}</p>
           )}
@@ -175,66 +146,52 @@ export const Library: React.FC = () => {
       )}
 
       <div className="filter-container" style={{ alignItems: 'center' }}>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            className={`filter-btn ${activeFilter === cat ? 'active' : ''}`}
-            onClick={() => setActiveFilter(cat)}
-          >
-            {cat === 'ALL' ? t('filter_all') : cat}
-          </button>
-        ))}
+        <Segmented
+          ariaLabel={t('type_label')}
+          value={activeFilter}
+          onChange={setActiveFilter}
+          options={categories.map(cat => ({ value: cat, label: cat === 'ALL' ? t('filter_all') : cat }))}
+        />
         <button
-          className="filter-btn"
+          className={`filter-btn filters-toggle${(bpmMin || bpmMax || referenceKey) ? ' active' : ''}`}
           onClick={() => setShowAdvanced(v => !v)}
-          style={{
-            marginLeft: 'auto',
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: (bpmMin || bpmMax || referenceKey) ? 'var(--gradient-primary)' : undefined,
-            color: (bpmMin || bpmMax || referenceKey) ? 'white' : undefined,
-          }}
+          aria-expanded={showAdvanced}
         >
           <SlidersHorizontal size={14} />
           {t('filters')}
-          <ChevronDown size={14} style={{ transform: showAdvanced ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+          <ChevronDown size={14} className={`chevron${showAdvanced ? ' open' : ''}`} />
         </button>
       </div>
 
       {showAdvanced && (
-        <div
-          className="glass"
-          style={{
-            display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end',
-            padding: '20px', borderRadius: '12px', marginBottom: '24px', marginTop: '-8px'
-          }}
-        >
+        <div className="filters-panel">
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label className="field-label">
               {t('filter_bpm_range')}
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input
                 type="number" placeholder={t('filter_min')} value={bpmMin}
                 onChange={e => setBpmMin(e.target.value)}
-                style={{ width: '80px', padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)' }}
+                className="field num" style={{ width: 84 }}
               />
               <span style={{ color: 'var(--text-muted)' }}>–</span>
               <input
                 type="number" placeholder={t('filter_max')} value={bpmMax}
                 onChange={e => setBpmMax(e.target.value)}
-                style={{ width: '80px', padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)' }}
+                className="field num" style={{ width: 84 }}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label className="field-label">
               {t('filter_harmonic')}
             </label>
             <select
               value={keyFilterIndex}
               onChange={e => setKeyFilterIndex(e.target.value)}
-              style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text-main)', minWidth: '140px' }}
+              className="field" style={{ minWidth: 150 }}
             >
               <option value="">{t('filter_any_key')}</option>
               {ALL_KEYS.map((k, i) => (
@@ -246,7 +203,7 @@ export const Library: React.FC = () => {
           {(bpmMin || bpmMax || referenceKey) && (
             <button
               onClick={() => { setBpmMin(''); setBpmMax(''); setKeyFilterIndex(''); }}
-              style={{ background: 'transparent', border: 'none', color: 'var(--accent-tertiary)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, padding: '8px 0' }}
+              className="link-btn"
             >
               {t('filter_clear')}
             </button>
@@ -255,11 +212,9 @@ export const Library: React.FC = () => {
       )}
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-          <p style={{ color: 'var(--accent-secondary)' }}>{t('loading_sounds')}</p>
-        </div>
+        <SoundGridSkeleton />
       ) : error ? (
-        <div style={{ color: 'var(--accent-tertiary)', padding: '20px', background: 'rgba(255,0,127,0.1)', borderRadius: '8px' }}>
+        <div style={{ color: 'var(--accent-tertiary)', padding: '20px', background: 'rgba(248, 113, 113,0.1)', borderRadius: '8px' }}>
           <strong>{t('error_loading')}</strong> {error}
         </div>
       ) : sounds.length === 0 ? (

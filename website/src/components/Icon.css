@@ -1,0 +1,146 @@
+/* Animațiile setului de iconițe — vezi Icon.tsx.
+   `.go` = animație declanșată de o acțiune; `.bi-trigger:hover` = la hover pe
+   părinte; `.loop` = continuă. O copie identică stă și pe site. */
+
+.bi {
+  display: inline-block;
+  flex-shrink: 0;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.bi * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* logo + signal: barele pulsează */
+.bi-logo.go .bi-bar,
+.bi-trigger:hover .bi-logo .bi-bar,
+.bi-signal .bi-bar {
+  animation: bi-bar 0.55s var(--ease-out) infinite alternate;
+}
+.bi-logo.go .bi-bar { animation-iteration-count: 4; }
+.bi-signal:not(.loop) .bi-bar { animation-play-state: paused; }
+.bi-trigger:hover .bi-signal .bi-bar { animation-play-state: running; }
+.bi-bar:nth-child(2) { animation-delay: -0.14s; }
+.bi-bar:nth-child(3) { animation-delay: -0.3s; }
+.bi-bar:nth-child(4) { animation-delay: -0.45s; }
+@keyframes bi-bar {
+  from { transform: scaleY(0.45); }
+  to { transform: scaleY(1.08); }
+}
+
+/* trend: linia se desenează, punctul pulsează */
+.bi-trend .bi-line { stroke-dasharray: 34; stroke-dashoffset: 0; }
+.bi-trend.go .bi-line,
+.bi-trigger:hover .bi-trend .bi-line { animation: bi-trace 0.8s var(--ease-out); }
+.bi-trend.go .bi-dot,
+.bi-trigger:hover .bi-trend .bi-dot { animation: bi-ping 0.7s 0.55s var(--ease-out); }
+@keyframes bi-trace { from { stroke-dashoffset: 34; } to { stroke-dashoffset: 0; } }
+@keyframes bi-ping { 50% { transform: scale(1.9); } }
+
+/* sparkle */
+.bi-sparkle.go .bi-big,
+.bi-trigger:hover .bi-sparkle .bi-big,
+.bi-sparkle.loop .bi-big { animation: bi-twirl 0.8s var(--ease-spring); }
+.bi-sparkle.loop .bi-big { animation-iteration-count: infinite; animation-duration: 1.6s; }
+.bi-sparkle.go .bi-small,
+.bi-trigger:hover .bi-sparkle .bi-small,
+.bi-sparkle.loop .bi-small { animation: bi-twinkle 0.8s 0.15s ease-in-out; }
+.bi-sparkle.loop .bi-small { animation-iteration-count: infinite; }
+@keyframes bi-twirl {
+  0% { transform: rotate(0) scale(1); }
+  50% { transform: rotate(45deg) scale(0.75); }
+  100% { transform: rotate(90deg) scale(1); }
+}
+@keyframes bi-twinkle { 50% { opacity: 0.2; transform: scale(0.4); } }
+
+/* folder: clapeta se deschide */
+.bi-folder .bi-flap { transform-origin: 50% 100%; }
+.bi-folder.go .bi-flap,
+.bi-trigger:hover .bi-folder .bi-flap { animation: bi-flap 0.8s var(--ease-spring); }
+@keyframes bi-flap { 40%, 60% { transform: skewX(-14deg) scaleY(0.78); } }
+
+/* upload: săgeata urcă prin nor */
+.bi-upload .bi-up { transform-box: view-box; }
+.bi-upload.go .bi-up,
+.bi-trigger:hover .bi-upload .bi-up { animation: bi-rise 0.9s var(--ease-out) 2; }
+.bi-upload.loop .bi-up { animation: bi-rise 0.9s var(--ease-out) infinite; }
+@keyframes bi-rise {
+  0% { transform: translateY(5px); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: translateY(-4px); opacity: 0; }
+}
+
+/* check: bifa se desenează + scântei */
+.bi-check .bi-tick { stroke-dasharray: 16; stroke-dashoffset: 0; }
+.bi-check.go .bi-tick { animation: bi-draw16 0.45s var(--ease-out); }
+@keyframes bi-draw16 { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
+
+/* scântei (check + heart) */
+.bi .bi-spark { opacity: 0; transform-box: view-box; transform-origin: 12px 12px; }
+.bi-check.go .bi-spark { animation: bi-fly 0.7s 0.15s var(--ease-out); }
+.bi-heart.go .bi-spark { animation: bi-fly 0.6s var(--ease-out); }
+@keyframes bi-fly {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-15px) scale(0.3); }
+}
+
+/* heart: se strânge, sare și se umple */
+.bi-heart .bi-heart { fill: transparent; transition: fill 0.25s var(--ease-out); }
+.bi-heart.filled .bi-heart { fill: currentColor; }
+.bi-heart.go .bi-heart { animation: bi-pop 0.5s var(--ease-spring); }
+.bi-trigger:hover .bi-heart:not(.filled) .bi-heart { transform: scale(1.08); transition: transform 0.25s var(--ease-spring); }
+@keyframes bi-pop {
+  30% { transform: scale(0.72); }
+  65% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* crew: al doilea membru intră */
+.bi-crew .bi-second { transform-box: view-box; }
+.bi-crew.go .bi-second,
+.bi-trigger:hover .bi-crew .bi-second { animation: bi-join 0.6s var(--ease-spring); }
+@keyframes bi-join { from { transform: translateX(-5px); opacity: 0; } }
+
+/* bell: se leagănă amortizat */
+.bi-bell .bi-bell { transform-box: view-box; transform-origin: 12px 3px; }
+.bi-bell.go .bi-bell,
+.bi-trigger:hover .bi-bell .bi-bell { animation: bi-swing 1s var(--ease-out); }
+@keyframes bi-swing {
+  15% { transform: rotate(18deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(9deg); }
+  60% { transform: rotate(-5deg); }
+  75% { transform: rotate(2deg); }
+}
+
+/* download: săgeata cade în tavă */
+.bi-download .bi-arr { transform-box: view-box; }
+.bi-download.go .bi-arr,
+.bi-trigger:hover .bi-download .bi-arr { animation: bi-drop 0.6s var(--ease-out) 2; }
+.bi-download.go .bi-tray,
+.bi-trigger:hover .bi-download .bi-tray { animation: bi-tray 0.6s 0.4s var(--ease-spring); }
+@keyframes bi-drop {
+  0% { transform: translateY(-3px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(2px); opacity: 0.4; }
+}
+@keyframes bi-tray { 50% { transform: scaleY(0.7); } }
+
+/* alert: un mic „nu” din cap */
+.bi-alert.go .bi-shake,
+.bi-trigger:hover .bi-alert .bi-shake { animation: bi-shake 0.5s var(--ease-out); }
+@keyframes bi-shake {
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(1px); }
+}
+
+/* lock: toarta se ridică */
+.bi-lock .bi-shackle { transform-box: view-box; }
+.bi-lock.go .bi-shackle,
+.bi-trigger:hover .bi-lock .bi-shackle { animation: bi-unlock 0.7s var(--ease-spring); }
+@keyframes bi-unlock { 50% { transform: translateY(-2px); } }

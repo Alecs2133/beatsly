@@ -8,7 +8,9 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { WaveformVisualizer } from './WaveformVisualizer';
-import { Play, Pause, Volume2, Heart, Download, SkipBack, SkipForward, Shuffle, Repeat, Repeat1 } from 'lucide-react';
+import { Play, Pause, Volume2, SkipBack, SkipForward, Shuffle, Repeat, Repeat1 } from 'lucide-react';
+import { useState } from 'react';
+import { Icon } from './Icon';
 import './AudioPlayer.css';
 
 export const AudioPlayer: React.FC = () => {
@@ -33,6 +35,10 @@ export const AudioPlayer: React.FC = () => {
   const { t } = useTranslation();
 
   const hasQueue = queue.length > 1;
+  // idle → busy (inel de progres) → done (bifă), apoi înapoi la idle
+  const [dlState, setDlState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [saveTick, setSaveTick] = useState(0);
+  const saved = !!currentTrack && isSaved(currentTrack.id);
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
@@ -62,7 +68,7 @@ export const AudioPlayer: React.FC = () => {
         return;
       }
 
-      showToast(t('preparing_download'), 'info');
+      setDlState('busy');
 
       // URL semnat de la server; creditul se consumă acolo, în aceeași cerere.
       const sourceUrl = isLocal
@@ -74,8 +80,11 @@ export const AudioPlayer: React.FC = () => {
 
       await writeFile(filePath, new Uint8Array(buffer));
 
+      setDlState('done');
+      setTimeout(() => setDlState('idle'), 1600);
       showToast(t('download_complete'), 'success');
     } catch (error) {
+      setDlState('idle');
       console.error('[download]', error);
       if (error instanceof InsufficientCreditsError) {
         showToast(t('not_enough_credits'), 'error');
@@ -91,7 +100,9 @@ export const AudioPlayer: React.FC = () => {
   return (
     <div className="audio-player glass">
       <div className="track-info">
-        <div className={`track-artwork ${isPlaying ? 'playing' : ''}`} style={{ background: currentTrack ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.05)' }}></div>
+        <div className={`track-artwork${currentTrack ? ' has-track' : ''}${isPlaying ? ' playing' : ''}`}>
+          <Icon name="signal" size={20} play={isPlaying} />
+        </div>
         <div className="track-details">
           <p className="track-title">{currentTrack ? currentTrack.title : t('player_select_sound')}</p>
           <p className="track-author">{currentTrack ? currentTrack.author : '-'}</p>
@@ -120,7 +131,8 @@ export const AudioPlayer: React.FC = () => {
            onClick={togglePlay}
            disabled={!currentTrack}
         >
-          {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
+          <span className={`play-glyph${isPlaying ? ' hidden' : ''}`}><Play size={19} fill="currentColor" /></span>
+          <span className={`play-glyph${isPlaying ? '' : ' hidden'}`}><Pause size={19} fill="currentColor" /></span>
         </button>
         <button
           className="action-btn queue-btn"
@@ -155,7 +167,7 @@ export const AudioPlayer: React.FC = () => {
       
       <div className="player-actions">
         <div className="volume-control">
-          <Volume2 size={18} color="var(--text-muted)" />
+          <Volume2 size={17} color="var(--muted)" />
           <input 
             type="range" 
             className="volume-bar" 
@@ -167,22 +179,27 @@ export const AudioPlayer: React.FC = () => {
             style={{ '--progress': `${volume * 100}%` } as React.CSSProperties}
           />
         </div>
-        <button 
-          className={`action-btn ${currentTrack && isSaved(currentTrack.id) ? 'active' : ''}`}
-          onClick={() => currentTrack && toggleSaveSound(currentTrack)}
+        <button
+          className={`action-btn bi-trigger${saved ? ' saved' : ''}`}
+          onClick={() => {
+            if (!currentTrack) return;
+            if (!saved) setSaveTick(n => n + 1);
+            toggleSaveSound(currentTrack);
+          }}
           disabled={!currentTrack}
           title={t('save_to_my_sounds')}
+          aria-pressed={saved}
         >
-          <Heart size={20} color={currentTrack && isSaved(currentTrack.id) ? "var(--accent-tertiary)" : "var(--text-main)"} fill={currentTrack && isSaved(currentTrack.id) ? "var(--accent-tertiary)" : "none"} />
+          <Icon name="heart" size={19} filled={saved} play={saveTick} />
         </button>
-        <button 
-          className="download-btn" 
+        <button
+          className={`download-btn bi-trigger ${dlState}`}
           onClick={handleDownload}
-          disabled={!currentTrack}
+          disabled={!currentTrack || dlState === 'busy'}
           title={t('download_track')}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <Download size={16} /> {t('download')}
+          {dlState === 'busy' ? <span className="dl-ring" aria-hidden /> : dlState === 'done' ? <Icon name="check" size={17} play={1} /> : <Icon name="download" size={17} />}
+          {dlState === 'busy' ? t('preparing_download') : t('download')}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
+import { Icon } from './Icon';
 import './LoadingScreen.css';
 
 interface LoadingScreenProps {
@@ -54,8 +55,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isReady }) => {
   return (
     <div className={`loading-screen ${isReady ? 'fade-out' : ''}`}>
       <div className="loading-logo-container">
-        <div className="loading-logo">🎹</div>
-        <div className="loading-title">Beats.ly</div>
+        <div className="loading-logo"><Icon name="logo" size={64} /></div>
+        <div className="loading-title">beats<span>.ly</span></div>
       </div>
       
       <div className="loading-progress-container">
