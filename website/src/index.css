@@ -49,7 +49,8 @@ h1, h2, h3 {
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: rgba(124, 92, 255, 0.5);
+  color: #fff;
 }
 
 :focus-visible {

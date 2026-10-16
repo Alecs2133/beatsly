@@ -212,3 +212,10 @@
 .auth-consent a {
   color: var(--accent-secondary);
 }
+
+.auth-hint {
+  margin: -6px 2px 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}

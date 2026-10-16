@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Camera, Loader2, Trash2, X } from 'lucide-react';
 import { Avatar } from './Avatar';
+import { BadgeRequest } from './BadgeRequest';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -203,6 +204,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) =
                 ))}
               </div>
             </div>
+
+            <BadgeRequest />
           </div>
         </div>
 

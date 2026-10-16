@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { BatchUpload } from '../components/BatchUpload';
+import { ModerationQueue, soundStoragePath } from '../components/admin/ModerationQueue';
 import { useTranslation } from '../hooks/useTranslation';
 import { SoundItem } from '../types/sound';
-import { Play, Pause } from 'lucide-react';
-import { usePlayerStore } from '../store/usePlayerStore';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { createPreviewMp3, previewObjectName } from '../lib/audioPreview';
 import { mapSoundRow } from '../lib/soundRow';
@@ -29,7 +28,6 @@ export const Admin: React.FC = () => {
   const [errorReportsLoaded, setErrorReportsLoaded] = useState(false);
   const [expandedErrorId, setExpandedErrorId] = useState<string | null>(null);
   const { showToast } = useAppStore();
-  const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayerStore();
 
   // Lazy — nu are rost să tragem potențial sute de rânduri de fiecare dată
   // când un admin deschide pagina, dacă nu se uită niciodată la tabul ăsta.
@@ -151,65 +149,6 @@ export const Admin: React.FC = () => {
     }
   };
 
-  const handleApproveSound = async (soundId: string) => {
-    try {
-      showToast(t('admin_approving_sound'), 'info');
-      const { error } = await supabase
-        .from('sounds')
-        .update({ status: 'approved' })
-        .eq('id', soundId);
-
-      if (error) throw error;
-      
-      showToast(t('admin_sound_approved'), 'success');
-      setPendingSounds(pendingSounds.filter(s => s.id !== soundId));
-    } catch (err) {
-      console.error(err);
-      showToast(t('admin_approval_failed'), 'error');
-    }
-  };
-
-  const handleRejectSound = async (sound: SoundItem) => {
-    try {
-      showToast(t('admin_rejecting_sound'), 'info');
-      
-      // `storage_path` este cheia reală a obiectului. Parsarea URL-ului
-      // public nu mai funcționează odată ce bucket-ul devine privat, iar
-      // pentru URL-uri semnate ar include și query string-ul.
-      const storagePath =
-        sound.storage_path ??
-        (sound.file_url?.includes('/object/public/sounds/')
-          ? sound.file_url.split('/object/public/sounds/')[1]
-          : undefined);
-
-      if (storagePath) {
-        const { error: storageError } = await supabase.storage
-          .from('sounds')
-          .remove([storagePath]);
-        if (storageError) console.error('Storage delete error:', storageError);
-
-        const { error: previewError } = await supabase.storage
-          .from('sound-previews')
-          .remove([previewObjectName(storagePath)]);
-        if (previewError) console.error('Preview delete error:', previewError);
-      }
-
-      // Delete from DB
-      const { error: dbError } = await supabase
-        .from('sounds')
-        .delete()
-        .eq('id', sound.id);
-
-      if (dbError) throw dbError;
-      
-      showToast(t('grid_deleted'), 'info');
-      setPendingSounds(pendingSounds.filter(s => s.id !== sound.id));
-    } catch (err) {
-      console.error(err);
-      showToast(t('admin_rejection_failed'), 'error');
-    }
-  };
-
   const countMissingPreviews = async () => {
     const { count, error } = await supabase
       .from('sounds')
@@ -257,17 +196,18 @@ export const Admin: React.FC = () => {
 
       for (const row of pending) {
         try {
-          const storagePath =
-            row.storage_path ??
-            (row.file_url?.includes('/object/public/sounds/')
-              ? row.file_url.split('/object/public/sounds/')[1]
-              : null);
+          const storagePath = soundStoragePath({ storage_path: row.storage_path ?? undefined, file_url: row.file_url ?? undefined });
+          if (!storagePath) throw new Error('Lipsește calea în storage');
 
-          if (!storagePath || !row.file_url) {
-            throw new Error('Lipsește calea în storage');
-          }
+          // Bucket-ul `sounds` e privat: URL-ul public din `file_url` nu mai
+          // răspunde, deci descărcăm originalul printr-un URL semnat.
+          const { data: signed, error: signError } = await supabase.storage
+            .from('sounds')
+            .createSignedUrl(storagePath, 600);
+          if (signError || !signed) throw signError ?? new Error('Nu am putut semna URL-ul');
 
-          const response = await tauriFetch(row.file_url);
+          const response = await tauriFetch(signed.signedUrl);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const blob = await response.blob();
           const preview = await createPreviewMp3(blob);
 
@@ -437,56 +377,11 @@ export const Admin: React.FC = () => {
 
           {loading ? (
             <p>{t('admin_pending_loading')}</p>
-          ) : pendingSounds.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-panel)', borderRadius: '12px' }}>
-              <p style={{ color: 'var(--text-muted)' }}>{t('admin_pending_empty')}</p>
-            </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {pendingSounds.map(sound => {
-                const isThisPlaying = currentTrack?.id === sound.id && isPlaying;
-                return (
-                  <div key={sound.id} style={{ background: 'var(--bg-panel)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      <button 
-                        onClick={() => {
-                          if (currentTrack?.id === sound.id) {
-                            togglePlay();
-                          } else {
-                            playTrack(sound);
-                          }
-                        }}
-                        style={{ 
-                          width: '40px', height: '40px', borderRadius: '50%', border: 'none', 
-                          background: 'var(--accent-primary)', color: 'black', 
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' 
-                        }}
-                      >
-                        {isThisPlaying ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: '2px' }} />}
-                      </button>
-                      <div>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>{sound.title}</p>
-                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{sound.author} • {sound.type.toUpperCase()}</p>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button 
-                        onClick={() => handleRejectSound(sound)}
-                        style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'rgba(255,68,68,0.1)', color: '#ff4444', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        {t('admin_reject_delete')}
-                      </button>
-                      <button 
-                        onClick={() => handleApproveSound(sound.id)}
-                        style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--accent-primary)', color: 'black', fontWeight: 'bold', cursor: 'pointer' }}
-                      >
-                        {t('admin_approve')}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ModerationQueue
+              sounds={pendingSounds}
+              onDone={(ids) => setPendingSounds(prev => prev.filter(s => !ids.includes(s.id)))}
+            />
           )}
         </>
       ) : activeTab === 'errors' ? (

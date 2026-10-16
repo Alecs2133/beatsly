@@ -130,6 +130,8 @@ export function Navbar({ user, authReady, scrolled, onSignOut, onRequestAuth }: 
             {user && (
               <NavLink to="/profile" className={NAV_LINK_CLASS}>{t('nav_profile')}</NavLink>
             )}
+            {/* Pe ecrane foarte înguste comutatorul de limbă stă aici, nu în bară. */}
+            <div className="mobile-menu-lang"><LanguageToggle /></div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -65,8 +65,10 @@ button, input, select, textarea {
   font-family: inherit;
 }
 
+/* Selecția de text se vede clar — înainte era un violet aproape transparent. */
 ::selection {
-  background: var(--accent-soft);
+  background: rgba(124, 92, 255, 0.5);
+  color: #fff;
 }
 
 :focus-visible {

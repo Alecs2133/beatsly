@@ -98,11 +98,6 @@
   100% { transform: scale(1); }
 }
 
-/* crew: al doilea membru intră */
-.bi-crew .bi-second { transform-box: view-box; }
-.bi-crew.go .bi-second,
-.bi-trigger:hover .bi-crew .bi-second { animation: bi-join 0.6s var(--ease-spring); }
-@keyframes bi-join { from { transform: translateX(-5px); opacity: 0; } }
 
 /* bell: se leagănă amortizat */
 .bi-bell .bi-bell { transform-box: view-box; transform-origin: 12px 3px; }

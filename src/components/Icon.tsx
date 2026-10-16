@@ -23,7 +23,6 @@ export type IconName =
   | 'upload'
   | 'check'
   | 'heart'
-  | 'crew'
   | 'bell'
   | 'download'
   | 'alert'
@@ -141,17 +140,6 @@ function Shape({ name }: { name: IconName }) {
               style={{ '--a': `${a}deg` } as React.CSSProperties}
             />
           ))}
-        </g>
-      );
-    case 'crew':
-      return (
-        <g {...STROKE}>
-          <circle cx="9" cy="8" r="3" />
-          <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-          <g className="bi-second">
-            <circle cx="17" cy="9" r="2.4" />
-            <path d="M15.5 14.5c2.8 0 5.5 1.6 5.5 5" />
-          </g>
         </g>
       );
     case 'bell':

@@ -36,6 +36,12 @@ interface PlayerState {
   cycleRepeat: () => void;
   seekTo: (time: number) => void;
   changeVolume: (level: number) => void;
+  /**
+   * Oprește redarea și golește piesa curentă și coada — la schimbarea
+   * contului, ca următorul user să nu vadă ce a ascultat precedentul.
+   * Volumul, shuffle și repeat rămân: sunt preferințe ale aparatului.
+   */
+  reset: () => void;
 }
 
 const globalAudio = new Audio();
@@ -180,6 +186,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       set(state => ({
         repeat: state.repeat === 'off' ? 'all' : state.repeat === 'all' ? 'one' : 'off',
       }));
+    },
+
+    reset: () => {
+      globalAudio.pause();
+      globalAudio.removeAttribute('src');
+      globalAudio.load();
+      shuffledOrder = [];
+      set({ currentTrack: null, isPlaying: false, currentTime: 0, duration: 0, queue: [], queueIndex: -1 });
     },
 
     seekTo: (time) => {

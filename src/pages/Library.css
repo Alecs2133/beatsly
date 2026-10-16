@@ -119,6 +119,12 @@
   font-size: 12.5px;
 }
 
+.discover-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .view-toggle {
   display: flex;
   padding: 3px;
@@ -139,6 +145,11 @@
   color: var(--muted);
   cursor: pointer;
   transition: background var(--dur), color var(--dur);
+}
+
+.view-toggle button:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .view-toggle button[aria-pressed='true'] {

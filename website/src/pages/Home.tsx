@@ -11,8 +11,8 @@ import { useT } from '../i18n/context';
 import './Home.css';
 
 const STEPS: { title: TranslationKey; text: TranslationKey; keys?: string[] }[] = [
-  { title: 'step_1_title', text: 'step_1_text' },
-  { title: 'step_2_title', text: 'step_2_text', keys: ['Ctrl', 'K'] },
+  { title: 'step_1_title', text: 'step_1_text', keys: ['Ctrl', 'K'] },
+  { title: 'step_2_title', text: 'step_2_text' },
   { title: 'step_3_title', text: 'step_3_text' },
 ];
 
@@ -20,7 +20,6 @@ const SPECS: { title: TranslationKey; text: TranslationKey; soon?: boolean }[] =
   { title: 'feature_library_title', text: 'feature_library_text' },
   { title: 'feature_cloud_title', text: 'feature_cloud_text' },
   { title: 'feature_verified_title', text: 'feature_verified_text' },
-  { title: 'feature_crews_title', text: 'feature_crews_text' },
   { title: 'feature_ai_title', text: 'feature_ai_text', soon: true },
 ];
 

@@ -1,0 +1,184 @@
+/* Panoul de upload — apare după ce tragi un fișier în aplicație */
+.up-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(5, 5, 9, 0.72);
+  backdrop-filter: blur(6px);
+  animation: upFade 0.2s var(--ease-out);
+}
+
+@keyframes upFade {
+  from { opacity: 0; }
+}
+
+.up-panel {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 22px 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9);
+  animation: upIn 0.45s var(--ease-spring);
+}
+
+@keyframes upIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+}
+
+.up-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.up-head h2 {
+  font: 800 24px / 1.1 var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.up-head p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.up-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--raised);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.up-close:hover {
+  color: var(--fg);
+}
+
+.up-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+}
+
+.up-play {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: pointer;
+  transition: background var(--dur), transform 0.3s var(--ease-spring);
+}
+
+.up-play:hover {
+  transform: scale(1.06);
+}
+
+.up-play.on {
+  background: var(--signal);
+}
+
+.up-wave {
+  position: relative;
+  flex: 1;
+  height: 44px;
+  --h: 190;
+}
+
+.up-wave .wave-bars {
+  inset: 0;
+}
+
+.up-field {
+  display: grid;
+  gap: 6px;
+}
+
+.up-field > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.up-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color var(--dur);
+}
+
+.up-input:hover {
+  border-color: var(--line-strong);
+}
+
+.up-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.up-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.up-detect {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -6px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.up-detect svg {
+  color: var(--signal);
+}
+
+.up-note {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.up-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.up-foot button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

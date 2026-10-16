@@ -438,10 +438,14 @@ export type Database = {
         Args: { granted_role: string; req_id: string; req_user_id: string }
         Returns: undefined
       }
+      approve_sounds: { Args: { p_ids: string[] }; Returns: number }
       claim_daily_refill: {
         Args: never
         Returns: {
+          avatar_path: string | null
+          bio: string | null
           credits: number
+          display_name: string | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -449,6 +453,7 @@ export type Database = {
           onboarded_at: string | null
           phone_number: string | null
           role: string
+          social_links: Json
           stripe_customer_id: string | null
           tier: string
           username: string | null
@@ -498,6 +503,7 @@ export type Database = {
           display_name: string
           follower_count: number
           following_count: number
+          role: string
           social_links: Json
           sound_count: number
           user_id: string
@@ -519,6 +525,7 @@ export type Database = {
       is_crew_member: { Args: { p_crew_id: string }; Returns: boolean }
       is_crew_owner: { Args: { p_crew_id: string }; Returns: boolean }
       is_publisher: { Args: never; Returns: boolean }
+      is_valid_username: { Args: { p_username: string }; Returns: boolean }
       refund_credit: {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
@@ -527,6 +534,7 @@ export type Database = {
         Args: { p_crew_id: string; p_user_id: string }
         Returns: undefined
       }
+      username_available: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

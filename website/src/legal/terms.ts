@@ -23,7 +23,7 @@ export const TERMS: LegalDocSet = {
             list: [
               'organize and analyze audio files stored on your own computer (BPM and key detection runs locally, on your device);',
               'browse, preview and download sounds published by other users in the community library;',
-              'save sounds, create collections, follow producers and share private sounds inside a Crew;',
+              'save sounds, create collections and follow producers;',
               'publish your own sounds, if your account has been approved as a publisher;',
               'use additional features that we may launch over time (such as the AI Generator), which we will describe when they become available.',
             ],
@@ -160,7 +160,7 @@ export const TERMS: LegalDocSet = {
             list: [
               'să organizezi și să analizezi fișierele audio de pe propriul calculator (detecția de BPM și tonalitate rulează local, pe dispozitivul tău);',
               'să cauți, să asculți și să descarci sunete publicate de alți utilizatori în biblioteca comunității;',
-              'să salvezi sunete, să creezi colecții, să urmărești producători și să împarți sunete private într-un Crew;',
+              'să salvezi sunete, să creezi colecții și să urmărești producători;',
               'să publici propriile sunete, dacă contul tău a fost aprobat ca publisher;',
               'să folosești funcționalități noi pe care le putem lansa în timp (de exemplu Generatorul AI), pe care le vom descrie când devin disponibile.',
             ],

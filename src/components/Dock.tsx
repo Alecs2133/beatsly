@@ -8,10 +8,9 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { useMyCrews } from '../hooks/useMyCrews';
 import { useTranslation } from '../hooks/useTranslation';
 import { requestDownloadUrl, InsufficientCreditsError } from '../lib/soundUpload';
-import { isAdminRole, isPublisherRole, hasUnlimitedCredits } from '../lib/roles';
+import { isAdminRole, isPublisherRole } from '../lib/roles';
 import { WaveformVisualizer } from './WaveformVisualizer';
 import { Icon } from './Icon';
 import { VolumeSlider } from './controls/VolumeSlider';
@@ -42,7 +41,6 @@ export const Dock: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, session } = useAuthStore();
-  const { crews } = useMyCrews();
   const savedSounds = useLibraryStore(s => s.savedSounds);
   const toggleSaveSound = useLibraryStore(s => s.toggleSaveSound);
   const isSaved = useLibraryStore(s => s.isSaved);
@@ -73,10 +71,7 @@ export const Dock: React.FC = () => {
     { to: '/', label: 'nav_discover', icon: <Compass size={21} strokeWidth={1.8} /> },
     { to: '/library', label: 'nav_my_sounds', icon: <Icon name="heart" size={21} />, badge: savedSounds.length || undefined },
     { to: '/analyzer', label: 'nav_ai_generator', icon: <Icon name="sparkle" size={21} /> },
-    ...(isPublisherRole(role) ? [{ to: '/local', label: 'nav_local_files' as const, icon: <Icon name="folder" size={21} /> }] : []),
-    ...(hasUnlimitedCredits(role, profile?.tier) || crews.length > 0
-      ? [{ to: '/crew', label: 'nav_crew' as const, icon: <Icon name="crew" size={21} /> }]
-      : []),
+    ...(isPublisherRole(role) ? [{ to: '/upload', label: 'nav_upload' as const, icon: <Icon name="upload" size={21} /> }] : []),
     { to: '/store', label: 'nav_store', icon: <ShoppingBag size={21} strokeWidth={1.8} /> },
     ...(isAdminRole(role) ? [{ to: '/admin', label: 'nav_admin' as const, icon: <ShieldCheck size={21} strokeWidth={1.8} /> }] : []),
   ];

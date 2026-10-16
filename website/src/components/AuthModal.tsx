@@ -8,6 +8,9 @@ import { supabase } from '../lib/supabase';
 import { useT } from '../i18n/context';
 import { richText } from '../i18n/rich';
 import { LEGAL_VERSION } from '../legal/version';
+
+// Aceeași regulă ca în baza de date (public.is_valid_username).
+const USERNAME_RE = /^[A-Za-z0-9._]{3,24}$/;
 import './AuthModal.css';
 
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string | undefined;
@@ -67,6 +70,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       setError(t('auth_must_accept'));
       return;
     }
+    if (mode === 'signup' && !USERNAME_RE.test(username.trim())) {
+      setError(t('auth_username_invalid'));
+      return;
+    }
     if (HCAPTCHA_SITE_KEY && !captchaToken) {
       setError(t('auth_captcha_required'));
       return;
@@ -89,12 +96,19 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
           onClose();
         }
       } else if (mode === 'signup') {
+        // Username-ul e obligatoriu și unic — verificăm înainte să creăm contul,
+        // ca userul să afle aici, nu după confirmarea emailului.
+        const { data: free, error: availError } = await supabase.rpc('username_available', { p_username: username.trim() });
+        if (!availError && free === false) {
+          setError(t('auth_username_taken'));
+          return;
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             // Dovada acordului: când și ce versiune a documentelor a acceptat.
-            data: { username, terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION },
+            data: { username: username.trim(), terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION },
             emailRedirectTo: `${window.location.origin}/email-confirmed`,
             captchaToken,
           }
@@ -161,17 +175,24 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
             <form onSubmit={handleSubmit} className="auth-form">
               {mode === 'signup' && (
+                <>
                 <div className="auth-field">
                   <User size={16} />
                   <input
                     type="text"
                     placeholder={t('auth_username')}
                     value={username}
-                    onChange={e => setUsername(e.target.value)}
+                    onChange={e => setUsername(e.target.value.replace(/\s/g, ''))}
                     autoComplete="username"
+                    minLength={3}
+                    maxLength={24}
+                    pattern="[A-Za-z0-9._]{3,24}"
+                    title={t('auth_username_hint')}
                     required
                   />
                 </div>
+                <p className="auth-hint">{t('auth_username_hint')}</p>
+                </>
               )}
               <div className="auth-field">
                 <Mail size={16} />

@@ -1,0 +1,35 @@
+/* Forma de undă din carduri și din panoul de upload */
+.wave-bars {
+  position: absolute;
+  inset: 8px;
+  --p: 0;
+}
+
+.wave-bars.loading .skeleton {
+  position: absolute;
+  inset: 30% 0;
+}
+
+.wave-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.wave-layer i {
+  flex: 1 1 0;
+  min-width: 1px;
+  border-radius: 2px;
+  background: #2e2e3c;
+  transform-origin: center;
+}
+
+.wave-layer.fill {
+  clip-path: inset(0 calc((1 - var(--p)) * 100%) 0 0);
+}
+
+.wave-layer.fill i {
+  background: hsl(var(--h) 85% 64%);
+}

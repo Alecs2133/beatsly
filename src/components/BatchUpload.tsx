@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { uploadSoundWithPreview } from '../lib/soundUpload';
 import { useAuthStore } from '../store/useAuthStore';
+import { isAdminRole } from '../lib/roles';
 import { LICENSE_OPTIONS, SoundLicense } from '../lib/licenses';
 import type { TranslationKeys } from '../i18n/en';
 import { Icon } from './Icon';
@@ -155,7 +156,8 @@ export const BatchUpload: React.FC = () => {
           storage_path: uploaded.storagePath,
           preview_url: uploaded.previewUrl,
           file_url: uploaded.legacyPublicUrl,
-          status: 'pending',
+          // Adminii publică direct; ceilalți trec prin moderare.
+          status: isAdminRole(profile.role) ? 'approved' : 'pending',
           license: file.license
         });
 

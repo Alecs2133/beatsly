@@ -1,0 +1,72 @@
+/* „?” — ajutor scurt pentru pagina Descoperă */
+.help-tip {
+  position: relative;
+}
+
+.help-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font: 700 14px var(--font-display);
+  cursor: pointer;
+  transition: color var(--dur), border-color var(--dur), background var(--dur), transform 0.3s var(--ease-spring);
+}
+
+.help-btn:hover,
+.help-btn.on {
+  color: var(--fg);
+  border-color: var(--line-strong);
+  background: var(--raised);
+}
+
+.help-btn:active {
+  transform: scale(0.94);
+}
+
+.help-pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 60;
+  width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  transform-origin: top right;
+  animation: helpIn 0.3s var(--ease-spring);
+}
+
+@keyframes helpIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+}
+
+.help-pop h3 {
+  margin-bottom: 10px;
+  font: 700 16px var(--font-display);
+}
+
+.help-pop dl {
+  display: grid;
+  gap: 10px;
+}
+
+.help-pop dt {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.help-pop dd {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}

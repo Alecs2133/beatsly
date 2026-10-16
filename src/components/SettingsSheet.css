@@ -99,6 +99,12 @@
   border-radius: 12px;
   background: var(--bg);
   border: 1px solid var(--line-soft);
+  transition: border-color var(--dur), background var(--dur);
+}
+
+.sheet-row:hover {
+  border-color: var(--line-strong);
+  background: var(--surface);
 }
 
 .sheet-row > div:first-child {

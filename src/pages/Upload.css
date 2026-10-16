@@ -1,0 +1,158 @@
+/* Încarcă — zona de drop și ultimele sunete trimise */
+.upload-page {
+  display: grid;
+  gap: 22px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.upload-head h1 {
+  font: 800 38px / 1 var(--font-display);
+  letter-spacing: -0.035em;
+}
+
+.upload-head p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.dropzone {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 64px 24px 48px;
+  border-radius: 22px;
+  border: 2px dashed var(--line-strong);
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+  transition: border-color 0.3s var(--ease-out), background 0.3s var(--ease-out), transform 0.45s var(--ease-spring);
+}
+
+.dropzone h2 {
+  color: var(--fg);
+  font: 700 22px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.dropzone p {
+  font-size: 13.5px;
+}
+
+.dropzone .btn-ghost-pill {
+  margin-top: 8px;
+}
+
+/* Când tragi un fișier peste fereastră */
+.dropzone.over {
+  border-color: var(--signal);
+  background: rgba(45, 212, 238, 0.06);
+  transform: scale(1.01);
+}
+
+.dropzone.over .bi {
+  color: var(--signal);
+}
+
+/* Barele din spate: liniștite, apoi „cântă” când ai un fișier deasupra */
+.dz-bars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 70px;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.dz-bars i {
+  width: 6px;
+  height: calc(20% + (var(--i) * 7 % 60) * 1%);
+  border-radius: 3px 3px 0 0;
+  background: var(--fg);
+  transform-origin: bottom;
+}
+
+.dropzone.over .dz-bars {
+  opacity: 0.45;
+}
+
+.dropzone.over .dz-bars i {
+  background: var(--signal);
+  animation: dzBob 0.5s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -0.07s);
+}
+
+@keyframes dzBob {
+  from { transform: scaleY(0.5); }
+  to { transform: scaleY(1.25); }
+}
+
+.dz-warn {
+  color: var(--warn);
+}
+
+.my-uploads h2 {
+  margin-bottom: 10px;
+  font: 700 18px var(--font-display);
+}
+
+.my-uploads ul {
+  list-style: none;
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.my-uploads li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--line);
+  transition: background var(--dur);
+}
+
+.my-uploads li:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.my-uploads b {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-uploads time {
+  color: var(--faint);
+  font-size: 12.5px;
+}
+
+.up-status {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.up-status.ok {
+  color: var(--good);
+  background: rgba(52, 211, 153, 0.1);
+}
+
+.up-status.wait {
+  color: var(--warn);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.my-uploads .muted {
+  color: var(--muted);
+}

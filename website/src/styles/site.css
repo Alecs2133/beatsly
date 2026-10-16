@@ -788,3 +788,82 @@
   border-bottom: 1px solid var(--line);
   background: none;
 }
+
+/* Butoanele de descărcare și mesajul pentru telefon / tabletă / TV */
+.download-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.download-blocked {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.download-blocked svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--note);
+}
+
+.download-blocked strong {
+  display: block;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.download-blocked p {
+  margin-bottom: 12px;
+  line-height: 1.55;
+}
+
+.download-blocked .btn {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.mobile-menu-lang {
+  display: none;
+  padding: 8px 14px 4px;
+}
+
+/* Telefon îngust: limba se mută în meniu, ca bara să nu iasă din ecran */
+@media (max-width: 480px) {
+  .nav-actions > .lang-toggle {
+    display: none;
+  }
+
+  .mobile-menu-lang {
+    display: block;
+  }
+
+  .navbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .nav-actions .btn {
+    padding: 8px 14px;
+  }
+}
+
+.mobile-menu-lang .lang-toggle {
+  display: inline-flex;
+}
+
+.download-blocked:first-child {
+  margin-top: 0;
+}

@@ -1,5 +1,5 @@
 
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { TopBar } from './components/TopBar';
 import { Dock } from './components/Dock';
@@ -17,6 +17,7 @@ import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
 import { isAdminRole, isPublisherRole } from './lib/roles';
 import { WelcomeTour } from './components/WelcomeTour';
+import { UsernamePrompt } from './components/UsernamePrompt';
 import { ComingSoon } from './components/ComingSoon';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { FEATURES } from './lib/features';
@@ -27,13 +28,12 @@ const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Lib
 const Analyzer = lazy(() => import('./pages/Analyzer').then(m => ({ default: m.Analyzer })));
 const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
 const MySounds = lazy(() => import('./pages/MySounds').then(m => ({ default: m.MySounds })));
-const LocalFiles = lazy(() => import('./pages/LocalFiles').then(m => ({ default: m.LocalFiles })));
+const Upload = lazy(() => import('./pages/Upload').then(m => ({ default: m.Upload })));
 const Pricing = lazy(() => import('./pages/Pricing').then(m => ({ default: m.Pricing })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
 const Packs = lazy(() => import('./pages/Packs').then(m => ({ default: m.Packs })));
 const PackDetails = lazy(() => import('./pages/PackDetails').then(m => ({ default: m.PackDetails })));
-const CrewPage = lazy(() => import('./pages/Crew').then(m => ({ default: m.CrewPage })));
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 
 const RouteFallback = () => (
@@ -94,13 +94,12 @@ const PAGE_TITLES: Record<string, string> = {
   '/auth': 'Sign In – beats.ly',
   '/library': 'My Sounds – beats.ly',
   '/analyzer': 'AI Generator – beats.ly',
-  '/local': 'Local Files – beats.ly',
+  '/upload': 'Upload – beats.ly',
   '/store': 'Store – beats.ly',
   '/admin': 'Admin – beats.ly',
   '/account': 'Profile – beats.ly',
   '/options': 'Settings – beats.ly',
   '/packs': 'Sound Packs – beats.ly',
-  '/crew': 'Crew – beats.ly',
 };
 
 const AppContent = () => {
@@ -115,10 +114,20 @@ const AppContent = () => {
   }, [initialize]);
 
   useEffect(() => {
-    if (user) {
-      fetchLibrary();
-    }
+    // Fără user, golim și lista de salvate — altfel rămânea a contului vechi.
+    fetchLibrary();
   }, [user, fetchLibrary]);
+
+  // Alt cont (sau deconectare): playerul nu păstrează ce a ascultat contul
+  // precedent. Prima încărcare a sesiunii nu contează ca schimbare.
+  const lastUserId = useRef<string | null | undefined>(undefined);
+  const resetPlayer = usePlayerStore(s => s.reset);
+  useEffect(() => {
+    if (!initialized) return;
+    const id = user?.id ?? null;
+    if (lastUserId.current !== undefined && lastUserId.current !== id) resetPlayer();
+    lastUserId.current = id;
+  }, [initialized, user?.id, resetPlayer]);
 
   // Ecranul de pornire stă cât se citește sesiunea — plus un minim scurt,
   // ca să nu clipească pe un PC rapid. Înainte era o pauză fixă de 2,5 s.
@@ -165,14 +174,14 @@ const AppContent = () => {
                 path="/analyzer"
                 element={FEATURES.aiGenerator ? <ProtectedRoute><Analyzer /></ProtectedRoute> : <ComingSoon feature="AI Generator" />}
               />
-              <Route path="/local" element={<PublisherRoute><LocalFiles /></PublisherRoute>} />
+              <Route path="/upload" element={<PublisherRoute><Upload /></PublisherRoute>} />
+              <Route path="/local" element={<Navigate to="/upload" replace />} />
               <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
               <Route path="/options" element={<OptionsRedirect />} />
               <Route path="/packs" element={<ProtectedRoute><Packs /></ProtectedRoute>} />
               <Route path="/pack/:tag" element={<ProtectedRoute><PackDetails /></ProtectedRoute>} />
-              <Route path="/crew" element={<ProtectedRoute><CrewPage /></ProtectedRoute>} />
               <Route path="/producer/:userId" element={<Profile />} />
             </Routes>
           </Suspense>
@@ -184,7 +193,9 @@ const AppContent = () => {
       <CommandPalette />
       <ToastContainer />
       {appReady && <UpdatePrompt />}
-      {appReady && user && profile && !profile.onboarded_at && !tourDismissed && (
+      {/* Username-ul e obligatoriu — întâi el, apoi turul de bun venit. */}
+      {appReady && user && profile && !profile.username?.trim() && <UsernamePrompt />}
+      {appReady && user && profile && profile.username?.trim() && !profile.onboarded_at && !tourDismissed && (
         <WelcomeTour userId={user.id} onDone={() => setTourDismissed(true)} />
       )}
     </div>

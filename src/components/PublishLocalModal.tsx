@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { isAdminRole } from '../lib/roles';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from './Icon';
 import { SoundItem } from '../types/sound';
@@ -63,7 +64,8 @@ export const PublishLocalModal: React.FC<PublishLocalModalProps> = ({ sound, onC
           storage_path: uploaded.storagePath,
           preview_url: uploaded.previewUrl,
           file_url: uploaded.legacyPublicUrl,
-          status: 'pending',
+          // Adminii publică direct; ceilalți trec prin moderare.
+          status: isAdminRole(profile.role) ? 'approved' : 'pending',
           license
         });
 

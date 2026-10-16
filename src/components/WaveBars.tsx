@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { useWavePeaks } from '../hooks/useWavePeaks';
 import { usePlayerStore } from '../store/usePlayerStore';
+import './WaveBars.css';
 
 interface WaveBarsProps {
   url?: string;

@@ -12,6 +12,7 @@ import { getPublicProfile, profileName, type PublicProfile } from '../lib/social
 import { deleteAccount } from '../lib/profile';
 import { readSocialLinks } from '../lib/socialLinks';
 import { Avatar } from '../components/Avatar';
+import { RoleBadge } from '../components/RoleBadge';
 import { EditProfileModal } from '../components/EditProfileModal';
 import { SocialLinkList } from '../components/SocialLinkList';
 import type { TranslationKeys } from '../i18n/en';
@@ -224,7 +225,10 @@ export const Account: React.FC = () => {
 
         <div className="idcard-info">
           <span className="idcard-label">{t('profile_label')}</span>
-          <h1 className="idcard-name" title={name}>{name}</h1>
+          <div className="name-row">
+            <h1 className="idcard-name" title={name}>{name}</h1>
+            <RoleBadge role={profile.role} size={32} />
+          </div>
           <div className="idcard-chips">
             {profile.username && <span>@{profile.username}</span>}
             <span><Crown size={13} /> {t(TIER_LABEL[profile.tier] ?? 'free')}</span>

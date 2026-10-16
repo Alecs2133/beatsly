@@ -102,7 +102,7 @@ export const CommandPalette: React.FC = () => {
       { id: 'go-profile', section: t('cmd_navigate'), label: t('topbar_profile'), icon: <User size={15} />, run: go('/account') },
       { id: 'go-settings', section: t('cmd_navigate'), label: t('topbar_settings'), icon: <SlidersHorizontal size={15} />, run: () => setSettingsOpen(true) },
     ];
-    if (isPublisherRole(profile?.role)) nav.push({ id: 'go-local', section: t('cmd_navigate'), label: t('nav_local_files'), icon: <ArrowRight size={15} />, run: go('/local') });
+    if (isPublisherRole(profile?.role)) nav.push({ id: 'go-upload', section: t('cmd_navigate'), label: t('nav_upload'), icon: <ArrowRight size={15} />, run: go('/upload') });
     if (isAdminRole(profile?.role)) nav.push({ id: 'go-admin', section: t('cmd_navigate'), label: t('nav_admin'), icon: <ArrowRight size={15} />, run: go('/admin') });
     list.push(...nav.filter(c => !ql || c.label.toLowerCase().includes(ql)));
 

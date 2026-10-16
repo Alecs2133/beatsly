@@ -19,6 +19,7 @@ import { SoundGridSkeleton } from '../components/SoundGridSkeleton';
 import { CamelotWheel } from '../components/controls/CamelotWheel';
 import { Knob } from '../components/controls/Knob';
 import { BpmInput } from '../components/controls/BpmInput';
+import { HelpTip } from '../components/HelpTip';
 import './Library.css';
 
 /** Fereastra de tempo din jurul valorii potențiometrului. */
@@ -55,8 +56,7 @@ export const Library: React.FC = () => {
             .from('sounds')
             .select('*')
             .eq('status', 'approved')
-            // Sunetele de crew sunt private: RLS le arată membrilor, dar
-            // locul lor e pe pagina Crew, nu în catalogul public.
+            // Sunetele rămase din fostele crew-uri sunt private — nu intră în catalog.
             .is('crew_id', null)
             .order('created_at', { ascending: false })
             .order('id')
@@ -171,6 +171,8 @@ export const Library: React.FC = () => {
               )}
             </p>
           </div>
+          <div className="discover-tools">
+          <HelpTip />
           <div className="view-toggle" role="group" aria-label={t('settings_view')}>
             <button type="button" aria-pressed={soundView === 'cards'} onClick={() => setSoundView('cards')} title={t('view_cards')}>
               <LayoutGrid size={16} />
@@ -178,6 +180,7 @@ export const Library: React.FC = () => {
             <button type="button" aria-pressed={soundView === 'list'} onClick={() => setSoundView('list')} title={t('view_list')}>
               <List size={16} />
             </button>
+          </div>
           </div>
         </div>
 

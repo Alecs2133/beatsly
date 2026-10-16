@@ -1,0 +1,55 @@
+/* Bifa de verificare de lângă nume */
+.role-badge {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  flex-shrink: 0;
+  line-height: 0;
+  cursor: help;
+}
+
+.role-badge svg {
+  overflow: visible;
+}
+
+.rb-seal {
+  fill: var(--accent);
+}
+
+.rb-check {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* OWNER: sigiliu auriu, coroană închisă la culoare, o lumină care trece peste */
+.role-badge.owner {
+  overflow: hidden;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 6px rgba(242, 184, 75, 0.45));
+}
+
+.role-badge.owner .rb-mark {
+  fill: #3b2710;
+}
+
+.rb-shine {
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.75) 50%, transparent 60%);
+  transform: translateX(-70%);
+  animation: rbShine 3.6s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes rbShine {
+  0%, 62% { transform: translateX(-70%); }
+  100% { transform: translateX(70%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-shine { display: none; }
+}

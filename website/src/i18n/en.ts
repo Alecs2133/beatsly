@@ -43,8 +43,6 @@ export const en = {
   feature_library_text: 'Loops, one-shots and packs from producers who were checked by a person, filterable by BPM and key.',
   feature_verified_title: 'Every upload gets listened to',
   feature_verified_text: 'Publisher accounts are verified by hand, and every sound is reviewed before it goes public.',
-  feature_crews_title: 'Crews',
-  feature_crews_text: 'Private sounds shared with your team. Only members can see and download them.',
 
   // Home — quick links
 
@@ -53,7 +51,7 @@ export const en = {
   faq_see_all: 'See all questions',
   faq_free_q: 'Is Beats.ly really free?',
   faq_free_a:
-    'Yes. The Free plan gives you 3 download credits per day and full access to the local library manager, at no cost and with no card required.',
+    'Yes. The Free plan gives you 3 download credits a day and full access to the community library, at no cost and with no card.',
   faq_credits_q: 'What is a "credit"?',
   faq_credits_a:
     'Credits are used to download sounds from the cloud — each download costs 1 credit. Free accounts get 3 per day and Producer accounts 30 per day. Ultimate members download without credits.',
@@ -88,7 +86,7 @@ export const en = {
   pricing_row_credits: 'Download credits',
   pricing_row_ai: 'AI Generator',
   pricing_row_upload: 'Cloud uploading',
-  pricing_row_local: 'Local library manager',
+  pricing_row_local: 'Community library with BPM and key filters',
   pricing_per_day: '{count} / day',
   pricing_unlimited: 'Unlimited',
   pricing_cta_title: 'Start with Free.',
@@ -239,7 +237,7 @@ export const en = {
   hero_title_a: 'Find the ',
   hero_title_mark: 'right',
   hero_title_b: ' sample before the idea is gone.',
-  hero_lead: 'beats.ly keeps your loops, one-shots and FX in one place. Search by BPM and key, listen without opening your DAW, and drag sounds from your disk straight into the project.',
+  hero_lead: 'beats.ly brings together loops, one-shots and FX from verified producers. Search by BPM and key and listen without opening your DAW — and if you make sounds, upload them by dragging them into the app.',
   hero_meta: 'free, 3 downloads a day',
   demo_label: 'Interactive demo of the key wheel',
   demo_title: 'Discover',
@@ -251,18 +249,25 @@ export const en = {
   demo_note: 'try it: click a key',
   steps_title: 'How you use it',
   steps_sub: 'No tutorial needed. Three things you do every session.',
-  step_1_title: 'Start with what you already have',
-  step_1_text: 'Point it at a folder on your disk. One click and you know the BPM and key of any file — worked out on your computer, nothing gets uploaded.',
-  step_2_title: 'Search by ear, not by file name',
-  step_2_text: 'The Camelot wheel shows which keys fit your track, and the tempo knob narrows the list to ±6 BPM. Or press Ctrl+K and type "140" or "8A".',
-  step_3_title: 'Set it aside, take it into the project',
-  step_3_text: 'The heart saves a sound, and crates keep things sorted by project. Sounds from your disk drag straight into FL Studio, Ableton or whatever you use.',
+  step_1_title: 'Search by ear, not by file name',
+  step_1_text: 'The Camelot wheel shows which keys fit your track, and the tempo knob narrows the list to ±6 BPM. Or press Ctrl+K and type "140" or "8A".',
+  step_2_title: 'Set aside what you like',
+  step_2_text: 'The heart saves a sound, and crates keep things sorted by project. You only download what you use, one credit per sound.',
+  step_3_title: 'Upload what you make',
+  step_3_text: 'With a producer badge you drag files straight into the app: BPM and key fill themselves in, and an admin listens before they go public.',
   shot_caption: 'Discover, in {version}. Example data, real interface.',
   specs_title: 'What else it does',
   faq_heading: 'Questions people ask',
   end_title: 'Try it on your own samples.',
   end_text: 'Free to install, and you can upgrade later if you need more downloads.',
   footer_made: 'Made in Romania, for people who make beats.',
+  auth_username_hint: '3–24 characters: letters, numbers, dot or underscore. It is how people find you.',
+  auth_username_invalid: 'Your username needs 3–24 characters: letters, numbers, dot or underscore.',
+  auth_username_taken: 'That username is already taken. Try another one.',
+  download_desktop_only_title: 'beats.ly installs on computers only',
+  download_desktop_only_text: 'The app is made for Windows and macOS. It can\'t be downloaded on a phone, tablet or TV — open this page on your computer.',
+  download_copy_link: 'Copy link',
+  download_link_copied: 'Link copied',
 };
 
 export type TranslationKey = keyof typeof en;

@@ -8,6 +8,8 @@ export interface PublicProfile {
   bio: string | null;
   avatar_path: string | null;
   social_links: SocialLinks;
+  /** Lipsește până se aplică migrarea 20261017110000. */
+  role?: string | null;
   sound_count: number;
   follower_count: number;
   following_count: number;

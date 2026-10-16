@@ -21,9 +21,6 @@ export const Pricing: React.FC = () => {
   const { profile, user } = useAuthStore();
   const { showToast } = useAppStore();
   const { t } = useTranslation();
-  const [isApplying, setIsApplying] = useState(false);
-  const [socialLinks, setSocialLinks] = useState('');
-  const [requestedRole, setRequestedRole] = useState('PRODUCER');
   // Acordul pentru livrarea imediată a creditelor (și pierderea dreptului de
   // retragere — OUG 34/2014, art. 16 lit. m). Fără el nu pornim plata.
   const [purchaseConsent, setPurchaseConsent] = useState(false);
@@ -67,33 +64,6 @@ export const Pricing: React.FC = () => {
 
   const openLegal = (doc: 'terms' | 'payments') => {
     open(`https://beatsly.vercel.app/legal/${doc}`).catch(err => console.error('Failed to open legal page:', err));
-  };
-
-  const handleApplyProducer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!socialLinks) return;
-
-    try {
-      setIsApplying(true);
-      const { error } = await supabase
-        .from('role_requests')
-        .insert({
-          user_id: user.id,
-          social_links: socialLinks,
-          status: 'pending',
-          requested_role: requestedRole
-        });
-
-      if (error) throw error;
-
-      showToast(t('application_sent'), 'success');
-      setSocialLinks('');
-    } catch (err) {
-      console.error(err);
-      showToast(`${t('application_failed')}: ${errorMessage(err)}`, 'error');
-    } finally {
-      setIsApplying(false);
-    }
   };
 
   return (
@@ -152,44 +122,6 @@ export const Pricing: React.FC = () => {
           <PlanButton current={profile.tier === 'ultimate'} t={t} />
         </div>
       </div>
-
-      {profile.tier === 'ultimate' && (
-        <div style={{ background: 'rgba(45, 212, 238, 0.05)', padding: '30px', borderRadius: '16px', marginBottom: '60px', border: '1px solid var(--accent-primary)' }}>
-          <h2 style={{ color: 'var(--accent-primary)', marginBottom: '15px' }}>{t('apply_producer_title')}</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
-            {t('apply_producer_desc')}
-          </p>
-          <form onSubmit={handleApplyProducer} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <select 
-                value={requestedRole}
-                onChange={e => setRequestedRole(e.target.value)}
-                className="role-select"
-              >
-                <option value="PRODUCER">{t('role_producer')}</option>
-                <option value="EDITOR">{t('role_editor')}</option>
-                <option value="SOUND ENGINEER">{t('role_sound_engineer')}</option>
-                <option value="ARTIST">{t('role_artist')}</option>
-              </select>
-              <input
-                type="text"
-                placeholder="https://instagram.com/your_handle"
-                value={socialLinks}
-                onChange={e => setSocialLinks(e.target.value)}
-                style={{ flex: 1, padding: '15px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'rgba(0,0,0,0.5)', color: 'white' }}
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isApplying}
-              style={{ padding: '15px 30px', borderRadius: '8px', border: 'none', background: 'var(--accent-primary)', color: 'black', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start' }}
-            >
-              {isApplying ? t('sending') : t('submit_request')}
-            </button>
-          </form>
-        </div>
-      )}
 
       {profile.tier !== 'ultimate' && (
         <div className="credits-section">

@@ -608,3 +608,39 @@ textarea.form-input {
 .flip-face .account-grid {
   margin-bottom: 0;
 }
+
+/* Numele + bifa de verificare; numele se taie, bifa rămâne vizibilă */
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.name-row h1 {
+  min-width: 0;
+}
+
+/* Cererea de badge din „Editează profilul” */
+.badge-request {
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.badge-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.badge-request-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.badge-request-row .btn-ghost-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

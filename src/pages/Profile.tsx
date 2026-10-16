@@ -8,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getPublicProfile, isFollowing, followUser, unfollowUser, profileName, PublicProfile } from '../lib/social';
 import { SoundGrid } from '../components/SoundGrid';
 import { Avatar } from '../components/Avatar';
+import { RoleBadge } from '../components/RoleBadge';
 import { SocialLinkList } from '../components/SocialLinkList';
 import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
@@ -116,7 +117,10 @@ export const Profile: React.FC = () => {
         <Avatar path={profile.avatar_path} name={name} size={176} className="profile-hero-static" />
         <div className="profile-hero-info">
           <span className="profile-hero-label">{t('profile_label')}</span>
-          <h1 className="profile-hero-name" title={name}>{name}</h1>
+          <div className="name-row">
+            <h1 className="profile-hero-name" title={name}>{name}</h1>
+            <RoleBadge role={profile.role} size={36} />
+          </div>
           <div className="profile-hero-meta">
             {profile.username && profile.display_name && <span>@{profile.username}</span>}
             <span>{t('profile_sounds', { count: profile.sound_count })}</span>

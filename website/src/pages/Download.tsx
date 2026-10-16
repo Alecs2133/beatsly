@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import { MonitorCheck } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Check, Copy, MonitorCheck, MonitorSmartphone } from 'lucide-react';
+import { detectDesktopOS } from '../lib/platform';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { AppleIcon, WindowsIcon } from '../components/PlatformIcons';
 import { useLayoutContext } from '../lib/layoutContext';
@@ -31,7 +33,22 @@ export function DownloadPage() {
   const macUrl = latest.macUrl ?? FALLBACK_MAC_URL;
   const displayVersion = latest.tag ?? `v${__APP_VERSION__}`;
 
+  // Doar Windows și macOS: pe telefon, tabletă sau TV installerul n-ar rula.
+  const os = useMemo(detectDesktopOS, []);
+  const [copied, setCopied] = useState(false);
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocat — linkul e oricum scris pe ecran
+    }
+  };
+
   const handleDownload = (url: string) => {
+    if (!os) return;
     if (!user) {
       requestAuth();
       return;
@@ -65,28 +82,47 @@ export function DownloadPage() {
           viewport={{ once: true, margin: '-100px' }}
           variants={staggerContainer}
         >
-          <motion.h2 variants={fadeInUp}>{t('download_ready_title')}</motion.h2>
-          <motion.p variants={fadeInUp}>{t('download_ready_text')}</motion.p>
-          <motion.div variants={fadeInUp} style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleDownload(winUrl)}
-              className="btn btn-primary btn-large"
-            >
-              <WindowsIcon />
-              {t('download_windows')}
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleDownload(macUrl)}
-              className="btn btn-secondary btn-large glass-btn"
-            >
-              <AppleIcon />
-              {t('download_mac')}
-            </motion.button>
-          </motion.div>
+          {os && (
+            <>
+              <motion.h2 variants={fadeInUp}>{t('download_ready_title')}</motion.h2>
+              <motion.p variants={fadeInUp}>{t('download_ready_text')}</motion.p>
+            </>
+          )}
+          {os ? (
+            <motion.div variants={fadeInUp} className="download-buttons">
+              {/* Sistemul detectat primește butonul principal */}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleDownload(winUrl)}
+                className={`btn btn-large ${os === 'windows' ? 'btn-primary' : 'btn-secondary glass-btn'}`}
+              >
+                <WindowsIcon />
+                {t('download_windows')}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleDownload(macUrl)}
+                className={`btn btn-large ${os === 'mac' ? 'btn-primary' : 'btn-secondary glass-btn'}`}
+              >
+                <AppleIcon />
+                {t('download_mac')}
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.div variants={fadeInUp} className="download-blocked" role="note">
+              <MonitorSmartphone size={22} />
+              <div>
+                <strong>{t('download_desktop_only_title')}</strong>
+                <p>{t('download_desktop_only_text')}</p>
+                <button type="button" className="btn btn-secondary" onClick={copyLink}>
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  {copied ? t('download_link_copied') : t('download_copy_link')}
+                </button>
+              </div>
+            </motion.div>
+          )}
           <motion.p variants={fadeInUp} className="download-note">{t('download_note')}</motion.p>
         </motion.div>
       </section>

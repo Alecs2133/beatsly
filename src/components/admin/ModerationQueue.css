@@ -1,0 +1,161 @@
+/* Coada de moderare din Admin */
+.mod {
+  display: grid;
+  gap: 12px;
+}
+
+.mod-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+}
+
+.mod-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.mod-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mod-bar-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mod input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.mod-list {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.mod-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  transition: border-color var(--dur), background var(--dur);
+}
+
+.mod-row:hover {
+  border-color: var(--line-strong);
+}
+
+.mod-row.sel {
+  border-color: rgba(124, 92, 255, 0.5);
+  background: rgba(124, 92, 255, 0.06);
+}
+
+.mod-play {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: pointer;
+  transition: background var(--dur), transform 0.3s var(--ease-spring);
+}
+
+.mod-play:hover {
+  transform: scale(1.06);
+}
+
+.mod-play.on {
+  background: var(--signal);
+}
+
+.mod-meta {
+  display: grid;
+  min-width: 0;
+}
+
+.mod-meta b {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mod-meta span {
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mod-chip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.mod-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mod-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--dur), border-color var(--dur), background var(--dur);
+}
+
+.mod-icon.ok:hover {
+  color: var(--good);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.mod-icon.danger:hover {
+  color: var(--bad);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.mod-icon:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mod-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+}
