@@ -1,177 +1,261 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Folder } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Play, Plus, Trash2 } from 'lucide-react';
 import { SoundGrid } from '../components/SoundGrid';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { useAppStore } from '../store/useAppStore';
+import { usePlayerStore } from '../store/usePlayerStore';
 import { useTranslation } from '../hooks/useTranslation';
-import { useNavigate } from 'react-router-dom';
 import { useCollections } from '../hooks/useCollections';
 import { createCollection, deleteCollection, fetchCollectionSoundIds } from '../lib/collections';
 import { supabase } from '../lib/supabase';
 import { SoundItem } from '../types/sound';
 import { mapSoundRow } from '../lib/soundRow';
-import { fetchByIdChunks } from '../lib/paging';
+import { fetchAllPages, fetchByIdChunks } from '../lib/paging';
 import { Icon } from '../components/Icon';
+import { Segmented } from '../components/Segmented';
 import { SoundGridSkeleton } from '../components/SoundGridSkeleton';
 import { errorMessage } from '../lib/errors';
+import './MySounds.css';
 
+const SAVED = 'saved';
+const CATEGORIES = ['ALL', 'Loop', 'One-Shot', 'FX'];
+// Nuanțe pentru lăzi, prin rotație — fiecare colecție își păstrează culoarea.
+const CRATE_HUES = [262, 205, 330, 30, 160, 290, 15, 185];
+// Banda de pe ladă nu e lipită niciodată perfect drept.
+const TAPE_TILT = [-2.4, 1.6, -0.8, 2.2, -1.7, 0.9, -2.9, 1.2];
+
+/** Barele decorative de pe o ladă — fixe pe index, ca să nu „sară” la randare. */
+function CrateBars({ seed }: { seed: number }) {
+  return (
+    <span className="crate-bars" aria-hidden>
+      {Array.from({ length: 8 }, (_, i) => (
+        <i key={i} style={{ height: `${30 + ((seed * 13 + i * 29) % 70)}%`, animationDelay: `${-i * 0.08}s` }} />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Sunetele mele: colecțiile ca lăzi cu viniluri. Treci peste o ladă și se
+ * răsfiră; click o deschide.
+ */
 export const MySounds: React.FC = () => {
   const { savedSounds } = useLibraryStore();
   const { searchQuery, showToast } = useAppStore();
+  const playQueue = usePlayerStore(s => s.playQueue);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState('ALL');
   const { collections, refetch: refetchCollections } = useCollections();
-  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
-  const [collectionSounds, setCollectionSounds] = useState<SoundItem[]>([]);
-  const [loadingCollection, setLoadingCollection] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
+  const [openCrate, setOpenCrate] = useState<string | null>(null);
+  const [crateSounds, setCrateSounds] = useState<SoundItem[]>([]);
+  const [loadingCrate, setLoadingCrate] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
 
-  const categories = ['ALL', 'Loop', 'One-Shot', 'FX'];
+  // Câte sunete are fiecare ladă — un singur query pentru toate colecțiile.
+  useEffect(() => {
+    if (collections.length === 0) {
+      setCounts({});
+      return;
+    }
+    const ids = collections.map(c => c.id);
+    fetchAllPages((from, to) =>
+      supabase.from('collection_sounds').select('collection_id').in('collection_id', ids).order('collection_id').range(from, to)
+    )
+      .then(rows => {
+        const next: Record<string, number> = {};
+        rows.forEach(r => { next[r.collection_id] = (next[r.collection_id] ?? 0) + 1; });
+        setCounts(next);
+      })
+      .catch(err => console.error('Failed to count collection sounds:', err));
+  }, [collections]);
 
   useEffect(() => {
-    if (!activeCollectionId) {
-      setCollectionSounds([]);
+    if (!openCrate || openCrate === SAVED) {
+      setCrateSounds([]);
       return;
     }
     let cancelled = false;
-    setLoadingCollection(true);
+    setLoadingCrate(true);
     (async () => {
       try {
-        const ids = await fetchCollectionSoundIds(activeCollectionId);
-        if (ids.length === 0) {
-          if (!cancelled) setCollectionSounds([]);
-          return;
-        }
-        const rows = await fetchByIdChunks(ids, chunk => supabase.from('sounds').select('*').in('id', chunk));
-        // Păstrăm ordinea din colecție (cel mai recent adăugat primul);
-        // `.in()` întoarce rândurile în ordinea tabelei.
+        const ids = await fetchCollectionSoundIds(openCrate);
+        const rows = ids.length
+          ? await fetchByIdChunks(ids, chunk => supabase.from('sounds').select('*').in('id', chunk))
+          : [];
+        // Păstrăm ordinea din colecție (cel mai recent adăugat primul).
         const byId = new Map(rows.map(row => [row.id, row]));
         const ordered = ids.flatMap(id => {
           const row = byId.get(id);
           return row ? [mapSoundRow(row)] : [];
         });
-        if (!cancelled) setCollectionSounds(ordered);
+        if (!cancelled) setCrateSounds(ordered);
       } catch (err) {
         console.error('Failed to load collection:', err);
         showToast(`${t('collections_load_failed')} ${errorMessage(err)}`, 'error');
       } finally {
-        if (!cancelled) setLoadingCollection(false);
+        if (!cancelled) setLoadingCrate(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [activeCollectionId, showToast, t]);
+  }, [openCrate, showToast, t]);
 
-  const handleCreateCollection = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCollectionName.trim()) return;
+    if (!newName.trim()) return;
     try {
-      const collection = await createCollection(newCollectionName.trim());
-      setNewCollectionName('');
+      const collection = await createCollection(newName.trim());
+      setNewName('');
+      setCreating(false);
       await refetchCollections();
-      setActiveCollectionId(collection.id);
+      setOpenCrate(collection.id);
     } catch (err) {
       showToast(`${t('grid_create_failed')} ${errorMessage(err)}`, 'error');
     }
   };
 
-  const handleDeleteCollection = async (collectionId: string) => {
+  const handleDelete = async (collectionId: string) => {
     if (!window.confirm(t('collections_delete_confirm'))) return;
     try {
       await deleteCollection(collectionId);
-      if (activeCollectionId === collectionId) setActiveCollectionId(null);
+      setOpenCrate(null);
       await refetchCollections();
     } catch (err) {
       showToast(`${t('collections_delete_failed')} ${errorMessage(err)}`, 'error');
     }
   };
 
-  const baseSounds = activeCollectionId ? collectionSounds : savedSounds;
+  const baseSounds = openCrate === SAVED ? savedSounds : crateSounds;
+  const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return baseSounds.filter(s =>
+      (!q || s.title.toLowerCase().includes(q) || s.author.toLowerCase().includes(q) || s.tags.some(tag => tag.toLowerCase().includes(q))) &&
+      (typeFilter === 'ALL' || s.type.toLowerCase() === typeFilter.toLowerCase())
+    );
+  }, [baseSounds, searchQuery, typeFilter]);
 
-  const filteredSounds = baseSounds.filter(s => {
-    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          s.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          s.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = activeFilter === 'ALL' || s.type.toLowerCase() === activeFilter.toLowerCase();
-    return matchesSearch && matchesFilter;
-  });
+  const countLabel = (n: number) =>
+    n === 0 ? t('crate_sounds_none') : n === 1 ? t('crate_sounds_one') : t('crate_sounds', { count: n });
+
+  // ---------- Lada deschisă ----------
+  if (openCrate) {
+    const collection = collections.find(c => c.id === openCrate);
+    const title = openCrate === SAVED ? t('crate_all') : collection?.name ?? '';
+    return (
+      <div className="crate-open">
+        <button type="button" className="back-link" onClick={() => { setOpenCrate(null); setTypeFilter('ALL'); }}>
+          <ChevronLeft size={16} /> {t('crate_back')}
+        </button>
+        <div className="crate-open-head">
+          <div>
+            <h1>{title}</h1>
+            <p>{countLabel(baseSounds.length)}</p>
+          </div>
+          <div className="crate-open-actions">
+            <Segmented
+              ariaLabel={t('rack_type')}
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={CATEGORIES.map(cat => ({ value: cat, label: cat === 'ALL' ? t('filter_all') : cat }))}
+            />
+            <button
+              type="button"
+              className="btn-primary-pill"
+              disabled={filtered.length === 0}
+              onClick={() => playQueue(filtered, 0)}
+            >
+              <Play size={15} fill="currentColor" /> {t('crate_play')}
+            </button>
+            {collection && (
+              <button type="button" className="btn-danger-pill" onClick={() => handleDelete(collection.id)} title={t('crate_delete')}>
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {loadingCrate ? (
+          <SoundGridSkeleton rows={5} />
+        ) : filtered.length === 0 ? (
+          <div className="empty-inline">
+            <div className="empty-icon"><Icon name="heart" size={26} play={1} /></div>
+            <p>{openCrate === SAVED ? t('no_saved_sounds') : t('crate_empty')}</p>
+            <button type="button" className="btn-primary-pill" onClick={() => navigate('/')}>{t('explore_discover')}</button>
+          </div>
+        ) : (
+          <SoundGrid sounds={filtered} />
+        )}
+      </div>
+    );
+  }
+
+  // ---------- Lăzile ----------
+  const crates = [
+    { id: SAVED, name: t('crate_all'), count: savedSounds.length },
+    ...collections.map(c => ({ id: c.id, name: c.name, count: counts[c.id] ?? 0 })),
+  ];
 
   return (
-    <div className="library-page">
-      <div className="page-header" style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>{t('my_sounds_title')}</h1>
-        <p style={{ color: 'var(--text-muted)' }}>{t('my_sounds_subtitle')}</p>
+    <div className="crates-page">
+      <div className="crates-head">
+        <h1>{t('my_sounds_title')}</h1>
+        <p>{t('crates_subtitle')}</p>
       </div>
 
-      <div className="filter-container" style={{ marginBottom: 12 }}>
-        <button
-          className={`filter-btn ${activeCollectionId === null ? 'active' : ''}`}
-          onClick={() => setActiveCollectionId(null)}
-        >
-          {t('collections_saved')}
-        </button>
-        {collections.map(c => (
+      <div className="crates">
+        {crates.map((crate, i) => (
           <button
-            key={c.id}
-            className={`filter-btn ${activeCollectionId === c.id ? 'active' : ''}`}
-            onClick={() => setActiveCollectionId(c.id)}
-            onDoubleClick={() => handleDeleteCollection(c.id)}
-            title={t('collections_delete_hint')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            key={crate.id}
+            type="button"
+            className="crate"
+            style={{ '--h': CRATE_HUES[i % CRATE_HUES.length], '--i': i } as React.CSSProperties}
+            onClick={() => setOpenCrate(crate.id)}
           >
-            <Folder size={13} /> {c.name}
+            <span className="crate-slab" />
+            <span className="crate-slab" />
+            <span className="crate-slab front">
+              <CrateBars seed={i + 1} />
+              <span className="num">{countLabel(crate.count)}</span>
+            </span>
+            <span className="crate-lip">
+              <span className="crate-tape" style={{ '--r': `${TAPE_TILT[i % TAPE_TILT.length]}deg` } as React.CSSProperties} title={crate.name}>
+                {crate.name}
+              </span>
+              <span className="crate-no num">{String(i + 1).padStart(2, '0')}</span>
+            </span>
           </button>
         ))}
-        <form onSubmit={handleCreateCollection} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <input
-            value={newCollectionName}
-            onChange={e => setNewCollectionName(e.target.value)}
-            placeholder={t('collections_new_placeholder')}
-            style={{ padding: '6px 10px', borderRadius: 16, border: '1px solid var(--border-strong)', background: 'rgba(0,0,0,0.3)', color: 'var(--text-main)', fontSize: 12, width: 140 }}
-          />
-          <button type="submit" className="filter-btn" style={{ display: 'flex', alignItems: 'center' }} title={t('collections_new_placeholder')}>
-            <Plus size={14} />
-          </button>
-        </form>
-      </div>
 
-      <div className="filter-container">
-        {categories.map(cat => (
+        {creating ? (
+          <form className="crate crate-new editing" style={{ '--i': crates.length } as React.CSSProperties} onSubmit={handleCreate}>
+            <span className="crate-slab front">
+              <input
+                autoFocus
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                placeholder={t('collections_new_placeholder')}
+                onBlur={() => { if (!newName.trim()) setCreating(false); }}
+                onKeyDown={e => { if (e.key === 'Escape') setCreating(false); }}
+              />
+              <button type="submit" className="btn-primary-pill">{t('grid_create')}</button>
+            </span>
+            <span className="crate-lip"><span className="crate-tape blank" style={{ '--r': '-1deg' } as React.CSSProperties}>{newName || t('crate_new')}</span><span className="crate-no num">{String(crates.length + 1).padStart(2, '0')}</span></span>
+          </form>
+        ) : (
           <button
-            key={cat}
-            className={`filter-btn ${activeFilter === cat ? 'active' : ''}`}
-            onClick={() => setActiveFilter(cat)}
+            type="button"
+            className="crate crate-new"
+            style={{ '--i': crates.length } as React.CSSProperties}
+            onClick={() => setCreating(true)}
           >
-            {cat === 'ALL' ? t('filter_all') : cat}
+            <span className="crate-slab front" aria-label={t('crate_new')}><Plus size={26} /></span>
+            <span className="crate-lip"><span className="crate-tape blank" style={{ '--r': '-1deg' } as React.CSSProperties}>{newName || t('crate_new')}</span><span className="crate-no num">{String(crates.length + 1).padStart(2, '0')}</span></span>
           </button>
-        ))}
+        )}
       </div>
-
-      {loadingCollection ? (
-        <SoundGridSkeleton rows={5} />
-      ) : filteredSounds.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
-          <div className="empty-icon"><Icon name="heart" size={26} play={1} /></div>
-          <h2 style={{ color: 'white', marginBottom: '12px' }}>{t('no_saved_sounds')}</h2>
-          <button 
-            onClick={() => navigate('/')}
-            style={{
-              background: 'var(--gradient-primary)',
-              color: 'white',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '20px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              marginTop: '16px'
-            }}
-          >
-            {t('explore_discover')}
-          </button>
-        </div>
-      ) : (
-        <SoundGrid sounds={filteredSounds} />
-      )}
     </div>
   );
 };

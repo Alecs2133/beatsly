@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { SectionLink } from './SectionLink';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut, UserCircle, Menu, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { useT } from '../i18n/context';
 import { LanguageToggle } from './LanguageToggle';
+import { Icon } from './Icon';
 
 interface NavbarProps {
   user: User | null;
@@ -20,10 +20,10 @@ const NAV_LINK_CLASS = ({ isActive }: { isActive: boolean }) => (isActive ? 'act
 /** Link cu pastila animată sub el cât timp e ruta activă. Doar pentru navbar-ul desktop. */
 function DesktopNavLink({ to, label }: { to: string; label: string }) {
   return (
-    <NavLink to={to} className={NAV_LINK_CLASS}>
+    <NavLink to={to} end className={NAV_LINK_CLASS}>
       {({ isActive }) => (
         <>
-          {label}
+          <span>{label}</span>
           {isActive && (
             <motion.span
               layoutId="nav-underline"
@@ -66,12 +66,12 @@ export function Navbar({ user, authReady, scrolled, onSignOut, onRequestAuth }: 
     <nav className={`navbar ${scrolled || menuOpen ? 'glass scrolled' : 'transparent'}`}>
       {/* Click pe logo sau pe "Beats.ly" duce mereu la pagina principală. */}
       <Link to="/" className="nav-brand">
-        <div className="logo-icon"><img src="/app-icon.png" alt="Beats.ly Logo" /></div>
-        <span className="logo-text">Beats.ly</span>
+        <Icon name="logo" size={28} className="brand-mark" />
+        <span className="brand-word">beats<em>.ly</em></span>
       </Link>
 
       <div className="nav-links">
-        <SectionLink section="features">{t('nav_features')}</SectionLink>
+        <DesktopNavLink to="/" label={t('nav_features')} />
         <DesktopNavLink to="/pricing" label={t('nav_pricing')} />
         <DesktopNavLink to="/download" label={t('nav_download')} />
       </div>
@@ -124,7 +124,7 @@ export function Navbar({ user, authReady, scrolled, onSignOut, onRequestAuth }: 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
           >
-            <SectionLink section="features">{t('nav_features')}</SectionLink>
+            <NavLink to="/" end className={NAV_LINK_CLASS}>{t('nav_features')}</NavLink>
             <NavLink to="/pricing" className={NAV_LINK_CLASS}>{t('nav_pricing')}</NavLink>
             <NavLink to="/download" className={NAV_LINK_CLASS}>{t('nav_download')}</NavLink>
             {user && (

@@ -23,7 +23,10 @@ const NOTE_TO_SEMITONE: Record<string, number> = {
   'F#': 6, GB: 6, G: 7, 'G#': 8, AB: 8, A: 9, 'A#': 10, BB: 10, B: 11,
 };
 
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+// Scrierea folosită de producători și pe roata Camelot: bemoli la major (Eb, Bb),
+// diezi unde sunt uzuali la minor (C#m, F#m, G#m).
+const MAJOR_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const MINOR_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
 
 const KEY_PATTERN = /^([A-G])(#|B)?\s*(MIN(?:OR)?|MAJ(?:OR)?|M)?$/;
 
@@ -98,6 +101,6 @@ export interface KeyOption {
 
 /** Toate cele 24 de tonalități — pentru un dropdown de selecție. */
 export const ALL_KEYS: KeyOption[] = [
-  ...NOTE_NAMES.map((label, root) => ({ label, key: { root, mode: 'major' as const } })),
-  ...NOTE_NAMES.map((label, root) => ({ label: `${label}m`, key: { root, mode: 'minor' as const } })),
+  ...MAJOR_NAMES.map((label, root) => ({ label, key: { root, mode: 'major' as const } })),
+  ...MINOR_NAMES.map((label, root) => ({ label: `${label}m`, key: { root, mode: 'minor' as const } })),
 ];

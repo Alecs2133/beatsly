@@ -45,22 +45,10 @@
 .auth-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
   margin-bottom: 28px;
   font-weight: 800;
   font-size: 20px;
-}
-
-.auth-logo-icon {
-  background: var(--gradient-primary);
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: var(--shadow-glow);
 }
 
 .auth-tabs {

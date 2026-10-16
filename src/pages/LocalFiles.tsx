@@ -138,7 +138,7 @@ export const LocalFiles: React.FC = () => {
       )}
 
       {!loading && !error && sounds.length > 0 && (
-        <SoundGrid
+        <SoundGrid view="list"
           sounds={sounds}
           // Fără asta, o corecție de BPM/key găsită prin analiză reală s-ar
           // pierde la următoarea navigare: `SoundGrid` ține propriul state

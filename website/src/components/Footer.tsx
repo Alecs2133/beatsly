@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SectionLink } from './SectionLink';
 import { useT } from '../i18n/context';
+import { Icon } from './Icon';
 
 export function Footer() {
   const { t } = useT();
@@ -8,10 +9,13 @@ export function Footer() {
   return (
     <footer className="footer">
       <div className="footer-content">
-        <Link to="/" className="footer-brand">
-          <div className="logo-icon"><img src="/app-icon.png" alt="Beats.ly Logo" /></div>
-          <span>Beats.ly</span>
-        </Link>
+        <div className="footer-about">
+          <Link to="/" className="footer-brand">
+            <Icon name="logo" size={24} className="brand-mark" />
+            <span className="brand-word">beats<em>.ly</em></span>
+          </Link>
+          <p>{t('footer_made')}</p>
+        </div>
         <div className="footer-links">
           <Link to="/pricing">{t('nav_pricing')}</Link>
           <Link to="/download">{t('nav_download')}</Link>

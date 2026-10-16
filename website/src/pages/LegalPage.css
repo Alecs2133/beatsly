@@ -27,9 +27,7 @@
 }
 
 .legal-aside h2 {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 13px;
   color: var(--text-muted);
   margin-bottom: 10px;
 }

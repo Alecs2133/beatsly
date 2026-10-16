@@ -1,0 +1,208 @@
+/* Sunetele mele — colecțiile ca lăzi cu viniluri */
+.crates-head {
+  margin-bottom: 26px;
+}
+
+.crates-head h1,
+.crate-open-head h1 {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.crates-head p,
+.crate-open-head p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.crates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 30px 20px;
+}
+
+.crate {
+  position: relative;
+  height: 220px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  animation: cardIn 0.6s var(--ease-out) backwards;
+  animation-delay: calc(var(--i) * 60ms);
+}
+
+.crate-slab {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  height: 146px;
+  border-radius: 14px;
+  background: linear-gradient(150deg, hsl(var(--h) 55% 32%), hsl(var(--h) 40% 12%));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 12px 26px -12px rgba(0, 0, 0, 0.8);
+  transform-origin: 50% 100%;
+  transition: transform 0.55s var(--ease-spring), filter 0.4s var(--ease-out);
+}
+
+.crate-slab:nth-child(1) { transform: translateY(-14px) scale(0.9); filter: brightness(0.6); }
+.crate-slab:nth-child(2) { transform: translateY(-7px) scale(0.95); filter: brightness(0.8); }
+
+.crate-slab.front {
+  display: grid;
+  align-content: end;
+  gap: 2px;
+  /* jos rămâne loc pentru buza lăzii, care acoperă ultimii ~18px */
+  padding: 14px 14px 30px;
+}
+
+.crate-slab.front > span.num {
+  font-size: 12px;
+  color: rgba(236, 235, 243, 0.75);
+}
+
+.crate-bars {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 34px;
+  opacity: 0.45;
+}
+
+.crate-bars i {
+  width: 3px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+/* Hover: lada se răsfiră */
+.crate:hover .crate-slab:nth-child(1) { transform: translate(-30px, -18px) rotate(-9deg) scale(0.92); filter: brightness(0.7); }
+.crate:hover .crate-slab:nth-child(2) { transform: translate(26px, -14px) rotate(7deg) scale(0.96); filter: brightness(0.85); }
+.crate:hover .crate-slab.front { transform: translateY(6px); }
+.crate:hover .crate-bars i { animation: waveBob 0.5s ease-in-out infinite alternate; }
+.crate:active .crate-slab.front { transform: translateY(8px) scale(0.98); }
+
+.crate-lip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  z-index: 2;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px 0 10px;
+  border-radius: 4px 4px 16px 16px;
+  /* placaj: dungi fine, ca o ladă de lemn vopsită */
+  background:
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(255, 255, 255, 0.018) 22px 23px),
+    linear-gradient(180deg, #1f1e27, #16151c);
+  border: 1px solid var(--line);
+  border-top: 2px solid #2e2d39;
+  color: var(--faint);
+}
+
+/* Banda de hârtie cu numele, scris de mână */
+.crate-tape {
+  max-width: calc(100% - 34px);
+  padding: 1px 12px 2px;
+  background: var(--tape);
+  color: var(--tape-ink);
+  font: 600 22px/1.15 var(--font-hand);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: rotate(var(--r, -1deg));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  /* capete rupte, nu tăiate drept */
+  clip-path: polygon(2% 8%, 7% 0, 30% 6%, 55% 0, 80% 5%, 98% 0, 100% 40%, 97% 100%, 70% 94%, 42% 100%, 15% 95%, 0 100%, 3% 55%);
+  opacity: 0.94;
+  transition: transform 0.45s var(--ease-spring);
+}
+
+.crate:hover .crate-tape {
+  transform: rotate(calc(var(--r, -1deg) * -0.4)) translateY(-1px);
+}
+
+.crate-tape.blank {
+  color: rgba(42, 39, 51, 0.55);
+}
+
+.crate-no {
+  font-size: 11px;
+}
+
+/* Lada „+ nouă” */
+.crate-new .crate-slab.front {
+  place-items: center;
+  align-content: center;
+  grid-auto-flow: column;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px dashed var(--line-strong);
+  box-shadow: none;
+  color: var(--muted);
+  font-weight: 600;
+  transition: border-color var(--dur), color var(--dur), transform 0.55s var(--ease-spring);
+}
+
+.crate-new:hover .crate-slab.front {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.crate-new.editing .crate-slab.front {
+  grid-auto-flow: row;
+  align-content: center;
+  gap: 10px;
+  padding: 16px;
+  border-color: var(--accent);
+}
+
+.crate-new.editing input {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.crate-new.editing input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Lada deschisă */
+.crate-open {
+  display: grid;
+  gap: 16px;
+  animation: pageIn var(--dur-slow) var(--ease-out) backwards;
+}
+
+.crate-open-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.crate-open-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

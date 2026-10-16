@@ -1,188 +1,159 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Music, ArrowRight, Download, Tag } from 'lucide-react';
-import { Icon, type IconName } from '../components/Icon';
-import { HeroSignal } from '../components/HeroSignal';
+import { ArrowRight, Download } from 'lucide-react';
 import type { TranslationKey } from '../i18n/en';
 import { fadeInUp, staggerContainer } from '../lib/animations';
+import { useLatestRelease } from '../lib/useLatestRelease';
 import { FaqItem } from '../components/FaqItem';
+import { KeyDemo } from '../components/KeyDemo';
 import { FAQS } from '../data/faqs';
 import { useT } from '../i18n/context';
+import './Home.css';
 
-const FEATURES: { icon: IconName; title: TranslationKey; text: TranslationKey; soon?: boolean }[] = [
-  { icon: 'upload', title: 'feature_cloud_title', text: 'feature_cloud_text' },
-  { icon: 'sparkle', title: 'feature_ai_title', text: 'feature_ai_text', soon: true },
-  { icon: 'headphones', title: 'feature_library_title', text: 'feature_library_text' },
-  { icon: 'signal', title: 'feature_fast_title', text: 'feature_fast_text' },
-  { icon: 'check', title: 'feature_verified_title', text: 'feature_verified_text' },
-  { icon: 'crew', title: 'feature_crews_title', text: 'feature_crews_text' },
+const STEPS: { title: TranslationKey; text: TranslationKey; keys?: string[] }[] = [
+  { title: 'step_1_title', text: 'step_1_text' },
+  { title: 'step_2_title', text: 'step_2_text', keys: ['Ctrl', 'K'] },
+  { title: 'step_3_title', text: 'step_3_text' },
 ];
 
-/** Titlul apare cuvânt cu cuvânt, din blur. */
-function Words({ text, offset = 0 }: { text: string; offset?: number }) {
+const SPECS: { title: TranslationKey; text: TranslationKey; soon?: boolean }[] = [
+  { title: 'feature_library_title', text: 'feature_library_text' },
+  { title: 'feature_cloud_title', text: 'feature_cloud_text' },
+  { title: 'feature_verified_title', text: 'feature_verified_text' },
+  { title: 'feature_crews_title', text: 'feature_crews_text' },
+  { title: 'feature_ai_title', text: 'feature_ai_text', soon: true },
+];
+
+/** Linia trasă de mână sub un cuvânt din titlu. */
+function Scribble() {
   return (
-    <>
-      {text.split(' ').map((word, i) => (
-        <span key={`${word}-${i}`} className="hero-word" style={{ '--i': i + offset } as React.CSSProperties}>
-          {word}{' '}
-        </span>
-      ))}
-    </>
+    <svg className="scribble" viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden>
+      <path d="M3 12c22-6 46-8 70-6s40 6 62 3c18-2 36-7 62-5" />
+      <path d="M18 15c34-3 70-2 104-1" />
+    </svg>
+  );
+}
+
+/** Cuvintele cu cratimă („sample-ul”, „să-ți”) nu se rup la capăt de rând. */
+function keepHyphenated(text: string) {
+  return text.split(/(\s+)/).map((part, i) =>
+    part.includes('-') ? <span key={i} className="nowrap">{part}</span> : part
   );
 }
 
 export function Home() {
   const { t } = useT();
-  const firstLineWords = t('hero_title_1').split(' ').length;
+  const latest = useLatestRelease();
+  const version = latest.tag ?? `v${__APP_VERSION__}`;
 
   return (
     <>
-      {/* Hero Section */}
-      <header className="hero">
-        <HeroSignal />
-        <motion.div
-          className="hero-content"
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-        >
-          <h1 className="hero-title">
-            <Words text={t('hero_title_1')} />
-            <br />
-            <span className="glow-text"><Words text={t('hero_title_2')} offset={firstLineWords} /></span>
-          </h1>
-          <motion.p className="hero-subtitle" variants={fadeInUp}>
-            {t('hero_subtitle')}
-          </motion.p>
-          <motion.div className="hero-cta" variants={fadeInUp}>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/download" className="btn btn-primary">
-                <Download size={18} />
-                {t('hero_cta_download')}
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/pricing" className="btn btn-secondary glass-btn">
-                <Tag size={18} />
-                {t('hero_cta_pricing')}
-              </Link>
-            </motion.div>
+      <header className="home-hero">
+        <motion.div className="home-hero-text" initial="hidden" animate="visible" variants={staggerContainer}>
+          <motion.p className="home-kicker" variants={fadeInUp}>{t('hero_kicker')}</motion.p>
+          <motion.h1 variants={fadeInUp}>
+            {keepHyphenated(t('hero_title_a'))}
+            <span className="marked">{t('hero_title_mark')}<Scribble /></span>
+            {keepHyphenated(t('hero_title_b'))}
+          </motion.h1>
+          <motion.p className="home-lead" variants={fadeInUp}>{t('hero_lead')}</motion.p>
+          <motion.div className="home-cta" variants={fadeInUp}>
+            <Link to="/download" className="btn btn-primary">
+              <Download size={18} /> {t('hero_cta_download')}
+            </Link>
+            <Link to="/pricing" className="btn btn-secondary">{t('hero_cta_pricing')}</Link>
           </motion.div>
+          <motion.p className="home-meta" variants={fadeInUp}>
+            <span className="num">{version}</span> · {t('hero_meta')}
+          </motion.p>
         </motion.div>
 
-        {/* 3D App Mockup */}
         <motion.div
-          className="hero-mockup-container"
-          initial={{ opacity: 0, y: 100, rotateX: 20 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          transition={{ duration: 1, delay: 0.2, type: 'spring', bounce: 0.4 }}
+          className="home-hero-demo"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="mockup-glow"></div>
-          <img
-            src="/hero-app.png"
-            alt={t('hero_mockup_alt')}
-            className="mockup-image"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              target.parentElement?.classList.add('show-placeholder');
-            }}
-          />
-          <div className="mockup-placeholder glass">
-            <div className="placeholder-content">
-              <Music size={48} style={{ opacity: 0.5 }} />
-            </div>
-          </div>
+          <p className="hand-note" aria-hidden>
+            {t('demo_note')}
+            <svg viewBox="0 0 60 40"><path d="M4 6c14 2 30 10 40 26M44 32l-9-1M44 32l1-9" /></svg>
+          </p>
+          <KeyDemo />
         </motion.div>
       </header>
 
-      {/* Features Section */}
-      <section id="features" className="features">
-        <motion.div
+      {/* Cum lucrezi cu ea — trei pași, fără iconițe decorative */}
+      <section className="home-section">
+        <div className="home-section-head">
+          <h2>{t('steps_title')}</h2>
+          <p>{t('steps_sub')}</p>
+        </div>
+        <motion.ol
+          className="home-steps"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          variants={fadeInUp}
-        >
-          <h2 className="section-title">{t('features_title_1')} <span className="glow-text">{t('features_title_2')}</span></h2>
-        </motion.div>
-
-        <motion.div
-          className="features-grid"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
+          viewport={{ once: true, margin: '-60px' }}
           variants={staggerContainer}
         >
-          {FEATURES.map((f) => (
-            <motion.div key={f.title} className="feature-card glass bi-trigger" variants={fadeInUp}>
-              <div className="feature-icon"><Icon name={f.icon} size={24} /></div>
-              <h3>
-                {t(f.title)}
-                {f.soon && <span className="soon-badge">{t('common_coming_soon')}</span>}
-              </h3>
-              <p>{t(f.text)}</p>
-            </motion.div>
+          {STEPS.map((s, i) => (
+            <motion.li key={s.title} variants={fadeInUp}>
+              <span className="step-n num">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{t(s.title)}</h3>
+              <p>{t(s.text)}</p>
+              {s.keys && (
+                <span className="kbd-row" aria-hidden>
+                  {s.keys.map(k => <kbd key={k}>{k}</kbd>)}
+                </span>
+              )}
+            </motion.li>
           ))}
-        </motion.div>
+        </motion.ol>
       </section>
 
-      {/* Quick links: teaser catre paginile dedicate Pricing / Download */}
-      <section className="quick-links">
-        <motion.div
-          className="quick-links-grid"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={staggerContainer}
-        >
-          <motion.div variants={fadeInUp}>
-            <Link to="/pricing" className="quick-link-card glass">
-              <div className="quick-link-icon" style={{ color: 'var(--accent-primary)' }}><Tag size={28} /></div>
-              <div className="quick-link-text">
-                <h3>{t('quick_pricing_title')}</h3>
-                <p>{t('quick_pricing_text')}</p>
-              </div>
-              <ArrowRight className="quick-link-arrow" size={20} />
-            </Link>
-          </motion.div>
-          <motion.div variants={fadeInUp}>
-            <Link to="/download" className="quick-link-card glass">
-              <div className="quick-link-icon" style={{ color: 'var(--accent-secondary)' }}><Download size={28} /></div>
-              <div className="quick-link-text">
-                <h3>{t('quick_download_title')}</h3>
-                <p>{t('quick_download_text')}</p>
-              </div>
-              <ArrowRight className="quick-link-arrow" size={20} />
-            </Link>
-          </motion.div>
-        </motion.div>
+      {/* Captură reală din aplicație */}
+      <section className="home-shot">
+        <figure>
+          <img src="/app-discover.jpg" alt={t('hero_mockup_alt')} loading="lazy" width={1440} height={900} />
+          <figcaption>{t('shot_caption', { version })}</figcaption>
+        </figure>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="faq-section">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={fadeInUp}
-        >
-          <h2 className="section-title">{t('faq_title_1')} <span className="glow-text">{t('faq_title_2')}</span></h2>
-          <p className="faq-subtitle">{t('faq_subtitle')}</p>
-        </motion.div>
-        <motion.div
-          className="faq-list"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-        >
-          {FAQS.map((item) => (
-            <motion.div key={item.id} variants={fadeInUp}>
-              <FaqItem id={item.id} q={t(item.q)} a={t(item.a)} />
-            </motion.div>
+      {/* Fișa tehnică: ce face, spus simplu */}
+      <section className="home-section">
+        <div className="home-section-head">
+          <h2>{t('specs_title')}</h2>
+        </div>
+        <dl className="home-specs">
+          {SPECS.map(s => (
+            <div key={s.title}>
+              <dt>
+                {t(s.title)}
+                {s.soon && <span className="soon-badge">{t('common_coming_soon')}</span>}
+              </dt>
+              <dd>{t(s.text)}</dd>
+            </div>
           ))}
-        </motion.div>
+        </dl>
+      </section>
+
+      <section id="faq" className="home-section">
+        <div className="home-section-head">
+          <h2>{t('faq_heading')}</h2>
+          <p>{t('faq_subtitle')}</p>
+        </div>
+        <div className="faq-list">
+          {FAQS.map(item => (
+            <FaqItem key={item.id} id={item.id} q={t(item.q)} a={t(item.a)} />
+          ))}
+        </div>
+      </section>
+
+      <section className="home-end">
+        <h2>{t('end_title')}</h2>
+        <p>{t('end_text')}</p>
+        <Link to="/download" className="btn btn-primary">
+          {t('hero_cta_download')} <ArrowRight size={18} />
+        </Link>
       </section>
     </>
   );

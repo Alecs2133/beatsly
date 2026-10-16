@@ -17,7 +17,7 @@
   align-items: center;
   gap: 18px;
   margin-bottom: 36px;
-  animation: pageIn 0.6s var(--ease-out) both;
+  animation: pageIn 0.6s var(--ease-out) backwards;
 }
 
 /* Barele logo-ului „cântă” cât se încarcă aplicația */
@@ -50,24 +50,21 @@
 }
 
 .loading-progress-bar {
+  width: 35%;
   height: 100%;
-  background: var(--signal);
-  width: 0%;
   border-radius: 3px;
-  transition: width 0.5s var(--ease-out);
+  background: var(--signal);
+  animation: loadSlide 1.1s var(--ease-out) infinite;
 }
 
-.loading-text {
-  margin-top: 14px;
-  font: 400 11px var(--font-mono);
-  color: var(--muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+@keyframes loadSlide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(290%); }
 }
 
 .loading-screen.fade-out {
   opacity: 0;
   transform: scale(1.02);
   pointer-events: none;
-  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+  transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out);
 }

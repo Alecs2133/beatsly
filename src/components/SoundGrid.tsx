@@ -21,6 +21,9 @@ import { createCollection, addSoundToCollection, Collection } from '../lib/colle
 import type { TranslationKeys } from '../i18n/en';
 import { Share2, Pencil, Trash2, Wand2, FolderPlus, Check } from 'lucide-react';
 import { Icon } from './Icon';
+import { WaveBars } from './WaveBars';
+import { keyHue, camelotCode, shortKey } from '../lib/keyColor';
+import type { SoundView } from '../store/useAppStore';
 import { startDrag } from '@crabnebula/tauri-plugin-drag';
 import { invoke } from '@tauri-apps/api/core';
 import { errorMessage } from '../lib/errors';
@@ -68,7 +71,6 @@ const SoundRow = React.memo(({
   const ownerId = sound.owner_id;
   const isDraggable = sound.id.toString().startsWith('local-') && !!localPath;
   const isLocal = sound.id.toString().startsWith('local-');
-  const [newCollectionName, setNewCollectionName] = React.useState('');
   // Contor pentru animația inimii — crește doar la salvare, nu la ștergere.
   const [likeTick, setLikeTick] = React.useState(0);
 
@@ -119,7 +121,13 @@ const SoundRow = React.memo(({
         )}
       </div>
       <div className="col col-bpm num">{sound.bpm || '–'}</div>
-      <div className="col col-key">{sound.key ? <span className="key-chip">{sound.key}</span> : <span className="muted">–</span>}</div>
+      <div className="col col-key">
+        {sound.key ? (
+          <span className="key-chip" title={sound.key}>
+            {camelotCode(sound.key) ? `${camelotCode(sound.key)} · ${shortKey(sound.key) ?? sound.key}` : sound.key}
+          </span>
+        ) : <span className="muted">–</span>}
+      </div>
       <div className="col col-tags">
         {sound.tags.map((tag: string) => (
           <span key={tag} className="tag">{tag}</span>
@@ -140,44 +148,16 @@ const SoundRow = React.memo(({
         <button className="row-action-btn bi-trigger" onClick={() => onDownload(sound)} title={t('download')}><Icon name="download" size={18} /></button>
         <button className="row-action-btn" onClick={() => onShare(sound)} title={t('grid_share')}><Share2 size={18} /></button>
         {isLoggedIn && !isLocal && (
-          <div className="collection-menu-anchor">
-            <button
-              className="row-action-btn"
-              onClick={() => onToggleCollectionMenu(sound.id)}
-              title={t('grid_add_to_collection')}
-            >
-              <FolderPlus size={18} />
-            </button>
-            {collectionMenuOpen && (
-              <div className="collection-menu">
-                {collections.length === 0 && (
-                  <div className="collection-menu-empty">{t('grid_no_collections')}</div>
-                )}
-                {collections.map(c => (
-                  <button key={c.id} className="collection-menu-item" onClick={() => onAddToCollection(sound, c.id)}>
-                    {c.name}
-                  </button>
-                ))}
-                <form
-                  className="collection-menu-new"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!newCollectionName.trim()) return;
-                    onCreateCollection(sound, newCollectionName.trim());
-                    setNewCollectionName('');
-                  }}
-                >
-                  <input
-                    value={newCollectionName}
-                    onChange={e => setNewCollectionName(e.target.value)}
-                    placeholder={t('collections_new_placeholder')}
-                    onClick={e => e.stopPropagation()}
-                  />
-                  <button type="submit" title={t('grid_create')}><Check size={14} /></button>
-                </form>
-              </div>
-            )}
-          </div>
+          <CollectionMenu
+            sound={sound}
+            open={collectionMenuOpen}
+            collections={collections}
+            t={t}
+            buttonClass="row-action-btn"
+            onToggle={onToggleCollectionMenu}
+            onAdd={onAddToCollection}
+            onCreate={onCreateCollection}
+          />
         )}
         {isLocal && !!sound.local_path && (
           <button
@@ -203,6 +183,165 @@ const SoundRow = React.memo(({
   );
 });
 
+interface CollectionMenuProps {
+  sound: SoundItem;
+  open: boolean;
+  collections: Collection[];
+  t: (key: TranslationKeys) => string;
+  buttonClass: string;
+  onToggle: (soundId: string | number) => void;
+  onAdd: (sound: SoundItem, collectionId: string) => void;
+  onCreate: (sound: SoundItem, name: string) => void;
+}
+
+/** Butonul „Adaugă în colecție” + meniul lui — comun pentru rânduri și carduri. */
+const CollectionMenu: React.FC<CollectionMenuProps> = ({ sound, open, collections, t, buttonClass, onToggle, onAdd, onCreate }) => {
+  const [name, setName] = React.useState('');
+  return (
+    <div className="collection-menu-anchor">
+      <button className={buttonClass} onClick={() => onToggle(sound.id)} title={t('grid_add_to_collection')}>
+        <FolderPlus size={18} />
+      </button>
+      {open && (
+        <div className="collection-menu">
+          {collections.length === 0 && <div className="collection-menu-empty">{t('grid_no_collections')}</div>}
+          {collections.map(c => (
+            <button key={c.id} className="collection-menu-item" onClick={() => onAdd(sound, c.id)}>
+              {c.name}
+            </button>
+          ))}
+          <form
+            className="collection-menu-new"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!name.trim()) return;
+              onCreate(sound, name.trim());
+              setName('');
+            }}
+          >
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder={t('collections_new_placeholder')}
+              onClick={e => e.stopPropagation()}
+            />
+            <button type="submit" title={t('grid_create')}><Check size={14} /></button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Sunetul ca un card: forma de undă reală (se umple cât cântă), play care
+ * devine egalizator, culoarea tonalității și aceleași acțiuni ca rândul.
+ */
+const SoundCard = React.memo((props: SoundRowProps & { onHoverStart: (sound: SoundItem) => void; onHoverEnd: () => void }) => {
+  const {
+    sound, index, isCurrentTrack, isPlaying, isSaved, canPublish, canModerate, isAnalyzing, isLoggedIn, t,
+    collectionMenuOpen, collections, onPlay, onLike, onDownload, onPublish, onEdit, onDelete, onAnalyze,
+    onNavigateToProfile, onToggleCollectionMenu, onAddToCollection, onCreateCollection, onHoverStart, onHoverEnd,
+  } = props;
+  const [likeTick, setLikeTick] = React.useState(0);
+  const isLocal = sound.id.toString().startsWith('local-');
+  const localPath = sound.local_path;
+  const isDraggable = isLocal && !!localPath;
+  const hue = keyHue(sound.key);
+  const code = camelotCode(sound.key);
+  const short = shortKey(sound.key);
+  // Uneltele rare (editare, ștergere, analiză, publicare) stau pe waveform și
+  // apar la hover — în footer n-ar încăpea pe un card îngust.
+  const hasTools = (isLocal && !!localPath) || (isLocal && canPublish) || (!isLocal && canModerate);
+
+  return (
+    <article
+      className={`sound-card${isCurrentTrack ? ' current' : ''}${isPlaying ? ' playing' : ''}${hue == null ? ' no-key' : ''}`}
+      style={{ '--h': hue ?? 255, '--i': Math.min(index, 14) } as React.CSSProperties}
+      onPointerMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+      }}
+      onPointerEnter={() => onHoverStart(sound)}
+      onPointerLeave={onHoverEnd}
+      draggable={isDraggable}
+      onDragStart={(e) => {
+        if (!isDraggable || !localPath) return;
+        e.preventDefault();
+        startDrag({ item: [localPath], icon: 'icon.png' });
+      }}
+    >
+      <div className="sc-wave" onClick={() => onPlay(sound)}>
+        <WaveBars url={sound.preview_url || sound.file_url} active={isCurrentTrack} />
+      </div>
+      <button type="button" className="sc-play" onClick={() => onPlay(sound)} aria-label={sound.title}>
+        <svg className="play-tri" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden><path d="M7 4.5v15l13-7.5z" /></svg>
+        <span className="row-eq" aria-hidden><span /><span /><span /></span>
+      </button>
+      {hasTools && (
+        <div className="sc-tools">
+          {isLocal && !!localPath && (
+            <button className="sc-tool" onClick={() => onAnalyze(sound)} disabled={isAnalyzing} title={t('grid_analyze')}>
+              {isAnalyzing ? <Icon name="signal" size={15} play /> : <Wand2 size={15} />}
+            </button>
+          )}
+          {isLocal && canPublish && (
+            <button className="sc-tool" onClick={() => onPublish(sound)} title={t('grid_publish')}><Icon name="upload" size={15} /></button>
+          )}
+          {!isLocal && canModerate && (
+            <>
+              <button className="sc-tool" onClick={() => onEdit(sound)} title={t('grid_edit')}><Pencil size={14} /></button>
+              <button className="sc-tool danger" onClick={() => onDelete(sound)} title={t('grid_delete')}><Trash2 size={14} /></button>
+            </>
+          )}
+        </div>
+      )}
+      <div className="sc-meta">
+        <b title={sound.title}>
+          {sound.title}
+          {sound.license && sound.license !== 'royalty_free' && (
+            <span className="license-badge" title={licenseLabel(sound.license)}>{licenseShortLabel(sound.license)}</span>
+          )}
+        </b>
+        {sound.owner_id ? (
+          <button className="sound-author sound-author-link" onClick={() => onNavigateToProfile(sound.owner_id!)}>{sound.author}</button>
+        ) : (
+          <span className="sound-author">{sound.author}</span>
+        )}
+      </div>
+      <div className="sc-foot">
+        {sound.bpm ? <span className="sc-chip num">{sound.bpm}</span> : null}
+        {sound.key ? <span className="sc-chip key" title={sound.key}>{code ? `${code} · ${short ?? sound.key}` : sound.key}</span> : null}
+        <span className="sc-spacer" />
+        <button
+          className={`row-action-btn bi-trigger${isSaved ? ' saved' : ''}`}
+          onClick={() => { if (!isSaved) setLikeTick(n => n + 1); onLike(sound); }}
+          title={t('save_to_my_sounds')}
+          aria-pressed={isSaved}
+        >
+          <Icon name="heart" size={18} filled={isSaved} play={likeTick} />
+        </button>
+        <button className="row-action-btn bi-trigger" onClick={() => onDownload(sound)} title={t('download')}>
+          <Icon name="download" size={18} />
+        </button>
+        {isLoggedIn && !isLocal && (
+          <CollectionMenu
+            sound={sound}
+            open={collectionMenuOpen}
+            collections={collections}
+            t={t}
+            buttonClass="row-action-btn"
+            onToggle={onToggleCollectionMenu}
+            onAdd={onAddToCollection}
+            onCreate={onCreateCollection}
+          />
+        )}
+      </div>
+    </article>
+  );
+});
+
 interface SoundGridProps {
   sounds: SoundItem[];
   /**
@@ -213,6 +352,8 @@ interface SoundGridProps {
    * resincronizează din prop-ul `sounds` primit de la părinte.
    */
   onSoundUpdated?: (id: string | number, updates: Partial<SoundItem>) => void;
+  /** Forțează un mod de afișare (ex. Fișiere locale = listă). Implicit: preferința din Setări. */
+  view?: SoundView;
 }
 
 interface AudioAnalysis {
@@ -230,7 +371,11 @@ interface AudioAnalysis {
  */
 const RENDER_BATCH = 100;
 
-export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onSoundUpdated }) => {
+export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onSoundUpdated, view: forcedView }) => {
+  const preferredView = useAppStore(s => s.soundView);
+  const hoverPreview = useAppStore(s => s.hoverPreview);
+  const view = forcedView ?? preferredView;
+  const hoverTimer = useRef<number>(0);
   const [sounds, setSounds] = useState<SoundItem[]>(initialSounds);
   const [renderCount, setRenderCount] = useState(RENDER_BATCH);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -320,6 +465,16 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
     const index = sounds.findIndex(s => s.id === sound.id);
     playQueue(sounds, index === -1 ? 0 : index);
   }, [sounds, currentTrack, togglePlay, playQueue]);
+
+  // „Ascultă la hover” (Setări): după 450ms pe un card, pornește preview-ul.
+  const handleHoverStart = useCallback((sound: SoundItem) => {
+    if (!hoverPreview) return;
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      if (usePlayerStore.getState().currentTrack?.id !== sound.id) handlePlay(sound);
+    }, 450);
+  }, [hoverPreview, handlePlay]);
+  const handleHoverEnd = useCallback(() => window.clearTimeout(hoverTimer.current), []);
 
   const savedSounds = useLibraryStore(state => state.savedSounds);
   // Set în loc de `savedSounds.some(...)` pe fiecare rând (O(rânduri × salvate)).
@@ -506,53 +661,94 @@ export const SoundGrid: React.FC<SoundGridProps> = ({ sounds: initialSounds, onS
   }, [showToast, refetchCollections, t]);
 
   return (
-    <div className="sound-grid">
-      <div className="grid-header">
-        <div className="col col-play"></div>
-        <div className="col col-title">{t('title_label')}</div>
-        <div className="col col-bpm">BPM</div>
-        <div className="col col-key">{t('grid_key')}</div>
-        <div className="col col-tags">{t('grid_tags')}</div>
-        <div className="col col-actions"></div>
-      </div>
-      
-      <div className="grid-body">
-        {sounds.slice(0, renderCount).map((sound, index) => {
-          const isCurrentTrack = currentTrack?.id === sound.id;
-          return (
-            <SoundRow
-              key={sound.id}
-              sound={sound}
-              index={index}
-              isCurrentTrack={isCurrentTrack}
-              // Doar rândul activ primește starea reală — altfel fiecare
-              // play/pauză re-randa toate rândurile (memo-ul nu mai ajuta).
-              isPlaying={isCurrentTrack && isPlaying}
-              isSaved={savedIds.has(sound.id)}
-              canPublish={canPublish}
-              canModerate={canManage(sound)}
-              isAnalyzing={analyzingId === sound.id}
-              isLoggedIn={!!session}
-              collectionMenuOpen={collectionMenuId === sound.id}
-              collections={collections}
-              t={t}
-              onPlay={handlePlay}
-              onLike={handleLike}
-              onDownload={handleDownload}
-              onShare={handleShare}
-              onPublish={handlePublishClick}
-              onEdit={setEditingSound}
-              onDelete={handleDelete}
-              onNavigateToProfile={handleNavigateToProfile}
-              onToggleCollectionMenu={handleToggleCollectionMenu}
-              onAddToCollection={handleAddToCollection}
-              onCreateCollection={handleCreateCollection}
-              onAnalyze={handleAnalyze}
-            />
-          );
-        })}
-        {hasMoreToRender && <div ref={sentinelRef} className="grid-sentinel" aria-hidden />}
-      </div>
+    <div className={view === 'cards' ? 'sound-cards' : 'sound-grid'}>
+      {view === 'cards' ? (
+        <div className="card-grid">
+          {sounds.slice(0, renderCount).map((sound, index) => {
+            const isCurrentTrack = currentTrack?.id === sound.id;
+            return (
+              <SoundCard
+                key={sound.id}
+                sound={sound}
+                index={index}
+                isCurrentTrack={isCurrentTrack}
+                isPlaying={isCurrentTrack && isPlaying}
+                isSaved={savedIds.has(sound.id)}
+                canPublish={canPublish}
+                canModerate={canManage(sound)}
+                isAnalyzing={analyzingId === sound.id}
+                isLoggedIn={!!session}
+                collectionMenuOpen={collectionMenuId === sound.id}
+                collections={collections}
+                t={t}
+                onPlay={handlePlay}
+                onLike={handleLike}
+                onDownload={handleDownload}
+                onShare={handleShare}
+                onPublish={handlePublishClick}
+                onEdit={setEditingSound}
+                onDelete={handleDelete}
+                onNavigateToProfile={handleNavigateToProfile}
+                onToggleCollectionMenu={handleToggleCollectionMenu}
+                onAddToCollection={handleAddToCollection}
+                onCreateCollection={handleCreateCollection}
+                onAnalyze={handleAnalyze}
+                onHoverStart={handleHoverStart}
+                onHoverEnd={handleHoverEnd}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          <div className="grid-header">
+            <div className="col col-play"></div>
+            <div className="col col-title">{t('title_label')}</div>
+            <div className="col col-bpm">BPM</div>
+            <div className="col col-key">{t('grid_key')}</div>
+            <div className="col col-tags">{t('grid_tags')}</div>
+            <div className="col col-actions"></div>
+          </div>
+          
+          <div className="grid-body">
+            {sounds.slice(0, renderCount).map((sound, index) => {
+              const isCurrentTrack = currentTrack?.id === sound.id;
+              return (
+                <SoundRow
+                  key={sound.id}
+                  sound={sound}
+                  index={index}
+                  isCurrentTrack={isCurrentTrack}
+                  // Doar rândul activ primește starea reală — altfel fiecare
+                  // play/pauză re-randa toate rândurile (memo-ul nu mai ajuta).
+                  isPlaying={isCurrentTrack && isPlaying}
+                  isSaved={savedIds.has(sound.id)}
+                  canPublish={canPublish}
+                  canModerate={canManage(sound)}
+                  isAnalyzing={analyzingId === sound.id}
+                  isLoggedIn={!!session}
+                  collectionMenuOpen={collectionMenuId === sound.id}
+                  collections={collections}
+                  t={t}
+                  onPlay={handlePlay}
+                  onLike={handleLike}
+                  onDownload={handleDownload}
+                  onShare={handleShare}
+                  onPublish={handlePublishClick}
+                  onEdit={setEditingSound}
+                  onDelete={handleDelete}
+                  onNavigateToProfile={handleNavigateToProfile}
+                  onToggleCollectionMenu={handleToggleCollectionMenu}
+                  onAddToCollection={handleAddToCollection}
+                  onCreateCollection={handleCreateCollection}
+                  onAnalyze={handleAnalyze}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
+      {hasMoreToRender && <div ref={sentinelRef} className="grid-sentinel" aria-hidden />}
 
       {editingSound && (
         <EditSoundModal 

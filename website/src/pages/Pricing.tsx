@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SectionLink } from '../components/SectionLink';
 import { motion } from 'framer-motion';
-import { Coins, Crown, Sparkles, Cloud, Lock, X, Check, ArrowRight } from 'lucide-react';
+import { Lock, X, Check, ArrowRight } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { FaqItem } from '../components/FaqItem';
 import { findFaq } from '../data/faqs';
@@ -37,29 +37,29 @@ export function Pricing() {
           variants={staggerContainer}
         >
           {/* Free Tier */}
-          <motion.div className="pricing-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
+          <motion.div className="pricing-card glass" variants={fadeInUp}>
             <div className="pricing-header">
               <h3>{t('pricing_free')}</h3>
               <div className="price">$0<span>{t('pricing_per_month')}</span></div>
             </div>
             <ul className="pricing-features">
-              <li><Coins size={16} /> {t('pricing_credits_day', { count: 3 })}</li>
-              <li style={{ opacity: 0.5 }}><X size={16} /> {t('pricing_ai_tool')}</li>
-              <li style={{ opacity: 0.5 }}><X size={16} /> {t('pricing_cloud_upload')}</li>
+              <li><Check size={16} /> {t('pricing_credits_day', { count: 3 })}</li>
+              <li className="no"><X size={16} /> {t('pricing_ai_tool')}</li>
+              <li className="no"><X size={16} /> {t('pricing_cloud_upload')}</li>
             </ul>
             <Link to="/download" className="btn btn-secondary pricing-btn">{t('pricing_get_started')}</Link>
           </motion.div>
 
           {/* Producer Pack */}
-          <motion.div className="pricing-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
+          <motion.div className="pricing-card glass" variants={fadeInUp}>
             <div className="pricing-header">
               <h3>{t('pricing_producer')}</h3>
               <div className="price">$14.99<span>{t('pricing_per_month')}</span></div>
             </div>
             <ul className="pricing-features">
-              <li><Coins size={16} color="var(--accent-secondary)" /> {t('pricing_credits_day', { count: 30 })}</li>
-              <li style={{ opacity: 0.5 }}><X size={16} /> {t('pricing_ai_tool')}</li>
-              <li style={{ opacity: 0.5 }}><X size={16} /> {t('pricing_cloud_upload')}</li>
+              <li><Check size={16} /> {t('pricing_credits_day', { count: 30 })}</li>
+              <li className="no"><X size={16} /> {t('pricing_ai_tool')}</li>
+              <li className="no"><X size={16} /> {t('pricing_cloud_upload')}</li>
             </ul>
             <button className="btn btn-secondary pricing-btn disabled" disabled>
               <Lock size={16} /> {t('common_coming_soon')}
@@ -68,16 +68,15 @@ export function Pricing() {
 
           {/* Ultimate Tier */}
           <motion.div className="pricing-card ultimate glass" variants={fadeInUp}>
-            <div className="card-glow"></div>
             <div className="pricing-badge">{t('pricing_recommended')}</div>
             <div className="pricing-header">
               <h3>{t('pricing_ultimate')}</h3>
               <div className="price">$29.99<span>{t('pricing_per_month')}</span></div>
             </div>
             <ul className="pricing-features">
-              <li><Crown size={16} color="#ffb703" /> {t('pricing_unlimited_downloads')}</li>
-              <li><Sparkles size={16} color="var(--accent-tertiary)" /> {t('pricing_ai_included')}</li>
-              <li><Cloud size={16} color="var(--accent-primary)" /> {t('pricing_premium_tag')}</li>
+              <li><Check size={16} /> {t('pricing_unlimited_downloads')}</li>
+              <li><Check size={16} /> {t('pricing_ai_included')}</li>
+              <li><Check size={16} /> {t('pricing_premium_tag')}</li>
             </ul>
             <button className="btn btn-primary pricing-btn disabled" disabled>
               <Lock size={16} /> {t('common_coming_soon')}

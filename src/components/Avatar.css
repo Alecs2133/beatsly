@@ -5,9 +5,10 @@
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--gradient-primary);
-  color: white;
-  font-weight: 800;
+  background: hsl(var(--ah, 255) 42% 34%);
+  color: hsl(var(--ah, 255) 70% 88%);
+  font-family: var(--font-display);
+  font-weight: 700;
   line-height: 1;
   user-select: none;
 }

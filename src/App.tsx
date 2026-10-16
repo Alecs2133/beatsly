@@ -1,11 +1,18 @@
 
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { AudioPlayer } from './components/AudioPlayer';
+import { Dock } from './components/Dock';
+import { SettingsSheet } from './components/SettingsSheet';
+import { CommandPalette } from './components/CommandPalette';
+import { usePlayerStore } from './store/usePlayerStore';
+import { useAppStore } from './store/useAppStore';
+import { keyHue } from './lib/keyColor';
 import { ToastContainer } from './components/ToastContainer';
 import { LoadingScreen } from './components/LoadingScreen';
+
+const BOOT_STARTED = performance.now();
+const MIN_SPLASH_MS = 450;
 import { useAuthStore } from './store/useAuthStore';
 import { useLibraryStore } from './store/useLibraryStore';
 import { isAdminRole, isPublisherRole } from './lib/roles';
@@ -24,7 +31,6 @@ const LocalFiles = lazy(() => import('./pages/LocalFiles').then(m => ({ default:
 const Pricing = lazy(() => import('./pages/Pricing').then(m => ({ default: m.Pricing })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
-const Options = lazy(() => import('./pages/Options').then(m => ({ default: m.Options })));
 const Packs = lazy(() => import('./pages/Packs').then(m => ({ default: m.Packs })));
 const PackDetails = lazy(() => import('./pages/PackDetails').then(m => ({ default: m.PackDetails })));
 const CrewPage = lazy(() => import('./pages/Crew').then(m => ({ default: m.CrewPage })));
@@ -33,6 +39,13 @@ const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Pro
 const RouteFallback = () => (
   <div style={{ padding: 40, color: 'var(--text-muted)' }}>…</div>
 );
+
+/** /options nu mai e o pagină: deschide panoul de setări peste Descoperă. */
+const OptionsRedirect = () => {
+  const setSettingsOpen = useAppStore(s => s.setSettingsOpen);
+  useEffect(() => { setSettingsOpen(true); }, [setSettingsOpen]);
+  return <Navigate to="/" replace />;
+};
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { session, initialized } = useAuthStore();
@@ -107,16 +120,21 @@ const AppContent = () => {
     }
   }, [user, fetchLibrary]);
 
+  // Ecranul de pornire stă cât se citește sesiunea — plus un minim scurt,
+  // ca să nu clipească pe un PC rapid. Înainte era o pauză fixă de 2,5 s.
   useEffect(() => {
-    if (initialized) {
-      const timer = setTimeout(() => {
-        setAppReady(true);
-      }, 2500); // Give the loading screen time to play animation
-      return () => clearTimeout(timer);
-    }
+    if (!initialized) return;
+    const elapsed = performance.now() - BOOT_STARTED;
+    const timer = setTimeout(() => setAppReady(true), Math.max(0, MIN_SPLASH_MS - elapsed));
+    return () => clearTimeout(timer);
   }, [initialized]);
 
-  const hideLayout = location.pathname === '/options';
+  // Fundalul ambiental ia nuanța tonalității sunetului care cântă.
+  const currentKey = usePlayerStore(s => s.currentTrack?.key);
+  useEffect(() => {
+    const hue = keyHue(currentKey);
+    document.documentElement.style.setProperty('--tint', String(hue ?? 255));
+  }, [currentKey]);
 
   // Dynamic page title
   useEffect(() => {
@@ -134,11 +152,10 @@ const AppContent = () => {
     <>
       <LoadingScreen isReady={appReady} />
       <div className="app-container">
-      {!hideLayout && <Sidebar />}
-      
-      <div className={hideLayout ? "" : "main-wrapper"} style={hideLayout ? { flex: 1, display: 'flex' } : {}}>
-        {!hideLayout && <TopBar />}
-        <main className={hideLayout ? "full-page-wrapper" : "main-content"} style={hideLayout ? { flex: 1, display: 'flex' } : {}}>
+      <div className="app-ambient" aria-hidden />
+      <div className="main-wrapper">
+        <TopBar />
+        <main className="main-content">
           <Suspense fallback={<RouteFallback />}>
             <Routes key={location.pathname}>
               <Route path="/" element={<Library />} />
@@ -152,7 +169,7 @@ const AppContent = () => {
               <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-              <Route path="/options" element={<Options />} />
+              <Route path="/options" element={<OptionsRedirect />} />
               <Route path="/packs" element={<ProtectedRoute><Packs /></ProtectedRoute>} />
               <Route path="/pack/:tag" element={<ProtectedRoute><PackDetails /></ProtectedRoute>} />
               <Route path="/crew" element={<ProtectedRoute><CrewPage /></ProtectedRoute>} />
@@ -162,7 +179,9 @@ const AppContent = () => {
         </main>
       </div>
 
-      {!hideLayout && <AudioPlayer />}
+      <Dock />
+      <SettingsSheet />
+      <CommandPalette />
       <ToastContainer />
       {appReady && <UpdatePrompt />}
       {appReady && user && profile && !profile.onboarded_at && !tourDismissed && (

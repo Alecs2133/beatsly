@@ -1,65 +1,81 @@
-import React, { useEffect, useRef, useState } from 'react';
-import WaveSurfer from 'wavesurfer.js';
+import React, { useRef } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useWavePeaks } from '../hooks/useWavePeaks';
 
-export const WaveformVisualizer: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wavesurferRef = useRef<WaveSurfer | null>(null);
-  const currentTrack = usePlayerStore(state => state.currentTrack);
-  const audio = usePlayerStore(state => state.audio);
-  const [isLoading, setIsLoading] = useState(false);
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
-  useEffect(() => {
-    // wait for audio to be available
-    if (!containerRef.current || !audio) return;
+/**
+ * Forma de undă din player: aceleași vârfuri ca pe carduri, progresul din
+ * store, click/drag/săgeți pentru derulare.
+ *
+ * Nu mai folosim wavesurfer legat de <audio>-ul global: după ce descărca
+ * fișierul ca să-l decodeze, îi schimba `src`-ul într-un blob URL și
+ * întrerupea redarea abia pornită (AbortError în consolă, iar playerul
+ * rămânea „pe play” cu sunetul oprit).
+ */
+export const WaveformVisualizer: React.FC<{ height?: number; bars?: number }> = ({ height = 36, bars = 72 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const track = usePlayerStore(s => s.currentTrack);
+  const duration = usePlayerStore(s => s.duration);
+  const currentTime = usePlayerStore(s => s.currentTime);
+  const seekTo = usePlayerStore(s => s.seekTo);
+  const url = track ? track.preview_url || track.file_url : undefined;
+  const peaks = useWavePeaks(url, ref, bars);
+  const progress = duration > 0 ? clamp01(currentTime / duration) : 0;
 
-    wavesurferRef.current = WaveSurfer.create({
-      container: containerRef.current,
-      // Culorile din tokens.css: linie neutră, progres în culoarea semnalului.
-      waveColor: '#34343f',
-      progressColor: '#2dd4ee',
-      cursorColor: 'rgba(236, 235, 243, 0.7)',
-      cursorWidth: 1,
-      barWidth: 2,
-      barGap: 2,
-      barRadius: 2,
-      height: 36,
-      normalize: true,
-      dragToSeek: true,
-      media: audio, // Use the global audio element directly!
-    });
-    
-    // Listen to decode events for the UI loader
-    wavesurferRef.current.on('load', () => setIsLoading(true));
-    wavesurferRef.current.on('ready', () => setIsLoading(false));
+  const seekAt = (clientX: number) => {
+    const el = ref.current;
+    if (!el || duration <= 0) return;
+    const r = el.getBoundingClientRect();
+    seekTo(clamp01((clientX - r.left) / r.width) * duration);
+  };
 
-    return () => {
-      if (wavesurferRef.current) {
-        wavesurferRef.current.destroy();
-      }
-    };
-  }, [audio]); // Re-run if audio changes (rarely happens)
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!track) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    seekAt(e.clientX);
+  };
 
-  useEffect(() => {
-    if (wavesurferRef.current && currentTrack) {
-      const url = currentTrack.preview_url || currentTrack.file_url || '';
-      // Load the new audio file to generate its specific waveform
-      wavesurferRef.current.load(url);
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) seekAt(e.clientX);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (duration <= 0) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      seekTo(Math.min(duration, Math.max(0, currentTime + (e.key === 'ArrowRight' ? 5 : -5))));
     }
-  }, [currentTrack]);
+  };
+
+  const layer = peaks?.map((p, i) => (
+    <i key={i} style={{ height: `${Math.max(12, Math.round(p * 100))}%` }} />
+  ));
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '36px', cursor: currentTrack ? 'pointer' : 'default' }}>
-      {!currentTrack && (
-        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '2px', background: 'var(--line)', transform: 'translateY(-50%)' }} />
-      )}
-      
-      {/* The container where WaveSurfer will draw the canvas */}
-      <div ref={containerRef} style={{ width: '100%', height: '100%', opacity: currentTrack ? 1 : 0, transition: 'opacity 0.3s' }} />
-      
-      {isLoading && currentTrack && (
-        // Schelet cât se decodează forma de undă, în loc de text
-        <div className="skeleton" style={{ position: 'absolute', inset: '8px 0', zIndex: 10 }} />
+    <div
+      ref={ref}
+      className={`dock-wave${track ? '' : ' empty'}`}
+      style={{ height, '--p': progress } as React.CSSProperties}
+      role="slider"
+      tabIndex={track ? 0 : -1}
+      aria-label="Seek"
+      aria-valuemin={0}
+      aria-valuemax={Math.round(duration)}
+      aria-valuenow={Math.round(currentTime)}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onKeyDown={onKeyDown}
+    >
+      {!track ? (
+        <span className="dock-wave-line" />
+      ) : !peaks ? (
+        <span className="skeleton dock-wave-skeleton" />
+      ) : (
+        <>
+          <div className="dock-wave-layer">{layer}</div>
+          <div className="dock-wave-layer fill">{layer}</div>
+        </>
       )}
     </div>
   );

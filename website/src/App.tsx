@@ -7,6 +7,7 @@ import { Profile } from './pages/Profile';
 import { EmailConfirmed } from './pages/EmailConfirmed';
 import { AppLogin } from './pages/AppLogin';
 import { LegalPage } from './pages/LegalPage';
+import './styles/site.css';
 import './App.css';
 
 /**

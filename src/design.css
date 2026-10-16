@@ -29,9 +29,8 @@
   --smooth-easing: var(--ease-out);
 
   /* Layout */
-  --sidebar-width: 248px;
-  --player-height: 84px;
-  --topbar-height: 68px;
+
+  --topbar-height: 64px;
 
   color-scheme: dark;
 }
@@ -103,14 +102,36 @@ button, input, select, textarea {
 }
 
 /* Global App Layout */
+/* Layout „Crate”: fără bară laterală — bara de sus, conținut pe toată
+   lățimea, dock-ul plutește jos (Dock.tsx). */
 .app-container {
+  position: relative;
+  isolation: isolate;
   display: flex;
   height: 100vh;
   width: 100%;
-  max-width: 2560px; /* Optional max constraint so it doesn't stretch infinitely on ultrawide */
-  min-width: 1024px; /* Add slider if window is smaller than 1024px */
-  min-height: 700px; /* Add slider if window is smaller than 700px */
-  flex-direction: row;
+  max-width: 2560px;
+  min-width: 1024px;
+  min-height: 700px;
+  overflow: hidden;
+}
+
+/* Fundal ambiental: două pete de culoare care iau nuanța tonalității
+   sunetului care cântă (--tint, setat din App.tsx). */
+.app-ambient {
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 46% at 80% 12%, hsl(var(--tint, 255) 80% 60% / 0.13), transparent 70%),
+    radial-gradient(32% 42% at 10% 92%, hsl(calc(var(--tint, 255) + 40) 80% 55% / 0.08), transparent 70%);
+  transition: background 1.2s var(--ease-out);
+  animation: ambientDrift 22s ease-in-out infinite alternate;
+}
+
+@keyframes ambientDrift {
+  to { transform: translate(-3%, 2%) scale(1.05); }
 }
 
 .main-wrapper {
@@ -118,14 +139,13 @@ button, input, select, textarea {
   flex-direction: column;
   flex: 1;
   min-width: 0;
-  height: calc(100vh - var(--player-height));
+  height: 100vh;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 28px;
-  padding-bottom: 100px; /* space for scrolling above player */
+  padding: 8px 28px 130px; /* jos: loc pentru dock-ul plutitor */
 }
 
 /* Intrarea paginii: vine de jos, din blur — scurt, fără scale. */
@@ -134,8 +154,11 @@ button, input, select, textarea {
   to { opacity: 1; transform: none; filter: none; }
 }
 
+/* `backwards`, nu `both`: o animație de transform care rămâne „umplută”
+   face din pagină cadrul de referință pentru position: fixed, iar modalele
+   din pagină (Editează profilul) ieșeau decalate și tăiate sus. */
 .main-content > *, .full-page-wrapper > * {
-  animation: pageIn var(--dur-slow) var(--ease-out) both;
+  animation: pageIn var(--dur-slow) var(--ease-out) backwards;
 }
 
 /* Elemente de listă care intră decalat: style={{ '--i': index }} */
@@ -145,7 +168,7 @@ button, input, select, textarea {
 }
 
 .stagger-in {
-  animation: rowIn 0.5s var(--ease-out) both;
+  animation: rowIn 0.5s var(--ease-out) backwards;
   animation-delay: calc(min(var(--i, 0), 14) * 40ms);
 }
 
@@ -217,7 +240,7 @@ button, input, select, textarea {
 /* Toast-uri: urcă elastic din colț, cu o bară care arată cât mai stau */
 .toast-container {
   position: fixed;
-  bottom: calc(var(--player-height) + 20px);
+  bottom: 104px; /* deasupra dock-ului */
   right: 24px;
   display: flex;
   flex-direction: column;
@@ -395,7 +418,7 @@ button, input, select, textarea {
 
 /* Rândurile schelet apar decalat, ca rândurile reale */
 .skeleton-row {
-  animation: rowIn 0.5s var(--ease-out) both;
+  animation: rowIn 0.5s var(--ease-out) backwards;
   animation-delay: calc(var(--i, 0) * 40ms);
 }
 
@@ -441,10 +464,8 @@ button, input, select, textarea {
 .field-label {
   display: block;
   margin-bottom: 6px;
-  font: 500 11px var(--font-mono);
+  font: 600 12.5px var(--font-body);
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 
 .field {
@@ -475,4 +496,126 @@ button, input, select, textarea {
 
 .link-btn:hover {
   color: var(--accent-hover);
+}
+
+/* Butoane-pastilă comune (mutate din Account.css — folosite peste tot) */
+.btn-primary-pill,
+.btn-ghost-pill,
+.btn-danger-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+}
+
+.btn-primary-pill {
+  border: none;
+  color: white;
+  background: var(--gradient-primary);
+}
+
+.btn-primary-pill:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-ghost-pill {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-ghost-pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-danger-pill {
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  color: #ff6b6b;
+  background: rgba(255, 68, 68, 0.08);
+}
+
+.btn-danger-pill:hover:not(:disabled) {
+  background: rgba(255, 68, 68, 0.18);
+}
+
+.btn-primary-pill:disabled,
+.btn-ghost-pill:disabled,
+.btn-danger-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+}
+
+/* Stări goale / erori, folosite de mai multe pagini */
+.error-box {
+  padding: 16px 18px;
+  border-radius: 12px;
+  color: var(--bad);
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.empty-inline {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  border-radius: 16px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state {
+  max-width: 520px;
+  margin: 60px auto;
+  padding: 48px 28px;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  border-radius: 22px;
+  background: rgba(19, 19, 26, 0.72);
+  border: 1px solid var(--line-soft);
+}
+
+.empty-state h2 {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.empty-state p {
+  color: var(--muted);
+  max-width: 40ch;
+  margin-bottom: 8px;
+}
+
+/* „← Înapoi” deasupra titlului */
+.back-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color var(--dur), transform 0.3s var(--ease-spring);
+}
+
+.back-link:hover {
+  color: var(--fg);
+  transform: translateX(-3px);
 }

@@ -10,7 +10,7 @@ import { CookieBanner } from './components/CookieBanner';
 
 /**
  * Scroll la fiecare navigare: sus de tot, sau la secțiunea cerută prin
- * `state.section` (link-urile „Features” / „FAQ” — vezi SectionLink).
+ * `state.section` (link-ul „FAQ” din footer și de pe Prețuri — vezi SectionLink).
  *
  * Secțiunea vine prin `state`, nu prin `#hash` în URL: un hash rămânea în
  * bara de adrese, iar la refresh sau la redeschiderea site-ului pagina pornea

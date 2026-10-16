@@ -1,0 +1,308 @@
+/* Dock-ul plutitor: navigare + player */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 22px;
+  background: rgba(20, 20, 28, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  box-shadow: 0 24px 50px -18px rgba(0, 0, 0, 0.9);
+  animation: dockIn 0.7s var(--ease-spring) both;
+}
+
+@keyframes dockIn {
+  from { opacity: 0; transform: translate(-50%, 30px); }
+}
+
+.dock-items {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.dock-ind {
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  transition: transform 0.5s var(--ease-spring), opacity var(--dur) var(--ease-out);
+}
+
+.dock-item {
+  --s: 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(calc((var(--s) - 1) * -14px)) scale(var(--s));
+  transform-origin: bottom center;
+  transition: transform 0.18s var(--ease-out), color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+
+.dock-item:hover,
+.dock-item.active {
+  color: var(--fg);
+}
+
+.dock-item.active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dock-item:active {
+  transform: scale(0.9);
+}
+
+.dock-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.15s, transform 0.25s var(--ease-spring);
+}
+
+.dock-item:hover .dock-tip {
+  opacity: 1;
+  transform: translateX(-50%);
+}
+
+.dock-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font: 600 9.5px/16px var(--font-mono);
+  text-align: center;
+  box-shadow: 0 0 0 2px #15151d;
+  animation: dockBump 0.5s var(--ease-spring);
+}
+
+@keyframes dockBump {
+  40% { transform: scale(1.6); }
+}
+
+.dock-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 6px 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Transport (player) */
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.tp-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tp-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease-spring);
+}
+
+.tp-play:hover:not(:disabled) { transform: scale(1.07); }
+.tp-play:active:not(:disabled) { transform: scale(0.92); }
+.tp-play:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.tp-glyph {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  transition: opacity 0.2s, transform 0.35s var(--ease-spring);
+}
+
+.tp-glyph.pl { margin-left: 2px; }
+.tp-glyph.pa { opacity: 0; transform: scale(0.4) rotate(-30deg); }
+.dock.playing .tp-glyph.pl { opacity: 0; transform: scale(0.4) rotate(30deg); }
+.dock.playing .tp-glyph.pa { opacity: 1; transform: none; }
+
+.tp-small,
+.tp-icon {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 9px;
+  transition: color var(--dur), background var(--dur), transform var(--dur-fast);
+}
+
+.tp-small { width: 28px; height: 28px; }
+.tp-icon { width: 34px; height: 34px; }
+
+.tp-small:hover:not(:disabled),
+.tp-icon:hover:not(:disabled) {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tp-small:active:not(:disabled),
+.tp-icon:active:not(:disabled) { transform: scale(0.88); }
+.tp-small:disabled, .tp-icon:disabled { opacity: 0.3; cursor: not-allowed; }
+.tp-small.on { color: var(--accent); }
+.tp-icon.saved { color: var(--accent); }
+.tp-icon.dl.done { color: var(--good); }
+
+.tp-ring {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(45, 212, 238, 0.25);
+  border-top-color: var(--signal);
+  animation: spin 0.8s linear infinite;
+}
+
+.tp-info {
+  display: grid;
+  gap: 2px;
+  width: 260px;
+  min-width: 0;
+}
+
+.tp-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tp-meta b {
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tp-meta span {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.transport.empty .tp-meta b {
+  color: var(--muted);
+}
+
+.tp-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tp-actions .vol {
+  margin-left: 6px;
+}
+
+@media (max-width: 1180px) {
+  .tp-info { width: 190px; }
+  .tp-actions .tp-small { display: none; }
+}
+
+/* Forma de undă din player — aceleași bare ca pe carduri, cu progres și derulare */
+.dock-wave {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  touch-action: none;
+  --p: 0;
+}
+
+.dock-wave.empty {
+  cursor: default;
+}
+
+.dock-wave:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.dock-wave-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--line);
+  transform: translateY(-50%);
+}
+
+.dock-wave-skeleton {
+  position: absolute;
+  inset: 30% 0;
+}
+
+.dock-wave-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.dock-wave-layer i {
+  flex: 1 1 0;
+  min-width: 1px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+
+.dock-wave-layer.fill {
+  clip-path: inset(0 calc((1 - var(--p)) * 100%) 0 0);
+}
+
+.dock-wave-layer.fill i {
+  background: var(--signal);
+}

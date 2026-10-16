@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Loader2, Trash2, X } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { useTranslation } from '../hooks/useTranslation';
@@ -117,7 +118,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) =
     }
   };
 
-  return (
+  // În <body>, nu în pagină: altfel moștenește cadrul paginii (animații,
+  // scroll) și se poziționează greșit.
+  return createPortal(
     <div className="profile-modal-overlay" onMouseDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <form className="profile-modal glass" onSubmit={handleSave} role="dialog" aria-modal="true" aria-labelledby="edit-profile-title">
         <div className="profile-modal-header">
@@ -211,6 +214,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) =
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 };

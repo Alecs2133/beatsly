@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Download as DownloadIcon, MonitorCheck, LogIn, FolderDown, PlayCircle } from 'lucide-react';
+import { MonitorCheck } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 import { AppleIcon, WindowsIcon } from '../components/PlatformIcons';
 import { useLayoutContext } from '../lib/layoutContext';
@@ -16,10 +16,10 @@ const RELEASES_BASE = 'https://github.com/Alecs2133/beatsly/releases/download';
 const FALLBACK_WIN_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_x64-setup.exe`;
 const FALLBACK_MAC_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_aarch64.dmg`;
 
-const STEPS: { icon: typeof FolderDown; title: TranslationKey; text: TranslationKey }[] = [
-  { icon: FolderDown, title: 'download_step1_title', text: 'download_step1_text' },
-  { icon: PlayCircle, title: 'download_step2_title', text: 'download_step2_text' },
-  { icon: LogIn, title: 'download_step3_title', text: 'download_step3_text' },
+const STEPS: { title: TranslationKey; text: TranslationKey }[] = [
+  { title: 'download_step1_title', text: 'download_step1_text' },
+  { title: 'download_step2_title', text: 'download_step2_text' },
+  { title: 'download_step3_title', text: 'download_step3_text' },
 ];
 
 export function DownloadPage() {
@@ -45,7 +45,7 @@ export function DownloadPage() {
       <header className="page-intro">
         <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
           <motion.h1 className="page-title" variants={fadeInUp}>
-            {t('download_title_1')} <span className="glow-text">Beats.ly</span>
+            {t('download_title_1')} <span className="brand-inline">beats<em>.ly</em></span>
           </motion.h1>
           <motion.p className="page-subtitle" variants={fadeInUp}>
             {t('download_subtitle')}
@@ -58,7 +58,6 @@ export function DownloadPage() {
 
       {/* Main download CTA */}
       <section className="download-section">
-        <div className="animated-bg"></div>
         <motion.div
           className="download-content"
           initial="hidden"
@@ -66,9 +65,6 @@ export function DownloadPage() {
           viewport={{ once: true, margin: '-100px' }}
           variants={staggerContainer}
         >
-          <motion.div variants={fadeInUp} className="download-icon-wrapper">
-            <DownloadIcon size={40} color="var(--accent-secondary)" />
-          </motion.div>
           <motion.h2 variants={fadeInUp}>{t('download_ready_title')}</motion.h2>
           <motion.p variants={fadeInUp}>{t('download_ready_text')}</motion.p>
           <motion.div variants={fadeInUp} style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
@@ -114,9 +110,8 @@ export function DownloadPage() {
           variants={staggerContainer}
         >
           {STEPS.map((step, i) => (
-            <motion.div key={step.title} className="step-card glass" variants={fadeInUp} whileHover={{ y: -8 }}>
-              <div className="step-number">{i + 1}</div>
-              <div className="step-icon"><step.icon size={28} /></div>
+            <motion.div key={step.title} className="step-card glass" variants={fadeInUp}>
+              <div className="step-number">{String(i + 1).padStart(2, '0')}</div>
               <h3>{t(step.title)}</h3>
               <p>{t(step.text)}</p>
             </motion.div>

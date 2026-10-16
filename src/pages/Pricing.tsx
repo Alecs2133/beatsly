@@ -4,9 +4,18 @@ import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from '../hooks/useTranslation';
 import { open } from '@tauri-apps/plugin-shell';
-import { Coins } from 'lucide-react';
+import { hasUnlimitedCredits } from '../lib/roles';
 import { errorMessage } from '../lib/errors';
 import './Pricing.css';
+
+/** Butonul unui plan: „Planul curent” pe cel pe care ești, „În curând” pe rest (abonamentele nu sunt încă deschise). */
+function PlanButton({ current, t }: { current: boolean; t: ReturnType<typeof useTranslation>['t'] }) {
+  return (
+    <button className={`plan-btn ${current ? 'secondary' : 'primary'}`} disabled>
+      {current ? t('current_plan') : t('coming_soon')}
+    </button>
+  );
+}
 
 export const Pricing: React.FC = () => {
   const { profile, user } = useAuthStore();
@@ -97,14 +106,14 @@ export const Pricing: React.FC = () => {
       <div className="current-status">
         <div>
           <h3>{t('current_plan')}</h3>
-          <div className="value" style={{ textTransform: 'capitalize' }}>
-            {profile.tier} {t('pack')}
+          <div className="value">
+            {t(profile.tier === 'ultimate' ? 'ultimate_pack' : profile.tier === 'producer' ? 'producer_pack' : 'free')}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <h3>{t('available_credits')}</h3>
-          <div className="value credits-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-            {profile.tier === 'ultimate' ? t('unlimited') : profile.credits} <Coins size={24} color="var(--accent-secondary)" />
+          <div className="value credits-value">
+            {hasUnlimitedCredits(profile.role, profile.tier) ? t('unlimited') : <span className="num">{profile.credits}</span>}
           </div>
         </div>
       </div>
@@ -118,7 +127,7 @@ export const Pricing: React.FC = () => {
             <li className="unavailable">{t('ai_generator')}</li>
             <li className="unavailable">{t('cloud_uploading')}</li>
           </ul>
-          <button className="plan-btn secondary" disabled>{t('current_plan')}</button>
+          <PlanButton current={profile.tier === 'free'} t={t} />
         </div>
 
         <div className="plan-card">
@@ -129,30 +138,18 @@ export const Pricing: React.FC = () => {
             <li className="unavailable">{t('ai_generator')}</li>
             <li className="unavailable">{t('cloud_uploading')}</li>
           </ul>
-          <button
-            className="plan-btn primary"
-            disabled={true}
-            style={{ opacity: 0.5, cursor: 'not-allowed' }}
-          >
-            {t('coming_soon')}
-          </button>
+          <PlanButton current={profile.tier === 'producer'} t={t} />
         </div>
 
         <div className="plan-card ultimate">
-          <h2 style={{ color: 'var(--accent-primary)' }}>{t('ultimate_pack')}</h2>
+          <h2>{t('ultimate_pack')}</h2>
           <div className="plan-price">$29.99<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>{t('unlimited_downloads')}</li>
             <li>{t('ai_generator_included')}</li>
             <li>{t('apply_producer_tag')}</li>
           </ul>
-          <button
-            className="plan-btn primary"
-            disabled={true}
-            style={{ background: 'var(--accent-primary)', color: '#000', opacity: 0.5, cursor: 'not-allowed' }}
-          >
-            {t('coming_soon')}
-          </button>
+          <PlanButton current={profile.tier === 'ultimate'} t={t} />
         </div>
       </div>
 
@@ -219,7 +216,7 @@ export const Pricing: React.FC = () => {
               { credits: 300, price: 39.99 }
             ].map(pack => (
               <div key={pack.credits} className="credit-pack" onClick={() => handleBuyCredits(pack.credits)}>
-                <div className="credit-amount" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>{pack.credits} <Coins size={18} /></div>
+                <div className="credit-amount num">{pack.credits}</div>
                 <div className="credit-price">${pack.price}</div>
               </div>
             ))}

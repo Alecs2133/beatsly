@@ -1,88 +1,51 @@
+/* Notificarea de cookie-uri: un bilețel mic în colț, nu o bară peste pagină.
+   Poziționată fără transform — framer-motion animă `transform` și suprascria
+   vechiul translateX(-50%), de-asta ieșea din ecran în dreapta. */
 .cookie-banner {
   position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 60px);
-  max-width: 900px;
-  padding: 20px 28px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  left: 20px;
+  bottom: 20px;
   z-index: 999;
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  width: min(380px, calc(100% - 40px));
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
 }
 
 .cookie-icon {
-  color: #f4a261;
-  flex-shrink: 0;
+  display: none;
 }
 
 .cookie-text {
-  flex: 1;
-  font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.5;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
 }
 
-.cookie-text strong {
-  color: var(--text-main);
+.cookie-text a {
+  color: var(--fg);
 }
 
 .cookie-actions {
   display: flex;
-  gap: 10px;
-  flex-shrink: 0;
+  justify-content: flex-end;
 }
 
-.btn-cookie-decline,
 .btn-cookie-accept {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 7px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--fg);
+  font: 600 13px var(--font-body);
   cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-cookie-decline {
-  background: rgba(255,255,255,0.05);
-  color: var(--text-muted);
-  border: 1px solid var(--border-strong);
-}
-
-.btn-cookie-decline:hover {
-  background: rgba(255,255,255,0.1);
-  color: var(--text-main);
-}
-
-.btn-cookie-accept {
-  background: var(--gradient-primary);
-  color: white;
+  transition: background var(--dur);
 }
 
 .btn-cookie-accept:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-@media (max-width: 600px) {
-  .cookie-banner {
-    flex-direction: column;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    width: auto;
-    transform: none;
-  }
-  .cookie-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
+  background: var(--surface);
 }

@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { hasUnlimitedCredits } from '../lib/roles';
-import { Search, Settings, X, Plus } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Icon } from './Icon';
 import { supabase } from '../lib/supabase';
 import { profileName } from '../lib/social';
@@ -14,18 +14,22 @@ import './TopBar.css';
 
 type Notification = Tables<'notifications'>;
 
+const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
+
+/**
+ * Bara de sus: logo, căutarea (deschide paleta Ctrl+K), credite, notificări
+ * și poza de profil. Navigarea stă în dock-ul de jos.
+ */
 export const TopBar: React.FC = () => {
-  const { searchQuery, setSearchQuery } = useAppStore();
-  const { user, profile, signOut } = useAuthStore();
+  const { searchQuery, setSearchQuery, setCommandOpen } = useAppStore();
+  const { user, profile } = useAuthStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   // Crește la fiecare notificare nouă → clopoțelul se leagănă.
   const [bellTick, setBellTick] = useState(0);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,11 +38,15 @@ export const TopBar: React.FC = () => {
       return;
     }
 
-    fetchNotifications(user.id);
+    supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => { if (data) setNotifications(data); });
 
-    // Notificările noi vin prin Realtime (vezi migrarea
-    // notifications_realtime), nu prin polling — apar instant și nu mai
-    // facem o cerere la 30s pentru fiecare user deschis.
+    // Notificările noi vin prin Realtime (vezi migrarea notifications_realtime).
     const channel = supabase
       .channel(`notifications:${user.id}`)
       .on(
@@ -56,54 +64,8 @@ export const TopBar: React.FC = () => {
     };
   }, [user]);
 
-  const fetchNotifications = async (userId: string) => {
-    try {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (data) setNotifications(data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      if (!user) return;
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-      
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const markAsRead = async (id: string) => {
-    try {
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-      
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setNotificationsOpen(false);
       }
@@ -112,83 +74,77 @@ export const TopBar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false);
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
   };
-  
-  const showSearch = location.pathname === '/' || location.pathname === '/library';
-  
+
+  const markAsRead = async (id: string) => {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, is_read: true } : n)));
+  };
+
+  const unread = notifications.filter(n => !n.is_read).length;
+
   return (
-    <header className="topbar glass">
-      {showSearch ? (
-        <div className="search-container">
-          <span className="search-icon"><Search size={16} /></span>
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder={t('search_placeholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button 
-              className="search-clear-btn" 
-              onClick={() => setSearchQuery('')}
-              title={t('search_clear')}
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      ) : (
-        <div />
-      )}
-      <div className="user-profile">
+    <header className="topbar">
+      <button type="button" className="tb-logo" onClick={() => navigate('/')} aria-label="Beats.ly">
+        <Icon name="logo" size={28} />
+        <span>beats<em>.ly</em></span>
+      </button>
+
+      <div className={`tb-search${searchQuery ? ' has-query' : ''}`}>
+        <button type="button" className="tb-search-btn" onClick={() => setCommandOpen(true)}>
+          <Search size={15} />
+          <span className="tb-search-text">{searchQuery ? `„${searchQuery}”` : t('search_placeholder')}</span>
+          <kbd>{isMac ? '⌘' : 'Ctrl'} K</kbd>
+        </button>
+        {searchQuery && (
+          <button type="button" className="tb-search-clear" onClick={() => setSearchQuery('')} title={t('search_clear')} aria-label={t('search_clear')}>
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      <div className="tb-right">
         {profile && (
-          <div className="credits" onClick={() => navigate('/store')} style={{ cursor: 'pointer' }} title={t('credits_get_more')}>
-            <span className="credits-amount roll" key={hasUnlimitedCredits(profile.role, profile.tier) ? 'inf' : profile.credits}>
+          <button type="button" className="tb-credits" onClick={() => navigate('/store')} title={t('credits_get_more')}>
+            <i aria-hidden />
+            <span className="credits-amount roll num" key={hasUnlimitedCredits(profile.role, profile.tier) ? 'inf' : profile.credits}>
               {hasUnlimitedCredits(profile.role, profile.tier) ? '∞' : profile.credits}
             </span>
-            <span className="credits-label">{t('topbar_credits')}</span>
-            <button className="add-credits-btn" aria-label={t('credits_get_more')}><Plus size={14} strokeWidth={2.6} /></button>
-          </div>
+            <span className="tb-credits-label">{t('topbar_credits')}</span>
+          </button>
         )}
-        
+
         {user && (
           <div className="notifications-container" ref={notificationsRef}>
-            <button 
-              className="notifications-btn bi-trigger"
-              onClick={() => {
-                setNotificationsOpen(!notificationsOpen);
-                setDropdownOpen(false);
-              }}
+            <button
+              type="button"
+              className="tb-round bi-trigger"
+              onClick={() => setNotificationsOpen(o => !o)}
+              aria-label={t('notifications_title')}
             >
               <Icon name="bell" size={18} play={bellTick} />
-              {notifications.filter(n => !n.is_read).length > 0 && (
-                <span className="notification-badge">
-                  {notifications.filter(n => !n.is_read).length}
-                </span>
-              )}
+              {unread > 0 && <span className="notification-badge">{unread}</span>}
             </button>
 
             {notificationsOpen && (
               <div className="notifications-dropdown">
                 <div className="notifications-header">
                   <h3>{t('notifications_title')}</h3>
-                  {notifications.some(n => !n.is_read) && (
+                  {unread > 0 && (
                     <button className="mark-read-btn" onClick={markAllAsRead}>{t('notifications_mark_read')}</button>
                   )}
                 </div>
                 <div className="notifications-list">
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                      {t('notifications_empty')}
-                    </div>
+                    <div className="notifications-empty">{t('notifications_empty')}</div>
                   ) : (
                     notifications.map(notif => (
-                      <div 
-                        key={notif.id} 
+                      <div
+                        key={notif.id}
                         className={`notification-item ${!notif.is_read ? 'unread' : ''}`}
                         onClick={() => markAsRead(notif.id)}
                       >
@@ -196,7 +152,7 @@ export const TopBar: React.FC = () => {
                         <div className="notification-message">{notif.message}</div>
                         {notif.created_at && (
                           <div className="notification-time">
-                            {new Date(notif.created_at).toLocaleDateString()} {new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            {new Date(notif.created_at).toLocaleDateString()} {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
                       </div>
@@ -208,76 +164,7 @@ export const TopBar: React.FC = () => {
           </div>
         )}
 
-        <div className="settings-container" ref={dropdownRef}>
-          {dropdownOpen && <div className="dropdown-overlay" onClick={() => setDropdownOpen(false)}></div>}
-          <button 
-            className="settings-btn" 
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            title={t('topbar_settings')}
-          >
-            <Settings size={18} strokeWidth={1.8} />
-          </button>
-          
-          {dropdownOpen && (
-            <div className="settings-dropdown">
-              {!user && (
-                <div className="dropdown-section">
-                  <span className="dropdown-label">{t('topbar_account')}</span>
-                  <span className="dropdown-value text-muted">{t('topbar_guest')}</span>
-                </div>
-              )}
-
-              <div
-                className="dropdown-section hoverable"
-                onClick={() => {
-                  navigate('/options');
-                  setDropdownOpen(false);
-                }}
-              >
-                <span className="dropdown-label">{t('topbar_options')}</span>
-                <span className="dropdown-value">{t('preferences')}</span>
-              </div>
-              
-              <div className="dropdown-divider"></div>
-              
-              {user ? (
-                <button 
-                  className="dropdown-action-btn logout-btn"
-                  onClick={() => {
-                    handleLogout();
-                    setDropdownOpen(false);
-                  }}
-                >
-                  {t('topbar_logout')}
-                </button>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '0 12px 12px 12px' }}>
-                  <button 
-                    className="dropdown-action-btn login-btn"
-                    onClick={() => {
-                      navigate('/auth');
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    {t('topbar_login')}
-                  </button>
-                  <button 
-                    className="dropdown-action-btn signup-btn"
-                    onClick={() => {
-                      navigate('/auth');
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    {t('topbar_signup')}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Profilul are acum pagina lui (ca pe Spotify) — poza din colț duce acolo. */}
-        {user && profile && (
+        {user && profile ? (
           <button
             className={`profile-btn${location.pathname === '/account' ? ' active' : ''}`}
             onClick={() => navigate('/account')}
@@ -285,6 +172,10 @@ export const TopBar: React.FC = () => {
             aria-label={t('topbar_profile')}
           >
             <Avatar path={profile.avatar_path} name={profileName(profile) || user.email} size={34} />
+          </button>
+        ) : (
+          <button type="button" className="tb-signin" onClick={() => navigate('/auth')}>
+            {t('topbar_login')}
           </button>
         )}
       </div>

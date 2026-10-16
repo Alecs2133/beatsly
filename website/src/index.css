@@ -107,3 +107,8 @@ h1, h2, h3 {
   background: var(--surface);
   border-color: var(--muted);
 }
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

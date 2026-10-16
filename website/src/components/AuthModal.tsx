@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Loader2, Music } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Icon } from './Icon';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n/context';
@@ -147,8 +148,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             <button className="auth-close" onClick={onClose} aria-label={t('common_cancel')}><X size={20} /></button>
 
             <div className="auth-logo">
-              <div className="auth-logo-icon"><Music size={28} /></div>
-              <span>Beats.ly</span>
+              <Icon name="logo" size={30} className="brand-mark" />
+              <span className="brand-word">beats<em>.ly</em></span>
             </div>
 
             {mode !== 'reset' && (

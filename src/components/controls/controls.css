@@ -1,0 +1,276 @@
+/* Controale „fizice”: potențiometru, comutator cu LED, roata Camelot */
+
+.knob {
+  flex-shrink: 0;
+  cursor: ns-resize;
+  touch-action: none;
+  border-radius: 50%;
+}
+
+.knob svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.knob-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-linecap: round;
+}
+
+.knob-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.12s var(--ease-out), stroke var(--dur) var(--ease-out);
+}
+
+.knob.off .knob-arc {
+  stroke: transparent;
+}
+
+.knob-cap {
+  fill: var(--raised);
+  stroke: var(--line);
+}
+
+.knob-ptr {
+  stroke: var(--fg);
+  stroke-linecap: round;
+  transition: transform 0.12s var(--ease-out);
+}
+
+.knob.off .knob-ptr {
+  stroke: var(--faint);
+}
+
+/* Comutator cu LED */
+.hw-switch {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #0a0a0e;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+
+.hw-switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #3a3a48, #23232e);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.45s var(--ease-spring);
+}
+
+.hw-switch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: #3a3a48;
+  transition: background var(--dur), box-shadow var(--dur);
+}
+
+.hw-switch[aria-checked='true'] {
+  background: rgba(124, 92, 255, 0.25);
+  border-color: rgba(124, 92, 255, 0.6);
+}
+
+.hw-switch[aria-checked='true']::before {
+  transform: translateX(22px);
+}
+
+.hw-switch[aria-checked='true']::after {
+  right: auto;
+  left: 9px;
+  background: var(--signal);
+  box-shadow: 0 0 8px var(--signal);
+}
+
+.hw-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Roata Camelot */
+.camelot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.camelot-seg {
+  fill: var(--raised);
+  stroke: var(--bg);
+  stroke-width: 2;
+  cursor: pointer;
+  outline: none;
+  transition: fill 0.3s var(--ease-out);
+}
+
+.camelot-seg:hover,
+.camelot-seg:focus-visible {
+  fill: #27273a;
+}
+
+.camelot-seg.compat {
+  fill: rgba(124, 92, 255, 0.38);
+}
+
+.camelot-seg.sel {
+  fill: var(--accent);
+}
+
+.camelot-t {
+  font: 600 9.5px var(--font-body);
+  letter-spacing: -0.02em;
+  fill: var(--muted);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  transition: fill 0.3s;
+}
+
+.camelot-t.minor {
+  font-size: 9px;
+}
+
+.camelot-t.on {
+  fill: #fff;
+}
+
+.camelot-hub {
+  fill: var(--surface);
+  stroke: var(--line);
+}
+
+.camelot-hub-t {
+  font: 700 17px var(--font-display);
+  fill: var(--fg);
+  text-anchor: middle;
+}
+
+.camelot-hub-s {
+  font: 500 10px var(--font-mono);
+  fill: var(--muted);
+  text-anchor: middle;
+}
+
+/* Volum: difuzor + bară orizontală */
+.vol {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vol-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--dur), background var(--dur);
+}
+
+.vol-btn:hover {
+  color: var(--fg);
+  background: var(--raised);
+}
+
+.vol-btn[aria-pressed='true'] {
+  color: var(--bad);
+}
+
+.vol-range {
+  --v: 80%;
+  width: 84px;
+  height: 18px;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.vol-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--fg) var(--v), var(--line-strong) var(--v));
+}
+
+.vol-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--fg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity var(--dur), transform 0.25s var(--ease-spring);
+}
+
+.vol:hover .vol-range::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--signal) var(--v), var(--line-strong) var(--v));
+}
+
+.vol:hover .vol-range::-webkit-slider-thumb,
+.vol-range:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.vol-range:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.vol-range:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* BPM scris de mână, lângă potențiometru */
+.bpm-input {
+  width: 62px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: border-color var(--dur), background var(--dur);
+}
+
+.bpm-input::placeholder {
+  color: var(--faint);
+}
+
+.bpm-input:hover {
+  border-color: var(--line-strong);
+}
+
+.bpm-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+}

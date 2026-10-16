@@ -58,6 +58,13 @@ function errorText(err: unknown): string {
   return String(err);
 }
 
+/** Nuanță stabilă din nume, aceeași regulă ca avatarul din aplicație. */
+function nameHue(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+}
+
 export function Profile() {
   const { t } = useT();
   const navigate = useNavigate();
@@ -294,6 +301,7 @@ export function Profile() {
           <button
             type="button"
             className="profile-page-avatar"
+            style={{ '--ah': nameHue(name) } as React.CSSProperties}
             onClick={() => fileInputRef.current?.click()}
             disabled={photoBusy}
             title={t('profile_change_photo')}

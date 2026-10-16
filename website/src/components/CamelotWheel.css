@@ -1,0 +1,65 @@
+/* Copie a stilurilor roții din aplicație (src/components/controls/controls.css) */
+/* Roata Camelot */
+.camelot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.camelot-seg {
+  fill: var(--raised);
+  stroke: var(--bg);
+  stroke-width: 2;
+  cursor: pointer;
+  outline: none;
+  transition: fill 0.3s var(--ease-out);
+}
+
+.camelot-seg:hover,
+.camelot-seg:focus-visible {
+  fill: #27273a;
+}
+
+.camelot-seg.compat {
+  fill: rgba(124, 92, 255, 0.38);
+}
+
+.camelot-seg.sel {
+  fill: var(--accent);
+}
+
+.camelot-t {
+  font: 600 9.5px var(--font-body);
+  letter-spacing: -0.02em;
+  fill: var(--muted);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  transition: fill 0.3s;
+}
+
+.camelot-t.minor {
+  font-size: 9px;
+}
+
+.camelot-t.on {
+  fill: #fff;
+}
+
+.camelot-hub {
+  fill: var(--surface);
+  stroke: var(--line);
+}
+
+.camelot-hub-t {
+  font: 700 17px var(--font-display);
+  fill: var(--fg);
+  text-anchor: middle;
+}
+
+.camelot-hub-s {
+  font: 500 10px var(--font-mono);
+  fill: var(--muted);
+  text-anchor: middle;
+}
+

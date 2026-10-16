@@ -1,0 +1,790 @@
+/* ===========================================================================
+   Scheletul site-ului: navbar, footer, antetul paginilor, butoane secundare,
+   FAQ, pagina de descărcare. Aceeași familie cu aplicația (TopBar-ul și
+   panourile ei), fără gradiente și fără strălucire.
+   =========================================================================== */
+
+.landing-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-container > main {
+  flex: 1;
+}
+
+/* ---------- Marca ---------- */
+.brand-mark {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.brand-word {
+  font: 700 20px var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+.brand-word em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* ---------- Navbar ---------- */
+.navbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  height: 68px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 0 28px;
+  border-bottom: 1px solid transparent;
+  transition: background var(--dur-slow) var(--ease-out), border-color var(--dur-slow) var(--ease-out);
+}
+
+.navbar.scrolled {
+  background: var(--overlay);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom-color: var(--line-soft);
+}
+
+.nav-brand {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+
+.nav-brand:hover .bi-bar {
+  animation: bi-bar 0.55s var(--ease-out) infinite alternate;
+}
+
+/* Linkurile stau într-o pastilă, ca bara de căutare din aplicație */
+.nav-links {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.nav-links a {
+  position: relative;
+  padding: 7px 16px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--dur);
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--fg);
+}
+
+.nav-links a > span:not(.nav-underline) {
+  position: relative;
+  z-index: 1;
+}
+
+.nav-underline {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 999px;
+  background: var(--raised);
+}
+
+.nav-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-actions .btn {
+  padding: 8px 18px;
+  font-size: 14px;
+}
+
+.nav-auth-placeholder {
+  width: 96px;
+  height: 36px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-user-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-size: 14px;
+  text-decoration: none;
+  transition: border-color var(--dur), background var(--dur);
+}
+
+.nav-user-link:hover {
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+
+.btn-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--dur), border-color var(--dur);
+}
+
+.btn-icon:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.lang-toggle {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.lang-toggle button {
+  padding: 4px 9px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: 500 12px var(--font-mono);
+  cursor: pointer;
+  transition: background var(--dur), color var(--dur);
+}
+
+.lang-toggle button.active {
+  background: var(--raised);
+  color: var(--fg);
+}
+
+.nav-hamburger {
+  display: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.mobile-menu {
+  position: absolute;
+  top: 68px;
+  left: 12px;
+  right: 12px;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+}
+
+.mobile-menu a {
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: var(--fg);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.mobile-menu a.active,
+.mobile-menu a:hover {
+  background: var(--raised);
+}
+
+/* ---------- Antetul paginilor secundare ---------- */
+.page-intro {
+  width: min(1180px, 100% - 48px);
+  margin: 0 auto;
+  padding: 132px 0 40px;
+}
+
+.page-title {
+  font: 800 clamp(36px, 4.6vw, 56px) / 1.04 var(--font-display);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.page-subtitle {
+  margin-top: 14px;
+  max-width: 58ch;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.section-title {
+  margin-bottom: 28px;
+  font: 800 clamp(26px, 3.2vw, 36px) / 1.1 var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+/* Cuvântul evidențiat din titluri — doar culoare, fără efecte */
+.glow-text {
+  color: var(--fg);
+}
+
+.btn-large {
+  padding: 15px 26px;
+  font-size: 16px;
+}
+
+.glass-btn {
+  background: transparent;
+}
+
+/* ---------- FAQ ---------- */
+.faq-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--line);
+  background: none;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 2px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: 600 16.5px var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.faq-question:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.faq-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  transition: color var(--dur), border-color var(--dur);
+}
+
+.faq-item.open .faq-icon,
+.faq-question:hover .faq-icon {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.faq-answer {
+  overflow: hidden;
+}
+
+.faq-answer p {
+  padding: 0 48px 22px 2px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* ---------- Descarcă ---------- */
+.version-badge {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--muted);
+  font: 500 13px var(--font-mono);
+}
+
+.download-section {
+  width: min(1180px, 100% - 48px);
+  margin: 0 auto;
+  padding: 36px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.download-content {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.download-icon-wrapper {
+  display: none;
+}
+
+.download-section h2 {
+  font: 800 clamp(26px, 3vw, 34px) / 1.1 var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.download-section p {
+  color: var(--muted);
+}
+
+.download-note {
+  font-size: 13px;
+}
+
+.steps-section,
+.requirements-section {
+  width: min(1180px, 100% - 48px);
+  margin: 0 auto;
+  padding-top: 80px;
+}
+
+.steps-grid,
+.requirements-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.requirements-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.step-card,
+.requirement-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--line);
+  background: none;
+}
+
+.step-number {
+  color: var(--faint);
+  font: 500 13px var(--font-mono);
+}
+
+.step-icon,
+.requirement-icon {
+  color: var(--muted);
+}
+
+.step-card h3,
+.requirement-card h3 {
+  font: 700 19px / 1.25 var(--font-display);
+}
+
+.step-card p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.requirement-card ul {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.requirement-card li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  width: min(1180px, 100% - 48px);
+  margin: 110px auto 0;
+  padding: 36px 0 28px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 26px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-about {
+  display: grid;
+  gap: 8px;
+}
+
+.footer-about p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.footer-links {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.footer-links a,
+.footer-legal a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color var(--dur);
+}
+
+.footer-links a:hover,
+.footer-legal a:hover {
+  color: var(--fg);
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.footer-legal a {
+  font-size: 13px;
+}
+
+.footer-bottom {
+  color: var(--faint);
+  font-size: 13px;
+}
+
+/* ---------- Ecrane mici ---------- */
+@media (max-width: 860px) {
+  .navbar {
+    grid-template-columns: 1fr auto;
+    padding: 0 16px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .nav-hamburger {
+    display: grid;
+  }
+
+  .steps-grid,
+  .requirements-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .page-intro,
+  .download-section,
+  .steps-section,
+  .requirements-section,
+  .footer {
+    width: calc(100% - 32px);
+  }
+
+  .page-intro {
+    padding-top: 108px;
+  }
+
+  .download-section {
+    padding: 24px 20px;
+  }
+
+  .nav-user-link span {
+    display: none;
+  }
+}
+
+/* Eticheta „În curând” */
+.soon-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  vertical-align: 2px;
+}
+
+/* ---------- Prețuri ---------- */
+.pricing {
+  width: min(1180px, 100% - 48px);
+  margin: 0 auto;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 26px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.pricing-card.ultimate {
+  border-color: rgba(124, 92, 255, 0.55);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pricing-header h3 {
+  font: 700 18px var(--font-display);
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+
+.price {
+  font: 800 40px / 1 var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.price span {
+  margin-left: 4px;
+  color: var(--muted);
+  font: 400 15px var(--font-body);
+  letter-spacing: 0;
+}
+
+.pricing-features {
+  list-style: none;
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+.pricing-features li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--signal);
+}
+
+.pricing-features li.no {
+  color: var(--faint);
+}
+
+.pricing-features li.no svg {
+  color: var(--faint);
+}
+
+.pricing-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.compare-section,
+.pricing-faq,
+.pricing-cta {
+  width: min(1180px, 100% - 48px);
+  margin: 0 auto;
+  padding-top: 88px;
+}
+
+.compare-hint {
+  display: none;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.compare-table {
+  overflow-x: auto;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--line);
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.6fr) repeat(3, minmax(90px, 1fr));
+  min-width: 560px;
+  border-bottom: 1px solid var(--line);
+}
+
+.compare-row > div {
+  padding: 14px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.compare-row > div:not(.compare-feature) {
+  justify-content: center;
+}
+
+.compare-feature {
+  color: var(--muted);
+}
+
+.compare-head > div {
+  font-weight: 600;
+}
+
+.compare-highlight {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.compare-head .compare-highlight {
+  color: var(--accent-hover);
+}
+
+.compare-yes {
+  color: var(--signal);
+}
+
+.compare-no {
+  color: var(--faint);
+}
+
+.pricing-faq-inner {
+  display: grid;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.see-all-faq {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.see-all-faq:hover {
+  color: var(--accent-hover);
+}
+
+.pricing-cta > div {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+}
+
+.pricing-cta h2 {
+  font: 800 clamp(26px, 3.2vw, 36px) / 1.1 var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.pricing-cta p {
+  color: var(--muted);
+  max-width: 60ch;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-hint {
+    display: block;
+  }
+}
+
+@media (max-width: 560px) {
+  .pricing,
+  .compare-section,
+  .pricing-faq,
+  .pricing-cta {
+    width: calc(100% - 32px);
+  }
+}
+
+/* Cardurile de pași / cerințe nu mai sunt „sticlă” — doar o linie sus */
+.step-card.glass,
+.requirement-card.glass {
+  border: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+/* Numele în titluri, scris ca în logo */
+.brand-inline em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* FAQ-ul de pe Prețuri e un singur rând, nu un card */
+.faq-item.glass {
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: none;
+}

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { open } from '@tauri-apps/plugin-shell';
-import { Coins, Crown, ExternalLink, KeyRound, Loader2, Pencil, ShieldAlert, UserRound } from 'lucide-react';
+import { ChevronLeft, Crown, ExternalLink, KeyRound, Loader2, Pencil, RotateCw, ShieldAlert, UserRound } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
@@ -19,6 +19,32 @@ import './Account.css';
 
 const WEBSITE_PROFILE_URL = 'https://beatsly.vercel.app/profile?section=subscription';
 const PASSWORD_MIN = 8;
+// Întoarcerea cardului: prima jumătate accelerează spre muchie, a doua
+// intră cu un mic arc. Web Animations, nu tranziții CSS — se pot înlănțui
+// exact, fără cadrul „sărit” dintre ele.
+const FLIP_OUT: KeyframeAnimationOptions = { duration: 260, easing: 'cubic-bezier(0.45, 0, 0.85, 0.35)', fill: 'forwards' };
+const FLIP_IN: KeyframeAnimationOptions = { duration: 560, easing: 'cubic-bezier(0.2, 0.9, 0.25, 1.1)' };
+const VU_SEGMENTS = 14;
+
+type Side = 'public' | 'account';
+
+/** Nivelul unui contor pe VU-metru: scară logaritmică, 1000+ umple tot. */
+const vuLevel = (n: number) => Math.min(VU_SEGMENTS, Math.round(Math.log10(n + 1) * (VU_SEGMENTS / 3)));
+
+function VuMeter({ label, value, index }: { label: string; value: number; index: number }) {
+  const lit = vuLevel(value);
+  return (
+    <div className="vu" style={{ '--i': index } as React.CSSProperties}>
+      <span className="vu-value num">{value}</span>
+      <span className="vu-bar" aria-hidden>
+        {Array.from({ length: VU_SEGMENTS }, (_, i) => (
+          <i key={i} className={i < lit ? 'on' : ''} style={{ '--k': i } as React.CSSProperties} />
+        ))}
+      </span>
+      <span className="vu-label">{label}</span>
+    </div>
+  );
+}
 
 const TIER_LABEL: Record<string, TranslationKeys> = {
   free: 'free',
@@ -43,6 +69,27 @@ export const Account: React.FC = () => {
 
   const [deleteText, setDeleteText] = useState('');
   const [deleting, setDeleting] = useState(false);
+
+  const [side, setSide] = useState<Side>('public');
+  const faceRef = useRef<HTMLDivElement>(null);
+  const turning = useRef(false);
+  const enterNext = useRef(false);
+
+  // După ce React a pus conținutul nou, aceeași față intră din partea cealaltă.
+  useLayoutEffect(() => {
+    const el = faceRef.current;
+    if (!enterNext.current || !el) return;
+    enterNext.current = false;
+    document.querySelector('.main-content')?.scrollTo({ top: 0 });
+    el.getAnimations().forEach(a => a.cancel());
+    el.animate(
+      [
+        { transform: 'rotateY(-90deg) scale(0.97)', opacity: 0.4 },
+        { transform: 'rotateY(0deg) scale(1)', opacity: 1 },
+      ],
+      FLIP_IN
+    ).finished.finally(() => { turning.current = false; });
+  }, [side]);
 
   useEffect(() => {
     if (!profile) return;
@@ -129,6 +176,33 @@ export const Account: React.FC = () => {
     }
   };
 
+  // Cardul se întoarce: rotim fața curentă până la 90°, schimbăm conținutul
+  // (spatele e mai înalt), apoi noua față intră din cealaltă parte.
+  const flip = () => {
+    if (turning.current) return;
+    const next: Side = side === 'public' ? 'account' : 'public';
+    const el = faceRef.current;
+    if (!el || typeof el.animate !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setSide(next);
+      document.querySelector('.main-content')?.scrollTo({ top: 0 });
+      return;
+    }
+    turning.current = true;
+    el.animate(
+      [
+        { transform: 'rotateY(0deg) scale(1)', opacity: 1 },
+        { transform: 'rotateY(90deg) scale(0.97)', opacity: 0.4 },
+      ],
+      FLIP_OUT
+    ).finished.then(
+      () => {
+        enterNext.current = true;
+        setSide(next);
+      },
+      () => { turning.current = false; }
+    );
+  };
+
   const openWebsite = async () => {
     try {
       await open(WEBSITE_PROFILE_URL);
@@ -137,51 +211,65 @@ export const Account: React.FC = () => {
     }
   };
 
-  return (
-    <div className="account-page">
-      {/* Antet ca pe Spotify: poză mare, nume uriaș, statistici dedesubt */}
-      <header className="profile-hero">
+  const front = (
+    <>
+      <header className="idcard-hero">
         <button className="profile-hero-avatar" onClick={() => setEditing(true)} title={t('profile_edit')}>
-          <Avatar path={profile.avatar_path} name={name} size={176} />
+          <Avatar path={profile.avatar_path} name={name} size={148} />
           <span className="profile-photo-overlay">
-            <Pencil size={26} />
+            <Pencil size={24} />
             <span>{t('profile_edit')}</span>
           </span>
         </button>
 
-        <div className="profile-hero-info">
-          <span className="profile-hero-label">{t('profile_label')}</span>
-          <h1 className="profile-hero-name" title={name}>{name}</h1>
-          <div className="profile-hero-meta">
+        <div className="idcard-info">
+          <span className="idcard-label">{t('profile_label')}</span>
+          <h1 className="idcard-name" title={name}>{name}</h1>
+          <div className="idcard-chips">
             {profile.username && <span>@{profile.username}</span>}
-            {stats && (
-              <>
-                <span>{t('profile_sounds', { count: stats.sound_count })}</span>
-                <span>{t('profile_followers', { count: stats.follower_count })}</span>
-                <span>{t('profile_following', { count: stats.following_count })}</span>
-              </>
-            )}
+            <span><Crown size={13} /> {t(TIER_LABEL[profile.tier] ?? 'free')}</span>
+            <span>{unlimited ? t('unlimited') : <><b className="num">{profile.credits}</b> {t('topbar_credits')}</>}</span>
           </div>
         </div>
       </header>
 
-      <div className="profile-actions">
+      <div className="idcard-vu">
+        <VuMeter index={0} label={t('vu_sounds')} value={stats?.sound_count ?? 0} />
+        <VuMeter index={1} label={t('vu_followers')} value={stats?.follower_count ?? 0} />
+        <VuMeter index={2} label={t('vu_following')} value={stats?.following_count ?? 0} />
+      </div>
+
+      <section className="idcard-about">
+        <p className={profile.bio ? 'profile-bio' : 'profile-bio muted'}>{profile.bio || t('profile_no_bio')}</p>
+        <SocialLinkList links={links} />
+      </section>
+
+      <div className="idcard-actions">
         <button className="btn-primary-pill" onClick={() => setEditing(true)}>
           <Pencil size={16} /> {t('profile_edit')}
         </button>
         <button className="btn-ghost-pill" onClick={() => navigate(`/producer/${user.id}`)}>
           <UserRound size={16} /> {t('profile_view_public')}
         </button>
+        <button className="btn-ghost-pill idcard-flip" onClick={flip}>
+          <RotateCw size={16} /> {t('profile_account_side')}
+        </button>
       </div>
+    </>
+  );
 
-      <section className="profile-about">
-        <p className={profile.bio ? 'profile-bio' : 'profile-bio muted'}>{profile.bio || t('profile_no_bio')}</p>
-        <SocialLinkList links={links} />
-      </section>
+  const back = (
+    <>
+      <div className="idcard-back-head">
+        <button type="button" className="back-link" onClick={flip}>
+          <ChevronLeft size={16} /> {t('profile_public_side')}
+        </button>
+        <h1>{t('profile_account_side')}</h1>
+      </div>
 
       <div className="account-grid">
         {/* Abonament */}
-        <section className="account-card glass">
+        <section className="account-card">
           <div className="account-card-head">
             <Crown size={20} />
             <div>
@@ -197,7 +285,7 @@ export const Account: React.FC = () => {
             <div>
               <span className="account-stat-label">{t('credits_label')}</span>
               <span className="account-stat-value">
-                {unlimited ? t('unlimited') : <><Coins size={16} /> {profile.credits}</>}
+                {unlimited ? t('unlimited') : <span className="num">{profile.credits}</span>}
               </span>
             </div>
           </div>
@@ -210,7 +298,7 @@ export const Account: React.FC = () => {
         </section>
 
         {/* Parola */}
-        <form className="account-card glass" onSubmit={savePassword}>
+        <form className="account-card" onSubmit={savePassword}>
           <div className="account-card-head">
             <KeyRound size={20} />
             <div>
@@ -249,7 +337,7 @@ export const Account: React.FC = () => {
       </div>
 
       {/* Date private */}
-      <form className="account-card glass" onSubmit={saveDetails}>
+      <form className="account-card" onSubmit={saveDetails}>
         <div className="account-card-head">
           <UserRound size={20} />
           <div>
@@ -309,7 +397,7 @@ export const Account: React.FC = () => {
       </form>
 
       {/* Ștergerea contului */}
-      <section className="account-card glass danger">
+      <section className="account-card danger">
         <div className="account-card-head">
           <ShieldAlert size={20} />
           <div>
@@ -331,6 +419,16 @@ export const Account: React.FC = () => {
           </button>
         </div>
       </section>
+    </>
+  );
+
+  return (
+    <div className="account-page">
+      <div className="flip-stage">
+        <div ref={faceRef} className={`flip-face ${side}`}>
+          {side === 'public' ? front : back}
+        </div>
+      </div>
 
       {editing && <EditProfileModal onClose={() => setEditing(false)} />}
     </div>
