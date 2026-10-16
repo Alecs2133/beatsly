@@ -498,6 +498,7 @@ export const en = {
   auth_username_hint: '3–24 characters: letters, numbers, dot or underscore.',
   auth_username_invalid: 'Your username needs 3–24 characters: letters, numbers, dot or underscore.',
   auth_username_taken: 'That username is already taken. Try another one.',
+  credits_soon_note: 'Credit packs open soon. Until then you get your plan\'s free daily credits.',
 };
 
 export type TranslationKeys = keyof typeof en;

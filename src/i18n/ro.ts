@@ -500,4 +500,5 @@ export const ro: Record<TranslationKeys, string> = {
   auth_username_hint: '3–24 caractere: litere, cifre, punct sau underscore.',
   auth_username_invalid: 'Numele de utilizator trebuie să aibă 3–24 caractere: litere, cifre, punct sau underscore.',
   auth_username_taken: 'Numele ăsta de utilizator e deja luat. Încearcă altul.',
+  credits_soon_note: 'Pachetele de credite se deschid în curând. Până atunci primești zilnic creditele gratuite ale planului tău.',
 };

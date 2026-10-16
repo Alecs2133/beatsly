@@ -64,6 +64,14 @@ serve(async (req) => {
       return json({ error: 'Sesiune invalida sau expirata' }, 401)
     }
 
+    // --- Plăți oprite ---------------------------------------------------
+    // Până există o firmă care poate încasa, nu pornim nicio plată — nici din
+    // versiuni vechi ale aplicației, nici apelând funcția direct. Se deschid
+    // cu secretul PAYMENTS_ENABLED=true în Supabase.
+    if (Deno.env.get('PAYMENTS_ENABLED') !== 'true') {
+      return json({ error: 'Plățile nu sunt încă deschise.', code: 'payments_disabled' }, 403)
+    }
+
     // --- Validarea produsului -------------------------------------------
     const { amount, item_type } = await req.json()
 

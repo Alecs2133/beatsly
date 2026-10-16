@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from '../hooks/useTranslation';
 import { open } from '@tauri-apps/plugin-shell';
 import { hasUnlimitedCredits } from '../lib/roles';
+import { FEATURES } from '../lib/features';
 import { errorMessage } from '../lib/errors';
 import './Pricing.css';
 
@@ -125,7 +126,13 @@ export const Pricing: React.FC = () => {
 
       {profile.tier !== 'ultimate' && (
         <div className="credits-section">
-          <h2>{t('buy_download_credits')}</h2>
+          <h2>
+            {t('buy_download_credits')}
+            {!FEATURES.creditPurchases && <span className="soon-tag">{t('coming_soon')}</span>}
+          </h2>
+          {!FEATURES.creditPurchases ? (
+            <p className="credits-soon">{t('credits_soon_note')}</p>
+          ) : (
           <label className="purchase-consent">
             <input
               type="checkbox"
@@ -139,7 +146,8 @@ export const Pricing: React.FC = () => {
               <button type="button" className="legal-link" onClick={() => openLegal('payments')}>{t('legal_payments')}</button>
             </span>
           </label>
-          <div className={`credits-grid${purchaseConsent ? '' : ' consent-pending'}`}>
+          )}
+          <div className={`credits-grid${!FEATURES.creditPurchases ? ' locked' : purchaseConsent ? '' : ' consent-pending'}`}>
             {[
               { credits: 10, price: 2.99 },
               { credits: 25, price: 5.99 },
@@ -147,7 +155,12 @@ export const Pricing: React.FC = () => {
               { credits: 150, price: 24.99 },
               { credits: 300, price: 39.99 }
             ].map(pack => (
-              <div key={pack.credits} className="credit-pack" onClick={() => handleBuyCredits(pack.credits)}>
+              <div
+                key={pack.credits}
+                className="credit-pack"
+                aria-disabled={!FEATURES.creditPurchases}
+                onClick={() => { if (FEATURES.creditPurchases) handleBuyCredits(pack.credits); }}
+              >
                 <div className="credit-amount num">{pack.credits}</div>
                 <div className="credit-price">${pack.price}</div>
               </div>

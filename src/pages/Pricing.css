@@ -255,3 +255,29 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* Cumpărarea de credite oprită (FEATURES.creditPurchases) */
+.soon-tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font: 600 12px var(--font-body);
+  vertical-align: 4px;
+}
+
+.credits-soon {
+  max-width: 56ch;
+  margin: -14px auto 22px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.credits-grid.locked .credit-pack {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
