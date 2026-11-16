@@ -1,0 +1,224 @@
+/* Ecranul de analiză — pagina în blur, progresul în centru */
+.az-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3500;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 6, 10, 0.55);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  animation: azFade 0.3s var(--ease-out);
+}
+
+@keyframes azFade {
+  from { opacity: 0; backdrop-filter: blur(0); }
+}
+
+.az-card {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 22px;
+  background: rgba(20, 20, 27, 0.92);
+  border: 1px solid var(--line);
+  box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.95);
+  animation: azIn 0.5s var(--ease-spring);
+}
+
+@keyframes azIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+}
+
+/* Piano roll-ul care „scanează” */
+.az-roll {
+  position: relative;
+  height: 92px;
+  overflow: hidden;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 9px, rgba(255, 255, 255, 0.03) 9px 10px),
+    repeating-linear-gradient(90deg, transparent 0 27px, rgba(255, 255, 255, 0.04) 27px 28px),
+    var(--bg);
+  border: 1px solid var(--line-soft);
+}
+
+.az-roll i {
+  position: absolute;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0;
+  animation: azNote 2.4s var(--ease-out) infinite;
+  animation-delay: calc(var(--i) * 0.22s);
+}
+
+@keyframes azNote {
+  0% { opacity: 0; transform: scaleX(0.2); transform-origin: left; }
+  15%, 70% { opacity: 0.85; transform: scaleX(1); }
+  100% { opacity: 0; }
+}
+
+.az-scan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--signal);
+  box-shadow: 0 0 14px var(--signal);
+  transition: left 0.3s var(--ease-out);
+}
+
+/* Varianta de încărcare: forma de undă care se aprinde odată cu progresul */
+.az-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px;
+}
+
+.az-wave i {
+  position: static;
+  flex: 1;
+  height: calc(var(--h) * 76%);
+  min-height: 3px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  opacity: 1;
+  animation: azBreath 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.06s);
+  transition: background 0.25s;
+}
+
+.az-wave i.lit {
+  background: linear-gradient(180deg, var(--signal), var(--accent));
+}
+
+@keyframes azBreath {
+  0%, 100% { transform: scaleY(0.88); }
+  50% { transform: scaleY(1); }
+}
+
+.az-card h2 {
+  margin-top: 4px;
+  font: 800 22px / 1.1 var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.az-file {
+  margin-top: -6px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.az-bar {
+  position: relative;
+  height: 10px;
+  border-radius: 10px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.az-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  transition: width 0.25s var(--ease-out);
+}
+
+/* lumina care trece peste bară — se vede că lucrează și când procentul stă */
+.az-bar i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-100%);
+  animation: azShine 1.3s ease-in-out infinite;
+}
+
+@keyframes azShine {
+  to { transform: translateX(100%); }
+}
+
+.az-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -4px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.az-meta .num {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.az-steps {
+  list-style: none;
+  display: grid;
+  gap: 7px;
+  margin: 4px 0 2px;
+}
+
+.az-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--faint);
+  font-size: 13.5px;
+  transition: color 0.3s;
+}
+
+.az-steps li.done {
+  color: var(--muted);
+}
+
+.az-steps li.now {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.az-dot {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+}
+
+.az-steps li.done .az-dot {
+  border-color: transparent;
+  background: var(--good);
+  color: #08130e;
+}
+
+.az-steps li.now .az-dot {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.az-cancel {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.az-hint {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .az-roll i,
+  .az-wave i,
+  .az-bar i::after {
+    animation: none;
+  }
+}

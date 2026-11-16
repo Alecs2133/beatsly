@@ -95,6 +95,7 @@ export const Pricing: React.FC = () => {
           <div className="plan-price">$0<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>3 {t('credits_day')}</li>
+            <li className="unavailable">{t('plan_midi')}</li>
             <li className="unavailable">{t('ai_generator')}</li>
             <li className="unavailable">{t('cloud_uploading')}</li>
           </ul>
@@ -106,7 +107,8 @@ export const Pricing: React.FC = () => {
           <div className="plan-price">$14.99<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>30 {t('credits_day')}</li>
-            <li className="unavailable">{t('ai_generator')}</li>
+            <li className="plan-new" data-badge={t('plan_new')}>{t('plan_midi')}</li>
+            <li className="plan-new" data-badge={t('plan_new')}>{t('ai_generator_included')}</li>
             <li className="unavailable">{t('cloud_uploading')}</li>
           </ul>
           <PlanButton current={profile.tier === 'producer'} t={t} />
@@ -117,6 +119,7 @@ export const Pricing: React.FC = () => {
           <div className="plan-price">$29.99<span>{t('per_month')}</span></div>
           <ul className="plan-features">
             <li>{t('unlimited_downloads')}</li>
+            <li>{t('plan_midi')}</li>
             <li>{t('ai_generator_included')}</li>
             <li>{t('apply_producer_tag')}</li>
           </ul>

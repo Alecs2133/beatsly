@@ -45,8 +45,8 @@ interface AuthState {
 }
 
 // NOTĂ: nu există `deductCredit` aici. Creditele se consumă exclusiv pe server,
-// în aceeași cerere cu operațiunea plătită (`get-download-url`,
-// `generate-audio`), ca ele să nu poată fi disociate. Valoarea nouă ajunge
+// în aceeași cerere cu operațiunea plătită (`get-download-url`), ca ele să
+// nu poată fi disociate. Valoarea nouă ajunge
 // înapoi în store prin abonamentul realtime de mai jos.
 
 export const useAuthStore = create<AuthState>((set, get) => ({

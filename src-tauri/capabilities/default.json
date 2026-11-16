@@ -10,20 +10,50 @@
         "dialog:default",
         "drag:default",
         "fs:allow-write-file",
+        "fs:allow-mkdir",
+        {
+            "identifier": "fs:scope",
+            "allow": [
+                {
+                    "path": "$TEMP/beatsly-midi"
+                },
+                {
+                    "path": "$TEMP/beatsly-midi/**"
+                },
+                {
+                    "path": "$TEMP/beatsly-gen"
+                },
+                {
+                    "path": "$TEMP/beatsly-gen/**"
+                }
+            ]
+        },
         {
             "identifier": "http:default",
             "allow": [
-                { "url": "https://lhoqhzigptnyhwgjqpsc.supabase.co/*" }
+                {
+                    "url": "https://lhoqhzigptnyhwgjqpsc.supabase.co/*"
+                }
             ]
         },
         {
             "identifier": "shell:allow-open",
             "allow": [
-                { "url": "https://*.stripe.com/*" },
-                { "url": "https://stripe.com/*" },
-                { "url": "https://beatsly.vercel.app/*" },
-                { "url": "https://*/*" },
-                { "url": "http://*/*" }
+                {
+                    "url": "https://*.stripe.com/*"
+                },
+                {
+                    "url": "https://stripe.com/*"
+                },
+                {
+                    "url": "https://beatsly.vercel.app/*"
+                },
+                {
+                    "url": "https://*/*"
+                },
+                {
+                    "url": "http://*/*"
+                }
             ]
         }
     ]

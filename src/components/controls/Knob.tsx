@@ -9,6 +9,8 @@ interface KnobProps {
   onChange: (value: number | null) => void;
   size?: number;
   label: string;
+  /** De unde pornește primul gest când e oprit; implicit mijlocul intervalului. */
+  startAt?: number;
 }
 
 /**
@@ -16,7 +18,7 @@ interface KnobProps {
  * săgețile de la tastatură. Dacă e oprit (`null`), primul gest îl pornește
  * de la mijlocul intervalului.
  */
-export const Knob: React.FC<KnobProps> = ({ min, max, value, onChange, size = 72, label }) => {
+export const Knob: React.FC<KnobProps> = ({ min, max, value, onChange, size = 72, label, startAt }) => {
   const drag = useRef<{ y: number; v: number } | null>(null);
   const c = size / 2;
   // Totul proporțional cu mărimea — cu valori fixe, la 34px capacul ieșea
@@ -25,7 +27,7 @@ export const Knob: React.FC<KnobProps> = ({ min, max, value, onChange, size = 72
   const r = c - stroke - 2;
   const len = 2 * Math.PI * r * 0.75;
   const f = value == null ? 0 : Math.min(1, Math.max(0, (value - min) / (max - min)));
-  const mid = (min + max) / 2;
+  const mid = startAt ?? (min + max) / 2;
 
   const set = (v: number) => onChange(Math.round(Math.min(max, Math.max(min, v))));
 
@@ -52,8 +54,8 @@ export const Knob: React.FC<KnobProps> = ({ min, max, value, onChange, size = 72
       onPointerCancel={() => { drag.current = null; }}
       onWheel={(e) => set((value ?? mid) + (e.deltaY < 0 ? 1 : -1))}
       onKeyDown={(e) => {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); set((value ?? min) + 1); }
-        if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); set((value ?? min) - 1); }
+        if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); set(value == null ? mid : value + 1); }
+        if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); set(value == null ? mid : value - 1); }
       }}
     >
       <svg viewBox={`0 0 ${size} ${size}`} aria-hidden>

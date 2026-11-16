@@ -4,7 +4,6 @@
  * adaptează singure.
  */
 export const FEATURES = {
-  aiGenerator: false,
   helpCenter: false,
   /** Cumpărarea de credite. Oprită până există o firmă care poate încasa; pe
    *  server o blochează și PAYMENTS_ENABLED din create-checkout. */

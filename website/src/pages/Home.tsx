@@ -18,9 +18,10 @@ const STEPS: { title: TranslationKey; text: TranslationKey; keys?: string[] }[] 
 
 const SPECS: { title: TranslationKey; text: TranslationKey; soon?: boolean }[] = [
   { title: 'feature_library_title', text: 'feature_library_text' },
+  { title: 'feature_midi_title', text: 'feature_midi_text' },
   { title: 'feature_cloud_title', text: 'feature_cloud_text' },
   { title: 'feature_verified_title', text: 'feature_verified_text' },
-  { title: 'feature_ai_title', text: 'feature_ai_text', soon: true },
+  { title: 'feature_ai_title', text: 'feature_ai_text' },
 ];
 
 /** Linia trasă de mână sub un cuvânt din titlu. */

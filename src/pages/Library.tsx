@@ -9,7 +9,7 @@ import { mapSoundRow } from '../lib/soundRow';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../hooks/useTranslation';
-import { ALL_KEYS, isHarmonicallyCompatible, parseKey } from '../lib/musicKey';
+import { ALL_KEYS, keyMatchesFilter } from '../lib/musicKey';
 import { errorMessage } from '../lib/errors';
 import { buildTagPacks, TagPack } from '../lib/packs';
 import { Icon } from '../components/Icon';
@@ -22,8 +22,6 @@ import { BpmInput } from '../components/controls/BpmInput';
 import { HelpTip } from '../components/HelpTip';
 import './Library.css';
 
-/** Fereastra de tempo din jurul valorii potențiometrului. */
-const BPM_WINDOW = 6;
 // Intervalul potențiometrului și al câmpului scris de mână.
 const BPM_MIN = 50;
 const BPM_MAX = 220;
@@ -32,7 +30,7 @@ const CATEGORIES = ['ALL', 'Loop', 'One-Shot', 'FX'];
 export const Library: React.FC = () => {
   const {
     searchQuery, setSearchQuery, soundView, setSoundView,
-    discoverKey, setDiscoverKey, discoverBpm, setDiscoverBpm, discoverType, setDiscoverType, clearDiscoverFilters,
+    discoverKey, setDiscoverKey, discoverBpmMin, discoverBpmMax, setDiscoverBpmRange, discoverType, setDiscoverType, clearDiscoverFilters,
   } = useAppStore();
   const { session } = useAuthStore();
   const { t } = useTranslation();
@@ -83,6 +81,8 @@ export const Library: React.FC = () => {
 
   const referenceKey = discoverKey == null ? null : ALL_KEYS[discoverKey]?.key ?? null;
 
+  const bpmActive = discoverBpmMin != null || discoverBpmMax != null;
+
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return sounds.filter(s => {
@@ -90,18 +90,35 @@ export const Library: React.FC = () => {
         s.author.toLowerCase().includes(q) ||
         s.tags.some(tag => tag.toLowerCase().includes(q));
       const matchesType = discoverType === 'ALL' || s.type.toLowerCase() === discoverType.toLowerCase();
-      const matchesBpm = discoverBpm == null || (s.bpm != null && Math.abs(s.bpm - discoverBpm) <= BPM_WINDOW);
+      // Cu un interval ales, un sunet fără BPM e exclus.
+      const matchesBpm = !bpmActive || (s.bpm != null &&
+        (discoverBpmMin == null || s.bpm >= discoverBpmMin) &&
+        (discoverBpmMax == null || s.bpm <= discoverBpmMax));
       // Cu o tonalitate aleasă, un sunet fără tonalitate parsabilă e exclus —
-      // mai bine ascuns decât potrivit greșit.
-      const matchesKey = !referenceKey || (() => {
-        const candidate = parseKey(s.key);
-        return !!candidate && isHarmonicallyCompatible(referenceKey, candidate);
-      })();
+      // mai bine ascuns decât potrivit greșit. Doar nota („C”) = major sau minor.
+      const matchesKey = !referenceKey || keyMatchesFilter(referenceKey, s.key);
       return matchesSearch && matchesType && matchesBpm && matchesKey;
     });
-  }, [sounds, searchQuery, discoverType, discoverBpm, referenceKey]);
+  }, [sounds, searchQuery, discoverType, discoverBpmMin, discoverBpmMax, bpmActive, referenceKey]);
 
-  const hasFilters = !!searchQuery || discoverKey != null || discoverBpm != null || discoverType !== 'ALL';
+  const hasFilters = !!searchQuery || discoverKey != null || bpmActive || discoverType !== 'ALL';
+
+  // Capetele nu se pot încrucișa: cel mutat îl împinge pe celălalt.
+  const setBpmMin = (v: number | null) =>
+    setDiscoverBpmRange(v, v != null && discoverBpmMax != null && v > discoverBpmMax ? v : discoverBpmMax);
+  const setBpmMax = (v: number | null) =>
+    setDiscoverBpmRange(v != null && discoverBpmMin != null && v < discoverBpmMin ? v : discoverBpmMin, v);
+  const lo = discoverBpmMin ?? BPM_MIN;
+  const hi = discoverBpmMax ?? BPM_MAX;
+  const pct = (v: number) => ((v - BPM_MIN) / (BPM_MAX - BPM_MIN)) * 100;
+  const bpmSummary =
+    discoverBpmMin != null && discoverBpmMax != null
+      ? t('rack_bpm_between', { min: discoverBpmMin, max: discoverBpmMax })
+      : discoverBpmMin != null
+        ? t('rack_bpm_from', { min: discoverBpmMin })
+        : discoverBpmMax != null
+          ? t('rack_bpm_to', { max: discoverBpmMax })
+          : t('rack_drag');
 
   if (!session) {
     return (
@@ -129,22 +146,41 @@ export const Library: React.FC = () => {
         <section className="rack-panel">
           <header>
             <h3>{t('rack_tempo')}</h3>
-            {discoverBpm != null && <button type="button" onClick={() => setDiscoverBpm(null)}>{t('rack_any')}</button>}
+            {bpmActive && <button type="button" onClick={() => setDiscoverBpmRange(null, null)}>{t('rack_any')}</button>}
           </header>
-          <div className="rack-knob">
-            <Knob min={BPM_MIN} max={BPM_MAX} value={discoverBpm} onChange={setDiscoverBpm} label={t('rack_tempo')} />
-            <div>
-              <span className="bpm-field">
-                <BpmInput value={discoverBpm} onChange={setDiscoverBpm} min={BPM_MIN} max={BPM_MAX} label={t('rack_tempo')} placeholder="—" />
-                <small>BPM</small>
-              </span>
-              <span>
-                {discoverBpm == null
-                  ? t('rack_drag')
-                  : t('rack_window', { min: discoverBpm - BPM_WINDOW, max: discoverBpm + BPM_WINDOW })}
-              </span>
+          <div className="rack-range">
+            <div className="rack-end">
+              <span className="rack-end-label">{t('rack_bpm_min')}</span>
+              <Knob
+                min={BPM_MIN}
+                max={BPM_MAX}
+                value={discoverBpmMin}
+                onChange={setBpmMin}
+                size={58}
+                startAt={discoverBpmMax != null ? Math.max(BPM_MIN, discoverBpmMax - 20) : 90}
+                label={t('rack_bpm_min')}
+              />
+              <BpmInput value={discoverBpmMin} onChange={setBpmMin} min={BPM_MIN} max={BPM_MAX} label={t('rack_bpm_min')} placeholder="—" />
+            </div>
+            <span className="rack-range-dash" aria-hidden>–</span>
+            <div className="rack-end">
+              <span className="rack-end-label">{t('rack_bpm_max')}</span>
+              <Knob
+                min={BPM_MIN}
+                max={BPM_MAX}
+                value={discoverBpmMax}
+                onChange={setBpmMax}
+                size={58}
+                startAt={discoverBpmMin != null ? Math.min(BPM_MAX, discoverBpmMin + 20) : 150}
+                label={t('rack_bpm_max')}
+              />
+              <BpmInput value={discoverBpmMax} onChange={setBpmMax} min={BPM_MIN} max={BPM_MAX} label={t('rack_bpm_max')} placeholder="—" />
             </div>
           </div>
+          <div className={`rack-range-bar${bpmActive ? ' on' : ''}`} aria-hidden>
+            <i style={{ left: `${pct(lo)}%`, width: `${pct(hi) - pct(lo)}%` }} />
+          </div>
+          <p className="rack-range-note">{bpmSummary}</p>
         </section>
 
         <section className="rack-panel">

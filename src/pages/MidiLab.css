@@ -1,0 +1,308 @@
+/* MIDI Deconstructor */
+.midi-page {
+  display: grid;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Zona de drop */
+.midi-drop {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  border-radius: 22px;
+  border: 2px dashed var(--line-strong);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 13px, rgba(255, 255, 255, 0.025) 13px 14px),
+    var(--surface);
+  color: var(--muted);
+  text-align: center;
+  transition: border-color 0.3s var(--ease-out), background-color 0.3s, transform 0.45s var(--ease-spring);
+}
+
+.midi-drop h2 {
+  color: var(--fg);
+  font: 700 22px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.midi-drop p {
+  max-width: 52ch;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.midi-drop.over,
+.midi-file.over {
+  border-color: var(--signal);
+  transform: scale(1.01);
+}
+
+/* Fișierul ales */
+.midi-file {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: border-color 0.3s, transform 0.45s var(--ease-spring);
+}
+
+.mf-play {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-spring), background var(--dur);
+}
+
+.mf-play:hover {
+  transform: scale(1.06);
+}
+
+.mf-play.on {
+  background: var(--signal);
+}
+
+.mf-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.mf-name b {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mf-name span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Reglaje */
+.midi-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 22px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(19, 19, 26, 0.72);
+  border: 1px solid var(--line-soft);
+}
+
+.mc-bpm,
+.mc-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.mc-bpm label,
+.mc-field > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mc-field em {
+  float: right;
+  font-style: normal;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.mc-bpm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mc-bpm-row > span {
+  color: var(--muted);
+  font: 500 12px var(--font-mono);
+}
+
+.mc-bpm-input {
+  width: 92px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 26px;
+  font-weight: 700;
+  transition: border-color var(--dur);
+}
+
+.mc-bpm-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.mc-bpm-input.bad {
+  border-color: var(--bad);
+}
+
+.mc-suggest {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(45, 212, 238, 0.4);
+  background: var(--signal-soft);
+  color: var(--signal);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: menuIn 0.3s var(--ease-spring);
+}
+
+.mc-bpm small,
+.mc-field small {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mc-field .segmented {
+  justify-self: start;
+}
+
+.mc-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.mc-go {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.mc-go .btn-primary-pill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mc-error {
+  color: var(--bad);
+  font-size: 13px;
+}
+
+/* Rezultat */
+.midi-result {
+  display: grid;
+  gap: 12px;
+  animation: pageIn var(--dur-slow) var(--ease-out) backwards;
+}
+
+.mr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.mr-stats {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mr-stats b {
+  color: var(--fg);
+}
+
+.mr-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mr-actions .btn-ghost-pill.on {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.mr-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* „Trage în DAW” — mânerul nativ de drag */
+.mr-drag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--signal);
+  color: var(--signal);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: grab;
+  user-select: none;
+  transition: background var(--dur), transform 0.3s var(--ease-spring);
+}
+
+.mr-drag:hover {
+  background: var(--signal-soft);
+  transform: translateY(-1px);
+}
+
+.mr-drag:active {
+  cursor: grabbing;
+}
+
+.mr-drag.wait {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.mr-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 14px;
+  border: 1px dashed var(--line);
+}
+
+.mr-tip {
+  color: var(--faint);
+  font-size: 12.5px;
+}
+
+@media (max-width: 1100px) {
+  .midi-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mr-recalc {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--signal);
+}

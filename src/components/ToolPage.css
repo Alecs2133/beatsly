@@ -1,0 +1,75 @@
+/* Antetul și ecranul „blocat” ale uneltelor de producție */
+.tool-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tool-head h1 {
+  font: 800 38px / 1 var(--font-display);
+  letter-spacing: -0.035em;
+}
+
+.tool-head p {
+  margin-top: 8px;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.tool-plan {
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 92, 255, 0.45);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tool-locked {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 64px 24px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: center;
+  color: var(--muted);
+}
+
+.tool-locked > svg {
+  color: var(--accent-hover);
+}
+
+.tool-locked h2 {
+  color: var(--fg);
+  font: 700 24px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.tool-locked p {
+  max-width: 54ch;
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+
+.tool-locked-art {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.tool-locked-art i {
+  position: absolute;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--accent);
+}

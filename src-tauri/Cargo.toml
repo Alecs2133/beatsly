@@ -16,8 +16,6 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["protocol-asset"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-lofty = "0.21.1"
-regex = "1"
 tauri-plugin-dialog = "2.0.0"
 # Necesar pentru writeFile la download. Era tras doar tranzitiv prin
 # tauri-plugin-dialog și nu era înregistrat, deci descărcările eșuau.

@@ -66,9 +66,10 @@ interface AppState {
   /** Index în ALL_KEYS (musicKey.ts), sau null = orice tonalitate. */
   discoverKey: number | null;
   setDiscoverKey: (index: number | null) => void;
-  /** Centrul ferestrei de ±6 BPM, sau null = orice tempo. */
-  discoverBpm: number | null;
-  setDiscoverBpm: (bpm: number | null) => void;
+  /** Intervalul de tempo; un capăt null = deschis (ex. „peste 120”). */
+  discoverBpmMin: number | null;
+  discoverBpmMax: number | null;
+  setDiscoverBpmRange: (min: number | null, max: number | null) => void;
   discoverType: string;
   setDiscoverType: (type: string) => void;
   clearDiscoverFilters: () => void;
@@ -106,11 +107,12 @@ export const useAppStore = create<AppState>((set, get) => {
 
     discoverKey: null,
     setDiscoverKey: (index) => set({ discoverKey: index }),
-    discoverBpm: null,
-    setDiscoverBpm: (bpm) => set({ discoverBpm: bpm }),
+    discoverBpmMin: null,
+    discoverBpmMax: null,
+    setDiscoverBpmRange: (min, max) => set({ discoverBpmMin: min, discoverBpmMax: max }),
     discoverType: 'ALL',
     setDiscoverType: (type) => set({ discoverType: type }),
-    clearDiscoverFilters: () => set({ discoverKey: null, discoverBpm: null, discoverType: 'ALL', searchQuery: '' }),
+    clearDiscoverFilters: () => set({ discoverKey: null, discoverBpmMin: null, discoverBpmMax: null, discoverType: 'ALL', searchQuery: '' }),
 
     settingsOpen: false,
     setSettingsOpen: (open) => set({ settingsOpen: open, commandOpen: false }),

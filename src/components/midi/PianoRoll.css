@@ -1,0 +1,101 @@
+/* Piano roll — notele detectate */
+.proll {
+  display: flex;
+  max-height: 380px;
+  overflow-y: auto;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.proll-keys {
+  position: sticky;
+  left: 0;
+  flex-shrink: 0;
+  background: #e9e8ef;
+  border-right: 1px solid var(--line);
+}
+
+.k-white {
+  fill: #e9e8ef;
+  stroke: #c9c8d2;
+  stroke-width: 0.5;
+}
+
+.k-black {
+  fill: #1c1b24;
+}
+
+.k-label {
+  fill: #55546a;
+  font: 600 9px var(--font-mono);
+  text-anchor: end;
+}
+
+.proll-scroll {
+  flex: 1;
+  overflow-x: auto;
+}
+
+.proll-grid {
+  display: block;
+}
+
+.row-white {
+  fill: #15151d;
+}
+
+.row-black {
+  fill: #101016;
+}
+
+.l-sixteenth {
+  stroke: rgba(255, 255, 255, 0.025);
+}
+
+.l-beat {
+  stroke: rgba(255, 255, 255, 0.07);
+}
+
+.l-bar {
+  stroke: rgba(255, 255, 255, 0.18);
+}
+
+.bar-num {
+  fill: var(--faint);
+  font: 500 9px var(--font-mono);
+}
+
+.note {
+  fill: var(--accent);
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 0.6;
+  animation: noteIn 0.4s var(--ease-spring) backwards;
+  transition: fill 0.12s;
+}
+
+.note:hover {
+  fill: var(--accent-hover);
+}
+
+/* Nota care sună acum, desenată peste cea normală */
+.note-on {
+  fill: var(--signal);
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 0.6;
+  pointer-events: none;
+}
+
+@keyframes noteIn {
+  from { transform: scaleX(0.2); opacity: 0; }
+}
+
+.note {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+.playhead {
+  stroke: var(--signal);
+  stroke-width: 1.5;
+}

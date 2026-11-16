@@ -94,6 +94,28 @@ export function isHarmonicallyCompatible(reference: ParsedKey, candidate: Parsed
   return false;
 }
 
+/**
+ * Tonalitățile pe care le poate avea un sunet, pentru filtrare. Când e scrisă
+ * doar nota („C”, „F#”), modul e necunoscut — producătorii notează adesea așa
+ * și sunete în minor. Le luăm pe amândouă, ca un „C” să apară și la Cmaj, și
+ * la Cm, nu doar la major cum presupune `parseKey`.
+ */
+export function keyCandidates(raw: string | null | undefined): ParsedKey[] {
+  const parsed = parseKey(raw);
+  if (!parsed) return [];
+  const match = raw!.trim().toUpperCase().match(KEY_PATTERN);
+  if (match?.[3]) return [parsed];
+  return [
+    { root: parsed.root, mode: 'major' },
+    { root: parsed.root, mode: 'minor' },
+  ];
+}
+
+/** True dacă sunetul cu tonalitatea `raw` se potrivește cu `reference` în filtru. */
+export function keyMatchesFilter(reference: ParsedKey, raw: string | null | undefined): boolean {
+  return keyCandidates(raw).some(candidate => isHarmonicallyCompatible(reference, candidate));
+}
+
 export interface KeyOption {
   label: string;
   key: ParsedKey;

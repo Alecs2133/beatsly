@@ -42,7 +42,7 @@ export const CommandPalette: React.FC = () => {
   const navigate = useNavigate();
   const {
     commandOpen, setCommandOpen, setSettingsOpen, setSearchQuery,
-    setDiscoverBpm, setDiscoverKey, clearDiscoverFilters,
+    setDiscoverBpmRange, setDiscoverKey, clearDiscoverFilters,
   } = useAppStore();
   const { user, profile, signOut } = useAuthStore();
   const savedSounds = useLibraryStore(s => s.savedSounds);
@@ -83,7 +83,7 @@ export const CommandPalette: React.FC = () => {
     // Comenzi „inteligente” din ce scrii
     const bpm = Number(q);
     if (Number.isInteger(bpm) && bpm >= 50 && bpm <= 220) {
-      list.push({ id: 'bpm', section: t('cmd_filters'), label: t('cmd_filter_bpm', { bpm }), icon: <Gauge size={15} />, run: () => { setDiscoverBpm(bpm); go('/')(); } });
+      list.push({ id: 'bpm', section: t('cmd_filters'), label: t('cmd_filter_bpm', { min: Math.max(50, bpm - 6), max: Math.min(220, bpm + 6) }), icon: <Gauge size={15} />, run: () => { setDiscoverBpmRange(Math.max(50, bpm - 6), Math.min(220, bpm + 6)); go('/')(); } });
     }
     const keyIdx = q ? findKeyIndex(q) : null;
     if (keyIdx != null) {
@@ -98,6 +98,8 @@ export const CommandPalette: React.FC = () => {
     const nav: Command[] = [
       { id: 'go-discover', section: t('cmd_navigate'), label: t('nav_discover'), icon: <Compass size={15} />, run: go('/') },
       { id: 'go-library', section: t('cmd_navigate'), label: t('nav_my_sounds'), icon: <ArrowRight size={15} />, run: go('/library') },
+      { id: 'go-generator', section: t('cmd_navigate'), label: t('nav_ai_generator'), icon: <ArrowRight size={15} />, run: go('/generator') },
+      { id: 'go-midi', section: t('cmd_navigate'), label: t('nav_midi'), icon: <ArrowRight size={15} />, run: go('/midi') },
       { id: 'go-store', section: t('cmd_navigate'), label: t('nav_store'), icon: <ArrowRight size={15} />, run: go('/store') },
       { id: 'go-profile', section: t('cmd_navigate'), label: t('topbar_profile'), icon: <User size={15} />, run: go('/account') },
       { id: 'go-settings', section: t('cmd_navigate'), label: t('topbar_settings'), icon: <SlidersHorizontal size={15} />, run: () => setSettingsOpen(true) },
@@ -125,7 +127,7 @@ export const CommandPalette: React.FC = () => {
     list.push(...actions.filter(c => !ql || c.label.toLowerCase().includes(ql)));
 
     return list;
-  }, [query, t, navigate, savedSounds, profile, user, setSettingsOpen, setSearchQuery, setDiscoverBpm, setDiscoverKey, clearDiscoverFilters, playQueue, signOut]);
+  }, [query, t, navigate, savedSounds, profile, user, setSettingsOpen, setSearchQuery, setDiscoverBpmRange, setDiscoverKey, clearDiscoverFilters, playQueue, signOut]);
 
   useEffect(() => {
     setActive(a => Math.min(a, Math.max(0, commands.length - 1)));

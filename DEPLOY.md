@@ -118,23 +118,18 @@ Verifică:
 npx supabase functions list
 ```
 
-### Amânat: generarea AI
+### Generatorul AI
 
-`generate-audio` nu se deployează încă. Funcția de generare nu e activă în
-produs — pagina Analyzer e acoperită integral de overlay-ul "Coming Soon", deci
-nimic din aplicație nu o apelează.
+Nu are nevoie de nimic pe server. Aplicația cheamă direct Space-ul oficial
+Stable Audio 3 de pe Hugging Face (`src/lib/generator/space.ts`), fără cont
+și fără token — fiecare user folosește propria cotă zilnică gratuită de GPU.
 
-Funcția e scrisă și gata. Când ai un token HuggingFace valid:
+Vechea funcție `generate-audio` (HuggingFace Inference API, închis între
+timp) a fost scoasă din repo. Dacă e încă deployată, o poți șterge:
 
 ```bash
-npx supabase secrets set HF_API_TOKEN=hf_tokenul_tau && npx supabase functions deploy generate-audio --use-api
+npx supabase functions delete generate-audio
 ```
-
-Apoi scoate overlay-ul din `src/pages/Analyzer.tsx`.
-
-Dacă funcția e deployată fără `HF_API_TOKEN` setat, răspunde `503` cu
-"AI generation is not configured" în loc să crape sau să consume credite —
-comportament intenționat, dar oricum inutil cât timp interfața e blocată.
 
 ---
 

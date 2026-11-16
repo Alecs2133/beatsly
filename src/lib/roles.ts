@@ -43,3 +43,12 @@ export const hasUnlimitedCredits = (
   role?: string | null,
   tier?: string | null
 ): boolean => role === 'OWNER' || tier === 'ultimate';
+
+/**
+ * Uneltele de producție (MIDI Deconstructor, Generatorul AI): incluse în
+ * Producer Pack și Ultimate; adminii le au ca să le poată testa.
+ */
+export const hasProducerTools = (
+  tier?: string | null,
+  role?: string | null
+): boolean => tier === 'producer' || tier === 'ultimate' || isAdminRole(role);

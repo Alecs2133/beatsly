@@ -21,6 +21,7 @@ export type IconName =
   | 'signal'
   | 'folder'
   | 'upload'
+  | 'midi'
   | 'check'
   | 'heart'
   | 'bell'
@@ -102,6 +103,18 @@ function Shape({ name }: { name: IconName }) {
           <path d="M7 18h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 10.6 3.8 3.8 0 0 0 7 18z" />
           <g className="bi-up">
             <path d="M12 16v-5m0 0-2.2 2.2M12 11l2.2 2.2" />
+          </g>
+        </g>
+      );
+    case 'midi':
+      // un mic piano roll: trei note la înălțimi diferite
+      return (
+        <g {...STROKE}>
+          <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+          <g className="bi-notes" fill="currentColor" stroke="none">
+            <rect x="6.5" y="13.5" width="4" height="2.2" rx="1.1" />
+            <rect x="10" y="10" width="4.5" height="2.2" rx="1.1" />
+            <rect x="14" y="7" width="3.5" height="2.2" rx="1.1" />
           </g>
         </g>
       );

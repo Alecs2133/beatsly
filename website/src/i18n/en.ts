@@ -38,7 +38,7 @@ export const en = {
   feature_cloud_title: 'Your library, on any computer',
   feature_cloud_text: 'What you save belongs to your account, not to the machine. Sign in somewhere else and it\'s all there.',
   feature_ai_title: 'Sample generator',
-  feature_ai_text: 'We\'re working on it. It won\'t ship until it sounds good.',
+  feature_ai_text: 'Type "distorted 808 with a long tail" and a few seconds later the sample is ready to drag into your DAW. Included in Producer Pack.',
   feature_library_title: 'Community library',
   feature_library_text: 'Loops, one-shots and packs from producers who were checked by a person, filterable by BPM and key.',
   feature_verified_title: 'Every upload gets listened to',
@@ -55,9 +55,9 @@ export const en = {
   faq_credits_q: 'What is a "credit"?',
   faq_credits_a:
     'Credits are used to download sounds from the cloud — each download costs 1 credit. Free accounts get 3 per day and Producer accounts 30 per day. Ultimate members download without credits.',
-  faq_ai_q: 'How will the AI Generator work?',
+  faq_ai_q: 'How does the AI Generator work?',
   faq_ai_a:
-    'You describe the sound you need (e.g. "heavy 808 bass at 140 BPM") and the AI generates an original audio sample. It is still in development and will arrive in an upcoming update.',
+    'You describe the sound you need (e.g. "heavy 808 bass at 140 BPM"), pick one-shot or loop and, if you want, a tempo and key. A few seconds later you get an original sample you can save as WAV or drag straight into your DAW. It uses the Stable Audio 3 model (Stability AI) and is included in Producer Pack and Ultimate.',
   faq_platforms_q: 'What platforms are supported?',
   faq_platforms_a: 'Beats.ly runs on Windows 10/11 (x64) and macOS on Apple Silicon. An Intel Mac build is coming soon.',
   faq_data_q: 'Is my data safe?',
@@ -268,6 +268,11 @@ export const en = {
   download_desktop_only_text: 'The app is made for Windows and macOS. It can\'t be downloaded on a phone, tablet or TV — open this page on your computer.',
   download_copy_link: 'Copy link',
   download_link_copied: 'Link copied',
+  pricing_midi: 'MIDI Deconstructor — turn audio into MIDI',
+  pricing_new: 'new',
+  pricing_row_midi: 'MIDI Deconstructor (audio → MIDI)',
+  feature_midi_title: 'Audio → MIDI',
+  feature_midi_text: 'With Producer Pack, MIDI Deconstructor pulls the notes out of a melody, a bassline or a chord and hands them to you as a MIDI file, ready to drag into your piano roll.',
 };
 
 export type TranslationKey = keyof typeof en;

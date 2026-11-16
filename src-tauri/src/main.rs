@@ -1,10 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use lofty::file::AudioFile;
-use lofty::probe::Probe;
-use regex::Regex;
 use serde::Serialize;
-use std::fs;
 use std::fs::File;
 use std::path::Path;
 use stratum_dsp::{analyze_audio, AnalysisConfig};
@@ -16,60 +12,6 @@ use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 use symphonia::core::sample::i24;
 use tauri::{AppHandle, Manager};
-
-#[derive(Serialize)]
-struct LocalSample {
-    id: String,
-    name: String,
-    path: String,
-    bpm: String, // String, nu u16, ca să putem returna "-" când nu găsim BPM
-    key: String,
-    tags: Vec<String>,
-    duration: String,
-}
-
-fn get_audio_duration(path: &Path) -> String {
-    if let Ok(tagged_file) = Probe::open(path).and_then(|probe| probe.read()) {
-        let duration = tagged_file.properties().duration();
-        let total_seconds = duration.as_secs();
-        let minutes = total_seconds / 60;
-        let seconds = total_seconds % 60;
-        return format!("{}:{:02}", minutes, seconds);
-    }
-    "-:--".to_string()
-}
-
-/// Caută BPM-ul în numele fișierului (ex: "140bpm", "128_bpm").
-fn extract_bpm(filename: &str) -> String {
-    let re = Regex::new(r"(?i)(\d{2,3})[\s_]*bpm").unwrap();
-
-    if let Some(caps) = re.captures(filename) {
-        if let Some(matched) = caps.get(1) {
-            return matched.as_str().to_string();
-        }
-    }
-
-    // Fără cuvântul "bpm": căutăm un număr izolat între 70 și 200.
-    let fallback_re = Regex::new(r"_(7[0-9]|1[0-9]{2}|200)_").unwrap();
-    if let Some(caps) = fallback_re.captures(filename) {
-        if let Some(matched) = caps.get(1) {
-            return matched.as_str().to_string();
-        }
-    }
-
-    "-".to_string()
-}
-
-/// Caută cheia muzicală în numele fișierului (ex: Cmin, F#maj, Am).
-fn extract_key(filename: &str) -> String {
-    let re = Regex::new(r"(?i)\b([A-G][#b]?\s?(min|maj|m|M))\b").unwrap();
-    if let Some(caps) = re.captures(filename) {
-        if let Some(matched) = caps.get(1) {
-            return matched.as_str().to_string();
-        }
-    }
-    "-".to_string()
-}
 
 /// Convertește un eșantion i24 (24 de biți, stocați în i32) în f32.
 fn i24_to_f32(sample: i24) -> f32 {
@@ -243,9 +185,20 @@ struct AudioAnalysis {
 /// la cerere, per fișier, dintr-un buton "Analyze" în interfață, nu automat
 /// la fiecare scanare de folder, unde ar transforma o listare instant
 /// într-un proces de minute pentru un folder cu sute de fișiere.
+///
+/// `async` + `spawn_blocking`: în Tauri v2 comenzile sincrone rulează pe firul
+/// principal al ferestrei, așa că decodarea unui fișier lung bloca toată
+/// aplicația (inclusiv animațiile) până termina. Acum calculul stă pe un fir
+/// separat, iar interfața rămâne liberă.
 #[tauri::command]
-fn analyze_sample_audio(path: String) -> Result<AudioAnalysis, String> {
-    let (samples, sample_rate) = decode_audio_file(&path)?;
+async fn analyze_sample_audio(path: String) -> Result<AudioAnalysis, String> {
+    tauri::async_runtime::spawn_blocking(move || analyze_file(&path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn analyze_file(path: &str) -> Result<AudioAnalysis, String> {
+    let (samples, sample_rate) = decode_audio_file(path)?;
 
     if samples.is_empty() {
         return Err("Fișierul nu conține date audio decodabile.".to_string());
@@ -286,51 +239,6 @@ fn allow_asset_path(app: AppHandle, path: String) -> Result<(), String> {
             .allow_file(p)
             .map_err(|e| e.to_string())
     }
-}
-
-#[tauri::command]
-fn scan_directory(app: AppHandle, folder_path: &str) -> Result<Vec<LocalSample>, String> {
-    let mut samples = Vec::new();
-    let paths = fs::read_dir(folder_path).map_err(|e| e.to_string())?;
-
-    // Folderul a fost ales de utilizator prin dialog, deci îl deschidem pentru
-    // protocolul `asset:` — altfel frontend-ul nu poate reda fișierele.
-    // Nerecursiv: permitem exact folderul scanat, nu tot ce e sub el.
-    app.asset_protocol_scope()
-        .allow_directory(Path::new(folder_path), false)
-        .map_err(|e| e.to_string())?;
-
-    for (index, path_result) in paths.enumerate() {
-        let entry = path_result.map_err(|e| e.to_string())?;
-        let p = entry.path();
-
-        if p.is_file() {
-            let ext = p
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("")
-                .to_lowercase();
-
-            if ext == "wav" || ext == "mp3" {
-                let name = p.file_name().unwrap().to_string_lossy().into_owned();
-
-                let duration = get_audio_duration(&p);
-                let bpm = extract_bpm(&name);
-                let key = extract_key(&name);
-
-                samples.push(LocalSample {
-                    id: index.to_string(),
-                    name,
-                    path: p.to_string_lossy().into_owned(),
-                    bpm,
-                    key,
-                    tags: vec!["Local".to_string(), ext.to_uppercase()],
-                    duration,
-                });
-            }
-        }
-    }
-    Ok(samples)
 }
 
 /// Un panic aici nu ajunge niciodată în `client_error_reports` — nu există
@@ -378,7 +286,6 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            scan_directory,
             allow_asset_path,
             analyze_sample_audio
         ])

@@ -1,0 +1,612 @@
+/* Generator AI */
+.gen-page {
+  display: grid;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.gen-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* ---------- compunerea ---------- */
+.gen-composer {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(19, 19, 26, 0.72);
+  border: 1px solid var(--line-soft);
+}
+
+.gen-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gen-label em {
+  float: right;
+  font-style: normal;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.gen-small {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.gen-prompt-box {
+  position: relative;
+  margin-top: -4px;
+}
+
+.gen-prompt {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  padding: 12px 14px 24px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px / 1.45 var(--font-body);
+  transition: border-color var(--dur), box-shadow var(--dur);
+}
+
+.gen-prompt:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.gen-count {
+  position: absolute;
+  right: 12px;
+  bottom: 9px;
+  color: var(--faint);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.gen-ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gen-idea {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color var(--dur), border-color var(--dur), background var(--dur), transform 0.3s var(--ease-spring);
+}
+
+.gen-idea:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.gen-idea.on {
+  color: var(--signal);
+  border-color: rgba(45, 212, 238, 0.45);
+  background: var(--signal-soft);
+}
+
+.gen-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.gen-field .segmented {
+  justify-self: start;
+}
+
+.gen-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.gen-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.gen-row .gen-field {
+  flex: 1;
+  min-width: 120px;
+}
+
+.gen-bpm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gen-bpm em {
+  color: var(--muted);
+  font: normal 500 12px var(--font-mono);
+}
+
+.gen-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+  transition: border-color var(--dur);
+}
+
+.gen-bpm .gen-input {
+  width: 76px;
+}
+
+.gen-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.gen-input.bad {
+  border-color: var(--bad);
+}
+
+.gen-select {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gen-select option {
+  background: var(--raised);
+}
+
+.gen-go {
+  justify-content: center;
+  margin-top: 4px;
+  padding-block: 12px;
+  font-size: 15px;
+}
+
+.gen-go kbd {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.16);
+  font: 500 11px var(--font-mono);
+}
+
+.gen-go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.gen-credit {
+  color: var(--faint);
+  font-size: 11.5px;
+  line-height: 1.45;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* contul Hugging Face, opțional */
+.gen-hf {
+  display: grid;
+  gap: 10px;
+  margin-top: -2px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.gen-hf.on {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gen-hf.on > svg {
+  color: var(--good);
+}
+
+.gen-hf.on.bad {
+  color: var(--bad);
+}
+
+.gen-hf.on.bad > svg {
+  color: var(--bad);
+}
+
+.gen-hf-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--signal);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gen-hf-chev {
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.gen-hf.open .gen-hf-chev {
+  transform: rotate(180deg);
+}
+
+.gen-hf-body {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  line-height: 1.45;
+  animation: menuIn 0.3s var(--ease-spring);
+}
+
+.gen-hf-body ol {
+  display: grid;
+  gap: 3px;
+  padding-left: 18px;
+}
+
+.gen-hf-row {
+  display: flex;
+  gap: 6px;
+}
+
+.gen-hf-row .gen-input {
+  flex: 1;
+  height: 34px;
+  font: 13px var(--font-mono);
+}
+
+.gen-hf-row .btn-ghost-pill {
+  padding: 6px 12px;
+  font-size: 12.5px;
+}
+
+.gen-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--signal);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* ---------- rezultatele ---------- */
+.gen-results {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.gen-results-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.gen-results-head h2 {
+  font: 700 18px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.gen-results-head span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.gen-empty {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 56px 24px;
+  border-radius: 18px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  text-align: center;
+  font-size: 13.5px;
+}
+
+.gen-empty-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 48px;
+}
+
+.gen-empty-wave i {
+  width: 4px;
+  height: var(--h);
+  border-radius: 2px;
+  background: var(--line-strong);
+  animation: genBreath 2.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.09s);
+}
+
+.gen-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  animation: genIn 0.45s var(--ease-spring) backwards;
+  transition: border-color var(--dur);
+}
+
+@keyframes genIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+}
+
+.gen-card.playing {
+  border-color: rgba(45, 212, 238, 0.45);
+}
+
+.gen-card.error {
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.gen-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gen-card-top .gen-text {
+  flex: 1;
+}
+
+.gen-text {
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.gen-card.pending .gen-text {
+  color: var(--muted);
+}
+
+.gen-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--dur), background var(--dur), border-color var(--dur);
+}
+
+.gen-icon:hover:not(:disabled) {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--line);
+}
+
+.gen-icon:disabled {
+  opacity: 0.4;
+  cursor: progress;
+}
+
+/* forma de undă */
+.gen-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gen-play {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--bg);
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-spring), background var(--dur);
+}
+
+.gen-play:hover {
+  transform: scale(1.06);
+}
+
+.gen-play.on {
+  background: var(--signal);
+}
+
+.gen-wave {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 46px;
+  cursor: pointer;
+}
+
+.gen-wave i {
+  flex: 1;
+  min-width: 1px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  transition: background 0.12s;
+}
+
+.gen-wave i.lit {
+  background: linear-gradient(180deg, var(--signal), var(--accent));
+}
+
+.gen-card.done:hover .gen-wave i:not(.lit) {
+  background: #45455a;
+}
+
+.gen-wave.pending {
+  cursor: default;
+}
+
+.gen-wave.pending i {
+  height: var(--h);
+  background: var(--line);
+  animation: genBreath 1.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.05s);
+}
+
+@keyframes genBreath {
+  0%, 100% { transform: scaleY(0.55); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.gen-bar {
+  position: relative;
+  height: 6px;
+  border-radius: 6px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.gen-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  transition: width 0.35s var(--ease-out);
+}
+
+.gen-bar i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-100%);
+  animation: genShine 1.3s ease-in-out infinite;
+}
+
+@keyframes genShine {
+  to { transform: translateX(100%); }
+}
+
+.gen-status {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -4px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.gen-status .num {
+  color: var(--fg);
+}
+
+.gen-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gen-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gen-meta span {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.gen-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gen-drag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 4px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--signal);
+  color: var(--signal);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: grab;
+  user-select: none;
+  transition: background var(--dur);
+}
+
+.gen-drag:hover {
+  background: var(--signal-soft);
+}
+
+.gen-drag.wait {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.gen-save {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.gen-error {
+  color: var(--bad);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gen-retry {
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
+  .gen-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gen-wave.pending i,
+  .gen-empty-wave i,
+  .gen-bar i::after {
+    animation: none;
+  }
+}

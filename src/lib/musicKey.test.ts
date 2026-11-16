@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_KEYS, isHarmonicallyCompatible, parseKey, toCamelot } from './musicKey';
+import { ALL_KEYS, isHarmonicallyCompatible, keyCandidates, keyMatchesFilter, parseKey, toCamelot } from './musicKey';
 
 const key = (raw: string) => {
   const parsed = parseKey(raw);
@@ -76,5 +76,29 @@ describe('isHarmonicallyCompatible', () => {
   it('rejects distant keys', () => {
     expect(isHarmonicallyCompatible(key('C'), key('F#'))).toBe(false);
     expect(isHarmonicallyCompatible(key('C'), key('Em'))).toBe(false);
+  });
+});
+
+describe('keyMatchesFilter', () => {
+  it('treats a bare note as both major and minor', () => {
+    expect(keyCandidates('C')).toEqual([{ root: 0, mode: 'major' }, { root: 0, mode: 'minor' }]);
+    expect(keyMatchesFilter(key('Cmaj'), 'C')).toBe(true);
+    expect(keyMatchesFilter(key('Cm'), 'C')).toBe(true);
+    expect(keyMatchesFilter(key('F#m'), 'F#')).toBe(true);
+    expect(keyMatchesFilter(key('Ebm'), 'Eb')).toBe(true);
+  });
+
+  it('keeps an explicit mode strict', () => {
+    expect(keyCandidates('Cmaj')).toEqual([{ root: 0, mode: 'major' }]);
+    expect(keyCandidates('C major')).toEqual([{ root: 0, mode: 'major' }]);
+    expect(keyCandidates('Cm')).toEqual([{ root: 0, mode: 'minor' }]);
+    // Cm = 5A, C major = 8B — departe pe roată.
+    expect(keyMatchesFilter(key('Cm'), 'C major')).toBe(false);
+  });
+
+  it('still rejects unrelated and unparsable keys', () => {
+    expect(keyMatchesFilter(key('Cm'), 'F#')).toBe(false);
+    expect(keyMatchesFilter(key('Cm'), 'nope')).toBe(false);
+    expect(keyMatchesFilter(key('Cm'), null)).toBe(false);
   });
 });

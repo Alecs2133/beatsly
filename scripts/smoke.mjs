@@ -111,16 +111,15 @@ for (const name of ['get-download-url', 'submit-auth-code', 'create-checkout', '
   });
 }
 
-// Generatorul AI e marcat „coming soon” (FEATURES.aiGenerator) și n-are încă
-// HF_API_TOKEN — verifică tokenul înaintea autentificării, deci răspunde 503.
-// Doar avertisment până activăm feature-ul.
+// Generatorul AI nu mai trece prin Supabase: aplicația cheamă direct
+// Space-ul Stable Audio 3 de pe Hugging Face (src/lib/generator/space.ts).
 await check(
-  'function generate-audio configured',
+  'AI generator Space is up',
   async () => {
-    const res = await fetch(fn('generate-audio'), { method: 'POST', headers: { apikey: ANON_KEY } });
-    const body = await readBody(res);
-    expect(res.status !== 404, 'HTTP 404 — funcția nu e deployată');
-    expect(res.status === 401, `HTTP ${res.status}: ${JSON.stringify(body)}`);
+    const res = await fetch('https://stabilityai-stable-audio-3.hf.space/config');
+    expect(res.ok, `HTTP ${res.status}`);
+    const cfg = await res.json();
+    expect(cfg.dependencies?.some(d => d.api_name === 'infer'), 'endpoint-ul infer lipsește');
   },
   { warnOnly: true }
 );

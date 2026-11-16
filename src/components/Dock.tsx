@@ -70,7 +70,8 @@ export const Dock: React.FC = () => {
   const items: NavItem[] = [
     { to: '/', label: 'nav_discover', icon: <Compass size={21} strokeWidth={1.8} /> },
     { to: '/library', label: 'nav_my_sounds', icon: <Icon name="heart" size={21} />, badge: savedSounds.length || undefined },
-    { to: '/analyzer', label: 'nav_ai_generator', icon: <Icon name="sparkle" size={21} /> },
+    { to: '/generator', label: 'nav_ai_generator', icon: <Icon name="sparkle" size={21} /> },
+    { to: '/midi', label: 'nav_midi', icon: <Icon name="midi" size={21} /> },
     ...(isPublisherRole(role) ? [{ to: '/upload', label: 'nav_upload' as const, icon: <Icon name="upload" size={21} /> }] : []),
     { to: '/store', label: 'nav_store', icon: <ShoppingBag size={21} strokeWidth={1.8} /> },
     ...(isAdminRole(role) ? [{ to: '/admin', label: 'nav_admin' as const, icon: <ShieldCheck size={21} strokeWidth={1.8} /> }] : []),

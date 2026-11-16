@@ -6,6 +6,7 @@ import { Dock } from './components/Dock';
 import { SettingsSheet } from './components/SettingsSheet';
 import { CommandPalette } from './components/CommandPalette';
 import { usePlayerStore } from './store/usePlayerStore';
+import { resetGenerator } from './store/useGeneratorStore';
 import { useAppStore } from './store/useAppStore';
 import { keyHue } from './lib/keyColor';
 import { ToastContainer } from './components/ToastContainer';
@@ -18,17 +19,17 @@ import { useLibraryStore } from './store/useLibraryStore';
 import { isAdminRole, isPublisherRole } from './lib/roles';
 import { WelcomeTour } from './components/WelcomeTour';
 import { UsernamePrompt } from './components/UsernamePrompt';
-import { ComingSoon } from './components/ComingSoon';
 import { UpdatePrompt } from './components/UpdatePrompt';
-import { FEATURES } from './lib/features';
 import './design.css';
 
 // Lazy loaded pages for performance
 const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
-const Analyzer = lazy(() => import('./pages/Analyzer').then(m => ({ default: m.Analyzer })));
+const Generator = lazy(() => import('./pages/Generator').then(m => ({ default: m.Generator })));
 const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
 const MySounds = lazy(() => import('./pages/MySounds').then(m => ({ default: m.MySounds })));
 const Upload = lazy(() => import('./pages/Upload').then(m => ({ default: m.Upload })));
+// Încărcat doar când deschizi pagina — aduce după el TensorFlow și modelul.
+const MidiLab = lazy(() => import('./pages/MidiLab').then(m => ({ default: m.MidiLab })));
 const Pricing = lazy(() => import('./pages/Pricing').then(m => ({ default: m.Pricing })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
@@ -93,8 +94,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/': 'beats.ly – Discover Sounds',
   '/auth': 'Sign In – beats.ly',
   '/library': 'My Sounds – beats.ly',
-  '/analyzer': 'AI Generator – beats.ly',
+  '/generator': 'AI Generator – beats.ly',
   '/upload': 'Upload – beats.ly',
+  '/midi': 'MIDI Deconstructor – beats.ly',
   '/store': 'Store – beats.ly',
   '/admin': 'Admin – beats.ly',
   '/account': 'Profile – beats.ly',
@@ -125,7 +127,10 @@ const AppContent = () => {
   useEffect(() => {
     if (!initialized) return;
     const id = user?.id ?? null;
-    if (lastUserId.current !== undefined && lastUserId.current !== id) resetPlayer();
+    if (lastUserId.current !== undefined && lastUserId.current !== id) {
+      resetPlayer();
+      resetGenerator();
+    }
     lastUserId.current = id;
   }, [initialized, user?.id, resetPlayer]);
 
@@ -170,11 +175,10 @@ const AppContent = () => {
               <Route path="/" element={<Library />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/library" element={<ProtectedRoute><MySounds /></ProtectedRoute>} />
-              <Route
-                path="/analyzer"
-                element={FEATURES.aiGenerator ? <ProtectedRoute><Analyzer /></ProtectedRoute> : <ComingSoon feature="AI Generator" />}
-              />
+              <Route path="/generator" element={<ProtectedRoute><Generator /></ProtectedRoute>} />
+              <Route path="/analyzer" element={<Navigate to="/generator" replace />} />
               <Route path="/upload" element={<PublisherRoute><Upload /></PublisherRoute>} />
+              <Route path="/midi" element={<ProtectedRoute><MidiLab /></ProtectedRoute>} />
               <Route path="/local" element={<Navigate to="/upload" replace />} />
               <Route path="/store" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

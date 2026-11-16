@@ -44,6 +44,7 @@ export function Pricing() {
             </div>
             <ul className="pricing-features">
               <li><Check size={16} /> {t('pricing_credits_day', { count: 3 })}</li>
+              <li className="no"><X size={16} /> {t('pricing_midi')}</li>
               <li className="no"><X size={16} /> {t('pricing_ai_tool')}</li>
               <li className="no"><X size={16} /> {t('pricing_cloud_upload')}</li>
             </ul>
@@ -58,7 +59,8 @@ export function Pricing() {
             </div>
             <ul className="pricing-features">
               <li><Check size={16} /> {t('pricing_credits_day', { count: 30 })}</li>
-              <li className="no"><X size={16} /> {t('pricing_ai_tool')}</li>
+              <li className="new"><Check size={16} /> {t('pricing_midi')} <span className="new-badge">{t('pricing_new')}</span></li>
+              <li className="new"><Check size={16} /> {t('pricing_ai_included')} <span className="new-badge">{t('pricing_new')}</span></li>
               <li className="no"><X size={16} /> {t('pricing_cloud_upload')}</li>
             </ul>
             <button className="btn btn-secondary pricing-btn disabled" disabled>
@@ -75,6 +77,7 @@ export function Pricing() {
             </div>
             <ul className="pricing-features">
               <li><Check size={16} /> {t('pricing_unlimited_downloads')}</li>
+              <li><Check size={16} /> {t('pricing_midi')}</li>
               <li><Check size={16} /> {t('pricing_ai_included')}</li>
               <li><Check size={16} /> {t('pricing_premium_tag')}</li>
             </ul>
@@ -127,9 +130,15 @@ export function Pricing() {
             <div className="compare-highlight">{t('pricing_unlimited')}</div>
           </div>
           <div className="compare-row">
+            <div className="compare-feature">{t('pricing_row_midi')}</div>
+            <div><X size={16} className="compare-no" /></div>
+            <div><Check size={16} className="compare-yes" /></div>
+            <div className="compare-highlight"><Check size={16} className="compare-yes" /></div>
+          </div>
+          <div className="compare-row">
             <div className="compare-feature">{t('pricing_row_ai')}</div>
             <div><X size={16} className="compare-no" /></div>
-            <div><X size={16} className="compare-no" /></div>
+            <div><Check size={16} className="compare-yes" /></div>
             <div className="compare-highlight"><Check size={16} className="compare-yes" /></div>
           </div>
           <div className="compare-row">

@@ -42,7 +42,7 @@ export const ro: Record<keyof typeof en, string> = {
   feature_cloud_title: 'Biblioteca ta, pe orice calculator',
   feature_cloud_text: 'Ce salvezi ține de cont, nu de calculator. Te loghezi pe altul și găsești totul acolo.',
   feature_ai_title: 'Generator de sample-uri',
-  feature_ai_text: 'Lucrăm la el. Nu-l lansăm până nu sună bine.',
+  feature_ai_text: 'Scrii „808 distorsionat cu coadă lungă” și în câteva secunde ai sample-ul, gata de tras în DAW. Inclus în Producer Pack.',
   feature_library_title: 'Biblioteca comunității',
   feature_library_text: 'Loop-uri, one-shot-uri și pack-uri de la producători verificați de un om, cu filtre de BPM și tonalitate.',
   feature_verified_title: 'Fiecare sunet e ascultat',
@@ -59,9 +59,9 @@ export const ro: Record<keyof typeof en, string> = {
   faq_credits_q: 'Ce este un „credit”?',
   faq_credits_a:
     'Creditele se folosesc pentru a descărca sunete din cloud — fiecare descărcare costă 1 credit. Conturile Free primesc 3 pe zi, iar cele Producer 30 pe zi. Membrii Ultimate descarcă fără credite.',
-  faq_ai_q: 'Cum va funcționa Generatorul AI?',
+  faq_ai_q: 'Cum funcționează Generatorul AI?',
   faq_ai_a:
-    'Descrii sunetul de care ai nevoie (de ex. „bas 808 puternic la 140 BPM”), iar AI-ul generează un sample audio original. Este încă în dezvoltare și va apărea într-un update viitor.',
+    'Descrii sunetul de care ai nevoie (de ex. „bas 808 puternic la 140 BPM”), alegi dacă e one-shot sau loop și, opțional, tempo-ul și tonalitatea. În câteva secunde primești un sample original, pe care îl salvezi ca WAV sau îl tragi direct în DAW. Folosește modelul Stable Audio 3 (Stability AI) și e inclus în Producer Pack și Ultimate.',
   faq_platforms_q: 'Ce platforme sunt suportate?',
   faq_platforms_a: 'Beats.ly rulează pe Windows 10/11 (x64) și pe macOS cu Apple Silicon. O versiune pentru Mac-urile Intel vine în curând.',
   faq_data_q: 'Datele mele sunt în siguranță?',
@@ -272,4 +272,9 @@ export const ro: Record<keyof typeof en, string> = {
   download_desktop_only_text: 'Aplicația există pentru Windows și macOS. De pe telefon, tabletă sau televizor nu se poate descărca — deschide pagina asta pe calculator.',
   download_copy_link: 'Copiază linkul',
   download_link_copied: 'Link copiat',
+  pricing_midi: 'MIDI Deconstructor — transformi audio în MIDI',
+  pricing_new: 'nou',
+  pricing_row_midi: 'MIDI Deconstructor (audio → MIDI)',
+  feature_midi_title: 'Audio → MIDI',
+  feature_midi_text: 'Cu Producer Pack, MIDI Deconstructor scoate notele dintr-o melodie, un bas sau un acord și ți le dă ca fișier MIDI, gata de tras în piano roll.',
 };

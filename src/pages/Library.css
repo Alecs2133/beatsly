@@ -48,31 +48,68 @@
   animation: menuIn 0.25s var(--ease-spring) both;
 }
 
-.rack-knob {
+/* Tempo: două potențiometre, MIN și MAX, plus bara intervalului */
+.rack-range {
   display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.rack-knob > div {
-  display: grid;
-  gap: 2px;
-}
-
-.rack-knob > div > span:not(.bpm-field) {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.bpm-field {
-  display: flex;
-  align-items: baseline;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 6px;
 }
 
-.bpm-field small {
+.rack-end {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.rack-end-label {
+  color: var(--faint);
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+.rack-end .bpm-input {
+  width: 58px;
+  padding: 2px 6px;
+  font-size: 17px;
+  text-align: center;
+}
+
+.rack-range-dash {
+  align-self: center;
+  margin-top: -18px;
+  color: var(--faint);
+  font-size: 18px;
+}
+
+.rack-range-bar {
+  position: relative;
+  height: 6px;
+  margin: 14px 2px 0;
+  border-radius: 6px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.rack-range-bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+  background: var(--line-strong);
+  transition: left 0.25s var(--ease-out), width 0.25s var(--ease-out), background var(--dur);
+}
+
+.rack-range-bar.on i {
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+}
+
+.rack-range-note {
+  margin-top: 8px;
   color: var(--muted);
-  font: 500 11px var(--font-mono);
+  font-size: 12px;
+  text-align: center;
 }
 
 .rack-panel .segmented {

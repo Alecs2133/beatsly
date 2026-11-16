@@ -444,9 +444,6 @@ entrypoint = "./functions/stripe-webhook/index.ts"
 [functions.get-download-url]
 verify_jwt = false
 
-[functions.generate-audio]
-verify_jwt = false
-
 [functions.create-portal-session]
 verify_jwt = false
 

@@ -139,3 +139,11 @@
 .bi-lock.go .bi-shackle,
 .bi-trigger:hover .bi-lock .bi-shackle { animation: bi-unlock 0.7s var(--ease-spring); }
 @keyframes bi-unlock { 50% { transform: translateY(-2px); } }
+
+/* midi: notele intră pe rând în piano roll */
+.bi-midi .bi-notes rect { transform-box: fill-box; transform-origin: left center; }
+.bi-midi.go .bi-notes rect,
+.bi-trigger:hover .bi-midi .bi-notes rect { animation: bi-midi 0.5s var(--ease-spring) backwards; }
+.bi-midi .bi-notes rect:nth-child(2) { animation-delay: 0.07s; }
+.bi-midi .bi-notes rect:nth-child(3) { animation-delay: 0.14s; }
+@keyframes bi-midi { from { transform: scaleX(0); opacity: 0; } }
