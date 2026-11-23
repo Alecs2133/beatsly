@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
-import { Check, Copy, MonitorCheck, MonitorSmartphone } from 'lucide-react';
+import { Check, Copy, FlaskConical, MonitorCheck, MonitorSmartphone } from 'lucide-react';
 import { detectDesktopOS } from '../lib/platform';
 import { fadeInUp, staggerContainer } from '../lib/animations';
-import { AppleIcon, WindowsIcon } from '../components/PlatformIcons';
+import { AppleIcon, LinuxIcon, WindowsIcon } from '../components/PlatformIcons';
 import { useLayoutContext } from '../lib/layoutContext';
 import { useLatestRelease } from '../lib/useLatestRelease';
 import { useT } from '../i18n/context';
@@ -17,6 +17,7 @@ import type { TranslationKey } from '../i18n/en';
 const RELEASES_BASE = 'https://github.com/Alecs2133/beatsly/releases/download';
 const FALLBACK_WIN_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_x64-setup.exe`;
 const FALLBACK_MAC_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_aarch64.dmg`;
+const FALLBACK_LINUX_URL = `${RELEASES_BASE}/v${__APP_VERSION__}/beatsly_${__APP_VERSION__}_amd64.AppImage`;
 
 const STEPS: { title: TranslationKey; text: TranslationKey }[] = [
   { title: 'download_step1_title', text: 'download_step1_text' },
@@ -31,6 +32,14 @@ export function DownloadPage() {
 
   const winUrl = latest.windowsUrl ?? FALLBACK_WIN_URL;
   const macUrl = latest.macUrl ?? FALLBACK_MAC_URL;
+  // AppImage, nu .deb: merge pe orice distribuție și e singurul format pe care
+  // aplicația se poate actualiza singură.
+  const linuxUrl = latest.linuxAppImageUrl ?? FALLBACK_LINUX_URL;
+  // Site-ul se publică la push, dar installerele apar abia după ce se termină
+  // build-ul release-ului. Până atunci nu arătăm un buton care duce în gol:
+  // cât se încarcă îl presupunem acolo, iar dacă release-ul chiar n-are
+  // AppImage, butonul de Linux dispare.
+  const hasLinux = latest.loading || !!latest.linuxAppImageUrl;
   const displayVersion = latest.tag ?? `v${__APP_VERSION__}`;
 
   // Doar Windows și macOS: pe telefon, tabletă sau TV installerul n-ar rula.
@@ -85,7 +94,9 @@ export function DownloadPage() {
           {os && (
             <>
               <motion.h2 variants={fadeInUp}>{t('download_ready_title')}</motion.h2>
-              <motion.p variants={fadeInUp}>{t('download_ready_text')}</motion.p>
+              {/* Pe Linux promisiunea „se actualizează singură” e valabilă doar
+                  pentru AppImage — detaliul e în caseta de mai jos. */}
+              <motion.p variants={fadeInUp}>{t(os === 'linux' ? 'download_ready_text_linux' : 'download_ready_text')}</motion.p>
             </>
           )}
           {os ? (
@@ -109,6 +120,17 @@ export function DownloadPage() {
                 <AppleIcon />
                 {t('download_mac')}
               </motion.button>
+              {hasLinux && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleDownload(linuxUrl)}
+                  className={`btn btn-large ${os === 'linux' ? 'btn-primary' : 'btn-secondary glass-btn'}`}
+                >
+                  <LinuxIcon />
+                  {t('download_linux')}
+                </motion.button>
+              )}
             </motion.div>
           ) : (
             <motion.div variants={fadeInUp} className="download-blocked" role="note">
@@ -120,6 +142,34 @@ export function DownloadPage() {
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                   {copied ? t('download_link_copied') : t('download_copy_link')}
                 </button>
+              </div>
+            </motion.div>
+          )}
+          {/* Linux e proaspăt și n-a fost încercat pe toate distribuțiile —
+              spunem asta înainte să descarce, nu după. */}
+          {/* Pe Linux, dar release-ul publicat încă n-are AppImage: se
+              construiește. Fără nota asta ar vedea doar butoane de Windows și
+              Mac, fără să înțeleagă de ce. */}
+          {os === 'linux' && !hasLinux && (
+            <motion.div variants={fadeInUp} className="download-beta" role="note">
+              <FlaskConical size={20} />
+              <div>
+                <strong>{t('download_linux_soon_title')}</strong>
+                <p>{t('download_linux_soon_text')}</p>
+              </div>
+            </motion.div>
+          )}
+          {os === 'linux' && hasLinux && (
+            <motion.div variants={fadeInUp} className="download-beta" role="note">
+              <FlaskConical size={20} />
+              <div>
+                <strong>{t('download_linux_beta_title')}</strong>
+                <p>{t('download_linux_beta_text')}</p>
+                {latest.linuxDebUrl && (
+                  <button type="button" className="btn btn-secondary" onClick={() => handleDownload(latest.linuxDebUrl!)}>
+                    {t('download_linux_deb')}
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
@@ -188,6 +238,15 @@ export function DownloadPage() {
             <ul>
               <li><MonitorCheck size={14} /> {t('download_req_mac_arch')}</li>
               <li><MonitorCheck size={14} /> {t('download_req_mac_intel')}</li>
+            </ul>
+          </motion.div>
+
+          <motion.div className="requirement-card glass" variants={fadeInUp}>
+            <div className="requirement-icon"><LinuxIcon /></div>
+            <h3>Linux</h3>
+            <ul>
+              <li><MonitorCheck size={14} /> {t('download_req_linux_os')}</li>
+              <li><MonitorCheck size={14} /> {t('download_req_linux_deps')}</li>
             </ul>
           </motion.div>
         </motion.div>

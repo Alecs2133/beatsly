@@ -10,6 +10,10 @@ export interface LatestRelease {
   windowsUrl: string | null;
   /** URL-ul direct de descărcare al installer-ului macOS, dacă a fost găsit. */
   macUrl: string | null;
+  /** AppImage-ul pentru Linux: merge pe orice distribuție și se actualizează singur. */
+  linuxAppImageUrl: string | null;
+  /** Pachetul .deb pentru Ubuntu / Debian / Mint. */
+  linuxDebUrl: string | null;
   loading: boolean;
 }
 
@@ -66,7 +70,7 @@ function findAsset(release: GitHubRelease | null, pattern: RegExp): string | nul
 
 /**
  * Citește ultimul release PUBLICAT de pe GitHub (nu draft) și întoarce
- * link-urile directe de descărcare pentru Windows și macOS.
+ * link-urile directe de descărcare pentru fiecare sistem.
  *
  * Elimină nevoia de a resincroniza manual versiunea site-ului cu versiunea
  * aplicației la fiecare release: link-urile devin corecte automat, fără
@@ -83,6 +87,8 @@ export function useLatestRelease(): LatestRelease {
     tag: null,
     windowsUrl: null,
     macUrl: null,
+    linuxAppImageUrl: null,
+    linuxDebUrl: null,
     loading: true,
   });
 
@@ -94,6 +100,10 @@ export function useLatestRelease(): LatestRelease {
         tag: release?.tag_name ?? null,
         windowsUrl: findAsset(release, /setup\.exe$/i),
         macUrl: findAsset(release, /\.dmg$/i),
+        // Doar `.AppImage`, nu și `.AppImage.tar.gz`: arhiva e pentru updater,
+        // nu pentru descărcare manuală.
+        linuxAppImageUrl: findAsset(release, /\.AppImage$/i),
+        linuxDebUrl: findAsset(release, /\.deb$/i),
         loading: false,
       });
     });

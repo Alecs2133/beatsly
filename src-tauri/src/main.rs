@@ -215,6 +215,24 @@ fn analyze_file(path: &str) -> Result<AudioAnalysis, String> {
     })
 }
 
+/// Poate aplicația să se actualizeze singură?
+///
+/// Pe Windows și macOS, da — installerul își înlocuiește propriile fișiere.
+/// Pe Linux, updater-ul Tauri știe să rescrie doar un AppImage; dacă userul a
+/// instalat din `.deb` sau `.rpm`, descărcarea ar reuși, iar instalarea ar
+/// eșua cu o eroare pe care n-are cum s-o rezolve. Variabila `APPIMAGE` e
+/// setată de runtime-ul AppImage, deci prezența ei spune exact din ce formă
+/// rulează aplicația. În cazul celălalt, interfața trimite userul să descarce
+/// versiunea nouă de pe site, în loc să-i promită un update automat.
+#[tauri::command]
+fn can_self_update() -> bool {
+    if cfg!(target_os = "linux") {
+        std::env::var_os("APPIMAGE").is_some()
+    } else {
+        true
+    }
+}
+
 /// Deschide protocolul `asset:` pentru un singur fișier ales de utilizator.
 ///
 /// Scope-ul din tauri.conf.json este gol. Anterior era `["**"]`, ceea ce
@@ -287,7 +305,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             allow_asset_path,
-            analyze_sample_audio
+            analyze_sample_audio,
+            can_self_update
         ])
         .run(tauri::generate_context!())
         .expect("Eroare la pornirea aplicației Tauri");

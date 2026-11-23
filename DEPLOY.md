@@ -135,6 +135,18 @@ npx supabase functions delete generate-audio
 
 ## 4. Release-ul aplicației
 
+Un tag `v*` construiește installerele pe trei sisteme deodată: Windows
+(`.exe`), macOS (`.dmg`) și Linux (`.AppImage`, `.deb`, `.rpm`).
+
+Linux-ul se compilează pe `ubuntu-22.04`, nu pe `latest`: binarul se leagă de
+glibc-ul sistemului pe care a fost construit, deci unul făcut pe 24.04 n-ar
+porni pe Ubuntu 22.04 sau Linux Mint 21. Invers merge.
+
+Auto-update-ul pe Linux funcționează **doar pentru AppImage** — updater-ul
+Tauri știe să rescrie doar acel format. Cine instalează din `.deb` sau `.rpm`
+primește în aplicație un buton spre pagina de descărcare, nu o instalare
+automată (vezi comanda `can_self_update` din `src-tauri/src/main.rs`).
+
 Semnarea pentru auto-update cere două secrete în repository settings →
 Secrets and variables → Actions:
 

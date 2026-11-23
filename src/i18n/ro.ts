@@ -330,6 +330,8 @@ export const ro: Record<TranslationKeys, string> = {
   update_installing: 'Se descarcă actualizarea…',
   update_later: 'Mai târziu',
   update_failed: 'Actualizarea nu s-a putut instala. Încearcă din nou din Opțiuni.',
+  update_manual_desc: 'O versiune nouă de Beats.ly e gata. Fiind instalată din pachet de sistem, se descarcă manual de pe site.',
+  update_manual_open: 'Deschide pagina de descărcare',
 
   // AI Generator
   removed_from_sounds: 'Șters din Sunetele mele',

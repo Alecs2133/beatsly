@@ -328,6 +328,8 @@ export const en = {
   update_installing: 'Downloading update…',
   update_later: 'Later',
   update_failed: 'The update failed to install. Try again from Options.',
+  update_manual_desc: 'A new version of Beats.ly is out. Since this copy came from a system package, you\'ll need to download it from the site.',
+  update_manual_open: 'Open the download page',
 
   // AI Generator
   removed_from_sounds: 'Removed from My Sounds',

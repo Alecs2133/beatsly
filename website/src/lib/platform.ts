@@ -1,13 +1,14 @@
 /**
  * Pe ce fel de aparat e deschis site-ul. Aplicația există doar pentru
- * calculatoare cu Windows și macOS — pe telefon, tabletă, televizor sau
- * consolă butonul de descărcare nu are sens (installerul nu rulează acolo).
+ * calculatoare cu Windows, macOS și Linux — pe telefon, tabletă, televizor
+ * sau consolă butonul de descărcare nu are sens (installerul nu rulează
+ * acolo).
  *
  * Verificare făcută în browser, deci orientativă: cine are linkul direct de
  * pe GitHub îl poate deschide oricum. Scopul e să nu păcălim pe nimeni să
  * descarce ceva ce nu poate instala.
  */
-export type DesktopOS = 'windows' | 'mac';
+export type DesktopOS = 'windows' | 'mac' | 'linux';
 
 interface UADataNavigator extends Navigator {
   userAgentData?: { mobile?: boolean; platform?: string };
@@ -32,6 +33,10 @@ export function detectDesktopOS(): DesktopOS | null {
     if (nav.maxTouchPoints > 0) return null;
     return 'mac';
   }
-  // Linux, ChromeOS și restul: nu avem installer pentru ele.
+  // Linux, dar NU Android (tot pe nucleu Linux, prins mai sus de
+  // NOT_A_COMPUTER) și nici ChromeOS, unde instalarea cere activat containerul
+  // de Linux — prea multă bătaie de cap ca să-i promitem butonul.
+  if (!/CrOS/i.test(ua) && (/Linux|X11/i.test(platform) || /Linux|X11/i.test(ua))) return 'linux';
+  // ChromeOS și restul: nu avem installer pentru ele.
   return null;
 }

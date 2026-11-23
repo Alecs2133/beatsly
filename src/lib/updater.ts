@@ -1,11 +1,30 @@
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { invoke } from '@tauri-apps/api/core';
 
 export type { Update };
+
+/** Pagina de unde se descarcă manual, când update-ul automat nu e posibil. */
+export const DOWNLOAD_PAGE = 'https://beatsly.vercel.app/download';
 
 /** `null` = deja la zi. Aruncă la eroare de rețea / semnătură. */
 export async function findUpdate(): Promise<Update | null> {
   return await check();
+}
+
+/**
+ * Pe Linux instalat din `.deb` sau `.rpm` update-ul automat nu funcționează
+ * (vezi `can_self_update` în main.rs) — acolo userul descarcă manual.
+ * La orice eroare presupunem că se poate: mai bine încercăm decât să ascundem
+ * update-ul pe Windows din cauza unei comenzi care n-a răspuns.
+ */
+export async function canSelfUpdate(): Promise<boolean> {
+  try {
+    return await invoke<boolean>('can_self_update');
+  } catch (err) {
+    console.warn('can_self_update failed:', err);
+    return true;
+  }
 }
 
 /**

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Loader2, X } from 'lucide-react';
-import { findUpdate, installUpdate, Update } from '../lib/updater';
+import { Download, ExternalLink, Loader2, X } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-shell';
+import { canSelfUpdate, DOWNLOAD_PAGE, findUpdate, installUpdate, Update } from '../lib/updater';
 import { reportError } from '../lib/errorReporting';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
@@ -14,6 +15,9 @@ export const UpdatePrompt: React.FC = () => {
   const [dismissed, setDismissed] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
+  // Pe Linux instalat din .deb/.rpm nu ne putem înlocui singuri — acolo
+  // trimitem userul să descarce, în loc să-i promitem un update care eșuează.
+  const [selfUpdate, setSelfUpdate] = useState(true);
   const { showToast } = useAppStore();
   const { t } = useTranslation();
 
@@ -23,9 +27,15 @@ export const UpdatePrompt: React.FC = () => {
       // Silențios: fără rețea sau în `tauri dev` nu vrem un toast de eroare
       // la fiecare pornire. Butonul din Options raportează eroarea explicit.
       .catch((err) => console.warn('Startup update check failed:', err));
+    canSelfUpdate().then(setSelfUpdate);
   }, []);
 
   if (!update || dismissed) return null;
+
+  const handleDownload = () => {
+    open(DOWNLOAD_PAGE).catch((err) => console.error('open download page:', err));
+    setDismissed(true);
+  };
 
   const handleInstall = async () => {
     setInstalling(true);
@@ -56,12 +66,14 @@ export const UpdatePrompt: React.FC = () => {
       )}
       <div style={{ fontWeight: 700, marginBottom: 4 }}>{t('update_ready_title')} — v{update.version}</div>
       <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
-        {installing
-          ? `${t('update_installing')}${progress !== null ? ` ${progress}%` : ''}`
-          : t('update_ready_desc')}
+        {!selfUpdate
+          ? t('update_manual_desc')
+          : installing
+            ? `${t('update_installing')}${progress !== null ? ` ${progress}%` : ''}`
+            : t('update_ready_desc')}
       </div>
       <button
-        onClick={handleInstall}
+        onClick={selfUpdate ? handleInstall : handleDownload}
         disabled={installing}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -69,8 +81,8 @@ export const UpdatePrompt: React.FC = () => {
           padding: '10px', borderRadius: 10, fontWeight: 'bold', cursor: installing ? 'wait' : 'pointer',
         }}
       >
-        {installing ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
-        {t('update_install')}
+        {!selfUpdate ? <ExternalLink size={16} /> : installing ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+        {selfUpdate ? t('update_install') : t('update_manual_open')}
       </button>
     </div>
   );

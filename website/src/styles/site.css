@@ -797,6 +797,37 @@
   margin-top: 18px;
 }
 
+/* Nota de „încă în probe” de la Linux — aceeași casetă ca `download-blocked`,
+   dar în galbenul de avertizare, nu în gri. */
+.download-beta {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(251, 191, 36, 0.07);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: var(--muted);
+  text-align: left;
+}
+
+.download-beta svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #fbbf24;
+}
+
+.download-beta strong {
+  display: block;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.download-beta p {
+  margin-bottom: 12px;
+  line-height: 1.55;
+}
 .download-blocked {
   display: flex;
   align-items: flex-start;

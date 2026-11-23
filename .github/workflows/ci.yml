@@ -15,8 +15,7 @@ concurrency:
 jobs:
   app:
     name: Desktop app (tsc + vite + cargo check)
-    # Windows = platforma pe care o livrăm; evită și dependențele GTK/WebKit
-    # de care ar avea nevoie `cargo check` pe Linux.
+    # Windows: platforma principală. Linux are jobul `app-linux` de mai jos.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +34,41 @@ jobs:
       - run: npm run build
 
       - run: npm test
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: cargo check
+        run: cargo check --locked
+        working-directory: src-tauri
+
+  app-linux:
+    name: Desktop app (cargo check pe Linux)
+    # Pe Linux se compilează alt cod: webview-ul e WebKitGTK, iar „trage în
+    # DAW” are o implementare GTK separată. Fără jobul ăsta, o eroare de
+    # compilare pe Linux ar ieși la iveală abia la build-ul de release.
+    # Aceeași versiune ca în release.yml, ca să prindem aceleași probleme.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `generate_context!` din Rust are nevoie de `dist/` ca să compileze.
+      - run: npm run build
 
       - uses: dtolnay/rust-toolchain@stable
 
